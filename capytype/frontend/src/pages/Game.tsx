@@ -172,7 +172,7 @@ const HighlightedText = ({ text, input, errorPositions, correctedPositions }: {
 
 export default function Game() {
   const navigate = useNavigate();
-  const { text, updateProgress, players, gameState, roomId } = useGameStore();
+  const { text, updateProgress, players, gameState } = useGameStore();
   const [input, setInput] = useState('');
   const [countdown, setCountdown] = useState<number | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
@@ -191,11 +191,9 @@ export default function Game() {
   const [errorPositions, setErrorPositions] = useState(new Set<number>());
   const [correctedPositions, setCorrectedPositions] = useState(new Set<number>());
   const [totalErrors, setTotalErrors] = useState(0);
-  const [errorHistory, setErrorHistory] = useState(new Set<number>());
   const [gameFinished, setGameFinished] = useState(false);
   const [timeUpTimer, setTimeUpTimer] = useState<number | null>(null);
   const [hasStartedTyping, setHasStartedTyping] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [showResults, setShowResults] = useState(false);
   
   // Get the current player's nickname from the store
@@ -345,14 +343,12 @@ export default function Game() {
     }
 
     // Check for errors and update progress
-    let hasErrors = false;
     const newErrorPositions = new Set<number>();
     const newCorrectedPositions = new Set<number>();
     
     // Check each character for errors
     for (let i = 0; i < value.length; i++) {
       if (value[i] !== text[i]) {
-        hasErrors = true;
         newErrorPositions.add(i);
         // If this position was previously corrected, remove it from corrected positions
         if (correctedPositions.has(i)) {
@@ -394,7 +390,6 @@ export default function Game() {
       setErrorPositions(new Set());
       setCorrectedPositions(new Set());
       setTotalErrors(0);
-      setErrorHistory(new Set());
       setHasStartedTyping(false);
     }
   }, [gameStarted]);
@@ -422,10 +417,6 @@ export default function Game() {
     useGameStore.getState().resetGame();
     // Navigate back to lobby
     navigate('/lobby');
-  };
-
-  const handleStartGame = () => {
-    // Implementation of handleStartGame function
   };
 
   return (

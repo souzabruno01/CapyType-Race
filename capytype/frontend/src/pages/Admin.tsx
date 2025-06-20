@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useGameStore } from '../store/gameStore';
+import { useState } from 'react';
 
 const SAMPLE_TEXTS = [
   {

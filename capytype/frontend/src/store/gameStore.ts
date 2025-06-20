@@ -92,9 +92,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   }),
 
   connect: () => {
-    const socket = io('http://localhost:3001', {
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+    console.log('Connecting to backend:', backendUrl);
+    
+    const socket = io(backendUrl, {
       withCredentials: true,
-      transports: ['websocket']
+      transports: ['websocket', 'polling']
     });
 
     socket.on('connect', () => {

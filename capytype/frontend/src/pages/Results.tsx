@@ -3,18 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { motion } from 'framer-motion';
 
-interface PlayerResult {
-  id: string;
-  nickname: string;
-  wpm: number;
-  errors: number;
-  time: number;
-  position: number;
-}
-
 export default function Results() {
   const navigate = useNavigate();
-  const { players, gameResults } = useGameStore();
+  const { gameResults } = useGameStore();
 
   useEffect(() => {
     // If there are no results, redirect back to lobby
