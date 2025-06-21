@@ -1,0 +1,14 @@
+# Railway Deployment Configuration
+# This file configures the Railway deployment for the CapyType backend
+
+[build]
+  builder = "nixpacks"
+
+[deploy]
+  startCommand = "npm start"
+  restartPolicyType = "on-failure"
+  restartPolicyMaxRetries = 10
+
+[env]
+  NODE_ENV = "production"
+

@@ -39,6 +39,25 @@ const rooms = new Map();
 
 app.use(express.json());
 
+// Health check endpoint for deployment services
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Basic info endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'CapyType Race Backend Server',
+    version: '1.0.0',
+    status: 'Running'
+  });
+});
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
