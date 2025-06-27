@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { generateRoomName } from '../utils/roomUtils';
+import { Player } from '../store/gameStore';
 
 const SAMPLE_TEXTS = [
   "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the English alphabet at least once. Pangrams are a great way to practice typing and test keyboards.",
@@ -72,6 +73,33 @@ export default function Lobby() {
     navigate('/login');
   };
 
+  // Utility: get avatar color for a player (by avatar file)
+  function getPlayerAvatarColor(player: Player) {
+    // Try to map avatar file to color
+    const avatarMap: Record<string, string> = {
+      'Capy-face-green.png': '#6ee7b7',
+      'Capy-face-blue.png': '#60a5fa',
+      'Capy-face-yellow.png': '#fde68a',
+      'Capy-face-pink.png': '#f9a8d4',
+      'Capy-face-brown.png': '#bfa181',
+      'Capy-face-orange.png': '#fdba74',
+      'Capy-face-white.png': '#fff',
+      'Capy-face-red.png': '#f87171',
+      'Capy-face-purple.png': '#a78bfa',
+      'Capy-face-black.png': '#232323',
+    };
+    if (player.avatar && avatarMap[player.avatar]) {
+      return avatarMap[player.avatar];
+    }
+    // Fallback: use localStorage for self
+    const myNick = localStorage.getItem('capy_nickname');
+    if (player.nickname === myNick) {
+      return localStorage.getItem('capy_avatar_color') || '#60a5fa';
+    }
+    // Otherwise, fallback to blue
+    return '#60a5fa';
+  }
+
   return (
     <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'url(/images/capybara_background_multiple.png) no-repeat center center fixed', backgroundSize: 'cover' }}>
       <div style={{ width: '100%', maxWidth: 400, padding: 32, background: 'rgba(235, 228, 200, 0.92)', borderRadius: 16, boxShadow: '0 4px 32px rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)', border: '1.5px solid #b6a77a', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
@@ -123,28 +151,39 @@ export default function Lobby() {
         </div>
         <div style={{ width: '100%' }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Players:</h2>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {players.map((player) => (
-              <li key={player.id} style={{ padding: 12, background: 'linear-gradient(90deg, #eef2ff 0%, #f3e8ff 100%)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {player.avatar ? (
-                    <span style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '2px solid #b6a77a' }}>
-                      <img src={`/images/${player.avatar}`} alt="avatar" style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: '50%' }} onError={e => (e.currentTarget.style.opacity = '0.2')} />
-                    </span>
-                  ) : (
-                    <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #a78bfa 0%, #6366f1 100%)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 16 }}>
-                      {player.nickname.substring(0, 2).toUpperCase()}
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, width: '100%', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {players.map((player) => {
+              const color = getPlayerAvatarColor(player);
+              return (
+                <li key={player.id} style={{
+                  padding: 6,
+                  background: `linear-gradient(90deg, ${color} 0%, #f3e8ff 100%)`,
+                  borderRadius: 6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {player.avatar ? (
+                      <span style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '1.5px solid #b6a77a' }}>
+                        <img src={`/images/${player.avatar}`} alt="avatar" style={{ width: 24, height: 24, objectFit: 'cover', borderRadius: '50%' }} onError={e => (e.currentTarget.style.opacity = '0.2')} />
+                      </span>
+                    ) : (
+                      <div style={{ width: 28, height: 28, background: `linear-gradient(135deg, ${color} 0%, #6366f1 100%)`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13 }}>
+                        {player.nickname.substring(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <span style={{ fontWeight: 500, color: '#232323', fontSize: 13, textShadow: '0 1px 2px #fff8' }}>{player.nickname}</span>
+                  </div>
+                  {player.progress > 0 && (
+                    <div style={{ fontSize: 11, color: '#4f46e5', fontWeight: 500 }}>
+                      {Math.round(player.progress)}% complete
                     </div>
                   )}
-                  <span style={{ fontWeight: 500, color: '#374151', fontSize: 15 }}>{player.nickname}</span>
-                </div>
-                {player.progress > 0 && (
-                  <div style={{ fontSize: 13, color: '#4f46e5', fontWeight: 500 }}>
-                    {Math.round(player.progress)}% complete
-                  </div>
-                )}
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </div>
         {isAdmin && (
