@@ -127,9 +127,15 @@ export default function Lobby() {
             {players.map((player) => (
               <li key={player.id} style={{ padding: 12, background: 'linear-gradient(90deg, #eef2ff 0%, #f3e8ff 100%)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #a78bfa 0%, #6366f1 100%)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 16 }}>
-                    {player.nickname.substring(0, 2).toUpperCase()}
-                  </div>
+                  {player.avatar ? (
+                    <span style={{ width: 36, height: 36, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '2px solid #b6a77a' }}>
+                      <img src={`/images/${player.avatar}`} alt="avatar" style={{ width: 32, height: 32, objectFit: 'cover', borderRadius: '50%' }} onError={e => (e.currentTarget.style.opacity = '0.2')} />
+                    </span>
+                  ) : (
+                    <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #a78bfa 0%, #6366f1 100%)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 16 }}>
+                      {player.nickname.substring(0, 2).toUpperCase()}
+                    </div>
+                  )}
                   <span style={{ fontWeight: 500, color: '#374151', fontSize: 15 }}>{player.nickname}</span>
                 </div>
                 {player.progress > 0 && (
