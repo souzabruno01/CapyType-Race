@@ -11,16 +11,16 @@ const filter = new Filter();
 
 // List of available capybara avatars and their colors
 const CAPYBARA_AVATARS = [
-  { file: 'capy-green.png', color: '#6ee7b7' },
-  { file: 'capy-blue.png', color: '#60a5fa' },
-  { file: 'capy-yellow.png', color: '#fde68a' },
-  { file: 'capy-pink.png', color: '#f9a8d4' },
-  { file: 'capy-brown.png', color: '#bfa181' },
-  { file: 'capy-orange.png', color: '#fdba74' },
-  { file: 'capy-gray.png', color: '#d1d5db' },
-  { file: 'capy-red.png', color: '#f87171' },
-  { file: 'capy-purple.png', color: '#a78bfa' },
-  { file: 'capy-black.png', color: '#232323' },
+  { file: 'capy-face.png', color: '#6ee7b7', name: 'green' },
+  { file: 'capy-face.png', color: '#60a5fa', name: 'blue' },
+  { file: 'capy-face.png', color: '#fde68a', name: 'yellow' },
+  { file: 'capy-face.png', color: '#f9a8d4', name: 'pink' },
+  { file: 'capy-face.png', color: '#bfa181', name: 'brown' },
+  { file: 'capy-face.png', color: '#fdba74', name: 'orange' },
+  { file: 'capy-face.png', color: '#d1d5db', name: 'gray' },
+  { file: 'capy-face.png', color: '#f87171', name: 'red' },
+  { file: 'capy-face.png', color: '#a78bfa', name: 'purple' },
+  { file: 'capy-face.png', color: '#232323', name: 'black' },
 ];
 
 function isValidNickname(nickname: string) {
