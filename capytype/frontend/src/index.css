@@ -9,6 +9,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: url('/images/capybara_background_multiple.png') no-repeat center center fixed;
+  background-size: cover;
 }
 
 code {
