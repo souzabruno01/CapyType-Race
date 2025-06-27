@@ -8,6 +8,7 @@ export interface Player {
   wpm: number;
   errors: number;
   position: number;
+  avatar?: string; // Add avatar to Player
 }
 
 interface PlayerResult {
@@ -42,8 +43,8 @@ interface GameStore extends GameState {
   setGameResults: (results: PlayerResult[]) => void;
   resetGame: () => void;
   connect: () => void;
-  createRoom: (nickname: string) => void;
-  joinRoom: (roomId: string, nickname: string) => void;
+  createRoom: (nickname: string, avatar?: string) => void;
+  joinRoom: (roomId: string, nickname: string, avatar?: string) => void;
   setAdmin: (isAdmin: boolean) => void;
 }
 
@@ -162,11 +163,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ socket });
   },
 
-  createRoom: (nickname) => {
+  createRoom: (nickname, avatar) => {
     const { socket } = get();
+    console.log('createRoom called with nickname:', nickname, 'avatar:', avatar);
     if (socket?.connected) {
-      console.log('Creating room with nickname:', nickname);
-      socket.emit('createRoom', nickname);
+      console.log('Socket is connected, emitting createRoom');
+      socket.emit('createRoom', { nickname, avatar });
     } else {
       console.error('Socket not connected');
       // Try to reconnect if not connected
@@ -174,7 +176,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
-  joinRoom: (roomId, nickname) => {
+  joinRoom: (roomId, nickname, avatar) => {
     const { socket } = get();
     if (!socket) {
       // If no socket exists, try to connect first
@@ -183,8 +185,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       setTimeout(() => {
         const newSocket = get().socket;
         if (newSocket?.connected) {
-          console.log('Joining room:', roomId, 'with nickname:', nickname);
-          newSocket.emit('joinRoom', { roomId, nickname });
+          console.log('Joining room:', roomId, 'with nickname:', nickname, 'avatar:', avatar);
+          newSocket.emit('joinRoom', { roomId, nickname, avatar });
           // Set the roomId in the store
           set({ roomId });
         } else {
@@ -192,8 +194,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }
       }, 1000); // Wait 1 second for connection
     } else if (socket.connected) {
-      console.log('Joining room:', roomId, 'with nickname:', nickname);
-      socket.emit('joinRoom', { roomId, nickname });
+      console.log('Joining room:', roomId, 'with nickname:', nickname, 'avatar:', avatar);
+      socket.emit('joinRoom', { roomId, nickname, avatar });
       // Set the roomId in the store
       set({ roomId });
     } else {
@@ -202,8 +204,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Wait for socket to connect
       setTimeout(() => {
         if (socket.connected) {
-          console.log('Joining room:', roomId, 'with nickname:', nickname);
-          socket.emit('joinRoom', { roomId, nickname });
+          console.log('Joining room:', roomId, 'with nickname:', nickname, 'avatar:', avatar);
+          socket.emit('joinRoom', { roomId, nickname, avatar });
           // Set the roomId in the store
           set({ roomId });
         } else {

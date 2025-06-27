@@ -1,8 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* @tailwind directives removed because Tailwind CSS is not being processed */
+/* Tailwind directives removed because Tailwind CSS is not being processed */
 
 body {
   margin: 0;
@@ -71,7 +67,7 @@ button:focus-visible {
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background-color: #ffffff;
+    /* background-color: #ffffff; removed to allow background image to show */
   }
   a:hover {
     color: #747bff;

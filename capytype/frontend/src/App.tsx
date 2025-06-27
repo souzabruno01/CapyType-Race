@@ -19,19 +19,14 @@ function App() {
   }, [connect]);
 
   return (
-    <Router>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-4xl font-bold text-center text-indigo-600 mb-8">
-            CapyType Race
-          </h1>
-          <Routes>
-            <Route path="/" element={<Login />} />
-            <Route path="/lobby" element={<Lobby />} />
-            <Route path="/game" element={<Game />} />
-            <Route path="/results" element={<Results />} />
-          </Routes>
-        </div>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <div className="min-h-screen">
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/lobby" element={<Lobby />} />
+          <Route path="/game" element={<Game />} />
+          <Route path="/results" element={<Results />} />
+        </Routes>
       </div>
     </Router>
   );
