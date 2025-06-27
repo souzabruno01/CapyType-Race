@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { Filter } from 'bad-words';
+import { encryptRoomId } from '../utils/crypto';
 
 const RESERVED_WORDS = [
   'admin', 'host', 'moderator', 'capybara', 'room', 'test', 'null', 'undefined', 'root', 'server'
@@ -47,7 +48,7 @@ export default function Login() {
   // Room code state: always start empty on login page
   const [roomCode, setRoomCode] = useState('');
   const [error, setError] = useState('');
-  // Use sessionStorage for avatar color
+  // Avatar color state
   const [selectedAvatarColor, setSelectedAvatarColor] = useState(() => {
     const stored = sessionStorage.getItem('capy_avatar_color');
     if (stored && CAPYBARA_AVATARS.some(a => a.color === stored)) return stored;
@@ -60,6 +61,12 @@ export default function Login() {
   });
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const avatarBtnRef = useRef<HTMLButtonElement>(null);
+
+  // Room code validation state
+  const [roomName, setRoomName] = useState<string | null>(null);
+  const [roomValid, setRoomValid] = useState<boolean | null>(null);
+  const [roomCheckLoading, setRoomCheckLoading] = useState(false);
+  const roomCodeCheckTimeout = useRef<number | null>(null);
 
   // Always derive selectedAvatar from selectedAvatarColor
   const selectedAvatar = (() => {
@@ -105,6 +112,47 @@ export default function Login() {
     setShowAvatarModal(false);
   };
 
+  // Room code validation effect
+  useEffect(() => {
+    if (roomCode.length < 8) {
+      setRoomName(null);
+      setRoomValid(null);
+      setRoomCheckLoading(false);
+      return;
+    }
+    setRoomCheckLoading(true);
+    setRoomName(null);
+    setRoomValid(null);
+    // Debounce API call
+    if (roomCodeCheckTimeout.current) clearTimeout(roomCodeCheckTimeout.current);
+    roomCodeCheckTimeout.current = setTimeout(() => {
+      // Use VITE_BACKEND_URL from env
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
+      const encryptedCode = encryptRoomId(roomCode.toLowerCase());
+      fetch(`${backendUrl}/api/room-info?code=${encodeURIComponent(encryptedCode)}`)
+        .then(async (res) => {
+          if (!res.ok) throw new Error('Invalid');
+          const data = await res.json();
+          if (data && data.name) {
+            setRoomName(data.name);
+            setRoomValid(true);
+          } else {
+            setRoomName(null);
+            setRoomValid(false);
+          }
+        })
+        .catch(() => {
+          setRoomName(null);
+          setRoomValid(false);
+        })
+        .finally(() => setRoomCheckLoading(false));
+    }, 400);
+    // Cleanup
+    return () => {
+      if (roomCodeCheckTimeout.current) clearTimeout(roomCodeCheckTimeout.current);
+    };
+  }, [roomCode]);
+
   const handleCreateRoom = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedNickname = nickname.trim();
@@ -148,13 +196,18 @@ export default function Login() {
       setError('Please enter a room code to join!');
       return;
     }
+    if (!roomValid) {
+      setError('Please enter a valid room code!');
+      return;
+    }
+    const normalizedRoomCode = roomCode.trim().toLowerCase();
     sessionStorage.setItem('capy_nickname', nickname);
-    sessionStorage.setItem('capy_roomId', roomCode.trim());
+    sessionStorage.setItem('capy_roomId', normalizedRoomCode);
     sessionStorage.setItem('capy_avatar_color', selectedAvatarColor);
     // Always get the avatar file from sessionStorage to ensure it's up to date
     const avatarFile = sessionStorage.getItem('capy_avatar_file') || (CAPYBARA_AVATARS.find(a => a.color === selectedAvatarColor)?.file || 'Capy-face-blue.png');
     sessionStorage.setItem('capy_avatar_file', avatarFile);
-    joinRoom(roomCode, nickname, avatarFile);
+    joinRoom(normalizedRoomCode, nickname, avatarFile);
   };
 
   useEffect(() => {
@@ -291,7 +344,10 @@ export default function Login() {
               type="text"
               id="roomCode"
               value={roomCode}
-              onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+              onChange={(e) => {
+                setRoomCode(e.target.value);
+                setError('');
+              }}
               placeholder="Room code (if joining)"
               style={{
                 width: '100%',
@@ -304,8 +360,20 @@ export default function Login() {
                 textAlign: 'center',
                 color: '#232323'
               }}
-              maxLength={8}
+              maxLength={36}
             />
+            {/* Room code validation feedback */}
+            {roomCode.length >= 8 && (
+              <div style={{ fontSize: 13, marginTop: 2, textAlign: 'center', minHeight: 18 }}>
+                {roomCheckLoading ? (
+                  <span style={{ color: '#a78bfa' }}>Checking room...</span>
+                ) : roomValid === true && roomName ? (
+                  <span style={{ color: '#059669' }}>Room: {roomName}</span>
+                ) : roomValid === false ? (
+                  <span style={{ color: '#e11d48' }}>Invalid room code</span>
+                ) : null}
+              </div>
+            )}
           </div>
           {error && <div style={{ color: '#e11d48', fontSize: 14, marginBottom: 8, textAlign: 'center' }}>{error}</div>}
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
