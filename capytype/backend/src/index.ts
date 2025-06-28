@@ -4,6 +4,8 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
+import { generateRoomName } from './roomUtils';
+import crypto from 'crypto';
 
 // Load environment variables
 dotenv.config();
@@ -58,17 +60,91 @@ app.get('/', (req, res) => {
   });
 });
 
+function decryptRoomId(cipher: string) {
+  // crypto-js AES uses OpenSSL format: Salted__ + 8 bytes salt + ciphertext
+  // We need to extract the salt and derive the key/iv as crypto-js does
+  const CryptoJS = require('crypto-js');
+  const SECRET = process.env.ROOM_ID_SECRET || 'capytype-shared-secret';
+  // Decrypt using crypto-js for perfect compatibility
+  const bytes = CryptoJS.AES.decrypt(cipher, SECRET);
+  return bytes.toString(CryptoJS.enc.Utf8);
+}
+
+// Room info endpoint for frontend validation
+app.get('/api/room-info', (req, res) => {
+  const code = req.query.code;
+  if (!code || typeof code !== 'string') {
+    console.log('[room-info] Missing or invalid code:', code);
+    return res.status(400).json({ error: 'Missing or invalid code' });
+  }
+
+  let roomIdToLookup = '';
+  try {
+    // The frontend always sends an encrypted code for validation.
+    // We must decrypt it to get the raw room ID.
+    const decrypted = decryptRoomId(code);
+    if (decrypted) {
+      roomIdToLookup = decrypted.toLowerCase();
+    }
+  } catch (e) {
+    // This catch block will handle any unexpected errors during decryption.
+    console.error('[room-info] Error during decryption:', e);
+  }
+  console.log('\n================= ROOM INFO LOOKUP =================');
+  console.log('Requested code:     ', code);
+  console.log('Decrypted code:     ', roomIdToLookup || '(decryption failed or empty)');
+  console.log('Current room keys:  ', Array.from(rooms.keys()));
+  // Print a grid of room info
+  if (rooms.size > 0) {
+    console.log('\n| Room ID                                | Admin Socket ID         | # Players | State     |');
+    console.log('|----------------------------------------|------------------------|-----------|-----------|');
+    for (const [roomId, room] of rooms.entries()) {
+      const admin = room.admin || '-';
+      const numPlayers = room.players ? room.players.size : 0;
+      const state = room.gameState || '-';
+      console.log(`| ${roomId.padEnd(36)} | ${admin.padEnd(22)} | ${String(numPlayers).padEnd(9)} | ${state.padEnd(9)} |`);
+    }
+    console.log('|----------------------------------------|------------------------|-----------|-----------|\n');
+  } else {
+    console.log('No rooms currently exist.');
+  }
+
+  const room = roomIdToLookup ? rooms.get(roomIdToLookup) : undefined;
+  if (!room) {
+    console.log('[room-info] Room not found for decrypted code:', roomIdToLookup);
+    return res.status(404).json({ error: 'Room not found' });
+  }
+  const name = generateRoomName(roomIdToLookup);
+  console.log('[room-info] Room found. Name:', name, 'ID:', roomIdToLookup);
+  res.json({ name, id: roomIdToLookup });
+});
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  const getNickname = () => {
+    // Search all rooms for this socket.id and return the nickname if found
+    for (const room of rooms.values()) {
+      const player = room.players.get(socket.id);
+      if (player) return player.nickname;
+    }
+    return undefined;
+  };
 
-  // Create a new room
-  socket.on('createRoom', (nickname: string) => {
-    const roomId = uuidv4();
+  const logWithInfo = (action: string) => {
+    const nickname = getNickname();
+    const now = new Date();
+    const timestamp = now.toTimeString().split(' ')[0]; // HH:MM:SS
+    console.log(`[${timestamp}] User ${action}: ${socket.id}${nickname ? ' (' + nickname + ')' : ''}`);
+  };
+
+  // Store nickname and avatar when user creates or joins a room
+  socket.on('createRoom', ({ nickname, avatar }) => {
+    console.log(`User connected: ${socket.id} with nickname: ${nickname}, avatar: ${avatar}`);
+    const roomId = uuidv4().toLowerCase();
     const room = {
       id: roomId,
       admin: socket.id,
-      players: new Map([[socket.id, { id: socket.id, nickname, progress: 0 }]]),
+      players: new Map([[socket.id, { id: socket.id, nickname, progress: 0, avatar }]]),
       gameState: 'waiting',
       text: '',
       startTime: null
@@ -77,11 +153,14 @@ io.on('connection', (socket) => {
     socket.join(roomId);
     socket.emit('roomCreated', roomId);
     io.to(roomId).emit('playerJoined', Array.from(room.players.values()));
+    console.log(`[ROOM CREATED] Room ID: ${roomId} | Admin: ${socket.id} | Nickname: ${nickname}`);
+    logWithInfo(`connected and created room with nickname: ${nickname}`);
   });
 
-  // Join an existing room
-  socket.on('joinRoom', ({ roomId, nickname }) => {
-    const room = rooms.get(roomId);
+  socket.on('joinRoom', ({ roomId, nickname, avatar }) => {
+    console.log(`User connected: ${socket.id} with nickname: ${nickname}, avatar: ${avatar}`);
+    const normalizedRoomId = roomId.toLowerCase();
+    const room = rooms.get(normalizedRoomId);
     if (!room) {
       socket.emit('error', 'Room not found');
       return;
@@ -92,9 +171,16 @@ io.on('connection', (socket) => {
       return;
     }
 
-    room.players.set(socket.id, { id: socket.id, nickname, progress: 0 });
-    socket.join(roomId);
-    io.to(roomId).emit('playerJoined', Array.from(room.players.values()));
+    if (room.players.size >= 32) {
+      socket.emit('error', 'Room is full (32 players max)');
+      return;
+    }
+
+    room.players.set(socket.id, { id: socket.id, nickname, progress: 0, avatar });
+    socket.join(normalizedRoomId);
+    io.to(normalizedRoomId).emit('playerJoined', Array.from(room.players.values()));
+    console.log(`[ROOM JOIN] Room ID: ${normalizedRoomId} | Nickname: ${nickname} | Socket: ${socket.id}`);
+    logWithInfo(`connected and joined room ${normalizedRoomId} with nickname: ${nickname}`);
   });
 
   // Start the game
@@ -151,7 +237,7 @@ io.on('connection', (socket) => {
 
   // Handle disconnection
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    logWithInfo('disconnected');
     // Find and remove player from rooms
     for (const [roomId, room] of rooms.entries()) {
       if (room.players.has(socket.id)) {
