@@ -103,15 +103,6 @@ export default function Login() {
     }
   }, []); // Only run on mount
 
-  // When user selects a color, update state and sessionStorage
-  const handleAvatarChange = (color: string) => {
-    setSelectedAvatarColor(color);
-    const avatarFile = CAPYBARA_AVATARS.find(a => a.color === color)?.file || 'Capy-face-blue.png';
-    sessionStorage.setItem('capy_avatar_color', color);
-    sessionStorage.setItem('capy_avatar_file', avatarFile);
-    setShowAvatarModal(false);
-  };
-
   // Room code validation effect
   useEffect(() => {
     if (roomCode.length < 8) {
@@ -176,7 +167,8 @@ export default function Login() {
     // Clear room code on create
     sessionStorage.removeItem('capy_roomId');
     setRoomCode('');
-    createRoom(nickname, avatarFile);
+    // Pass both avatarFile and selectedAvatarColor
+    createRoom(nickname, avatarFile, selectedAvatarColor);
   };
 
   const handleJoinRoom = (e: React.FormEvent) => {
@@ -207,7 +199,8 @@ export default function Login() {
     // Always get the avatar file from sessionStorage to ensure it's up to date
     const avatarFile = sessionStorage.getItem('capy_avatar_file') || (CAPYBARA_AVATARS.find(a => a.color === selectedAvatarColor)?.file || 'Capy-face-blue.png');
     sessionStorage.setItem('capy_avatar_file', avatarFile);
-    joinRoom(normalizedRoomCode, nickname, avatarFile);
+    // Pass both avatarFile and selectedAvatarColor
+    joinRoom(normalizedRoomCode, nickname, avatarFile, selectedAvatarColor);
   };
 
   useEffect(() => {
@@ -254,7 +247,7 @@ export default function Login() {
                 const value = e.target.value;
                 if (value.length <= 13 && /^[a-zA-Z0-9_]*$/.test(value)) {
                   setNickname(value);
-                  setError('');
+                  if (error) setError(""); // Clear error on valid input
                 } else if (!/^[a-zA-Z0-9_]*$/.test(value)) {
                   setError('Only letters, numbers, and underscores allowed!');
                 }
@@ -326,7 +319,12 @@ export default function Login() {
                       cursor: 'pointer',
                       boxShadow: selectedAvatarColor === avatar.color ? '0 0 0 2px #a5b4fc' : undefined
                     }}
-                    onClick={() => handleAvatarChange(avatar.color)}
+                    onClick={() => {
+                      setSelectedAvatarColor(avatar.color);
+                      sessionStorage.setItem('capy_avatar_color', avatar.color);
+                      sessionStorage.setItem('capy_avatar_file', avatar.file);
+                      setShowAvatarModal(false);
+                    }}
                   >
                     <img
                       src={`/images/${avatar.file}`}

@@ -1,18 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+// Removed unused Button import
 import { useGameStore } from '../store/gameStore';
 import { generateRoomName } from '../utils/roomUtils';
-import { Player } from '../store/gameStore';
-
-const SAMPLE_TEXTS = [
-  "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the English alphabet at least once. Pangrams are a great way to practice typing and test keyboards.",
-  "In the heart of the Amazon rainforest, capybaras gather by the riverbank. These gentle giants are the world's largest rodents, known for their social nature and swimming abilities.",
-  "Programming is the art of telling a computer what to do. It requires logical thinking, problem-solving skills, and attention to detail. The best code is both efficient and readable."
-];
+// Removed unused Player import
+import { getAvatarByFile } from '../utils/avatars';
 
 export default function Lobby() {
   const navigate = useNavigate();
-  const { roomId, players, isAdmin, gameState } = useGameStore();
+  const { roomId, players, isAdmin, gameState, startGame } = useGameStore();
   const [playAlone, setPlayAlone] = useState(false);
   const [roomName, setRoomName] = useState({ readableId: '', fullId: '' });
   const [showFullId, setShowFullId] = useState(false);
@@ -47,14 +43,6 @@ export default function Lobby() {
     };
   }, [roomId]);
 
-  const handleStartGame = () => {
-    const randomText = SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
-    const { socket, roomId } = useGameStore.getState();
-    if (socket && roomId) {
-      socket.emit('startGame', { roomId, text: randomText });
-    }
-  };
-
   const handleCopyRoomId = () => {
     if (roomId) {
       navigator.clipboard.writeText(roomId);
@@ -73,40 +61,9 @@ export default function Lobby() {
     navigate('/login');
   };
 
-  // Utility: get avatar color for a player (by avatar file)
-  function getPlayerAvatarColor(player: Player) {
-    // Try to map avatar file to color
-    const avatarMap: Record<string, string> = {
-      'Capy-face-green.png': '#6ee7b7',
-      'Capy-face-blue.png': '#60a5fa',
-      'Capy-face-yellow.png': '#fde68a',
-      'Capy-face-pink.png': '#f9a8d4',
-      'Capy-face-brown.png': '#bfa181',
-      'Capy-face-orange.png': '#fdba74',
-      'Capy-face-white.png': '#fff',
-      'Capy-face-red.png': '#f87171',
-      'Capy-face-purple.png': '#a78bfa',
-      'Capy-face-black.png': '#232323',
-    };
-    if (player.avatar && avatarMap[player.avatar]) {
-      return avatarMap[player.avatar];
-    }
-    // Fallback: use localStorage for self
-    const myNick = localStorage.getItem('capy_nickname');
-    if (player.nickname === myNick) {
-      return localStorage.getItem('capy_avatar_color') || '#60a5fa';
-    }
-    // Otherwise, fallback to blue
-    return '#60a5fa';
-  }
-
   return (
     <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'url(/images/capybara_background_multiple.png) no-repeat center center fixed', backgroundSize: 'cover' }}>
-      <div style={{ width: '100%', maxWidth: 400, padding: 32, background: 'rgba(235, 228, 200, 0.92)', borderRadius: 16, boxShadow: '0 4px 32px rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)', border: '1.5px solid #b6a77a', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
-        <button
-          onClick={handleBackToLogin}
-          style={{ alignSelf: 'flex-start', padding: '6px 16px', fontSize: 14, fontWeight: 500, color: '#4f46e5', background: '#fff', borderRadius: 8, border: '1.5px solid #b6a77a', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', cursor: 'pointer', marginBottom: 8 }}
-        >
+      <div style={{ width: '100%', maxWidth: 400, padding: 32, background: 'rgba(235, 228, 200, 0.92)', borderRadius: 16, boxShadow: '0 4px 32px rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)', border: '1.5px solid #b6a77a', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>        <button onClick={handleBackToLogin} style={{ alignSelf: 'flex-start', marginBottom: 8,  padding: '6px 12px', fontSize: 13,  }}>
           ← Back to Login
         </button>
         <div style={{ textAlign: 'center', width: '100%' }}>
@@ -133,7 +90,7 @@ export default function Lobby() {
         <div style={{ width: '100%', marginBottom: 8 }}>
           <button
             onClick={() => setShowFullId(!showFullId)}
-            style={{ fontSize: 13, color: '#4f46e5', background: '#fff', border: '1.5px solid #b6a77a', borderRadius: 6, cursor: 'pointer', marginBottom: 4, padding: '4px 12px', fontWeight: 500, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
+            style={{ fontSize: 13, color: '#4f46e5', background: '#fff', border: '1.5px solid #b6a77a', borderRadius: 6, cursor: 'pointer', marginBottom: 4, padding: '4px 12px', fontWeight: 500, boxShadow: '0 1px 4px rgba(0,0,0,0.04)',  }}
           >
             {showFullId ? 'Hide ID' : 'Show ID'} ▾
           </button>
@@ -142,7 +99,7 @@ export default function Lobby() {
               <p style={{ fontSize: 13, color: '#6b7280', background: 'rgba(255,255,255,0.85)', padding: 8, borderRadius: 6, fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: 0, border: '1px solid #d1d5db' }}>{roomName.fullId}</p>
               <button
                 onClick={handleCopyRoomId}
-                style={{ position: 'absolute', right: 8, top: 8, fontSize: 12, color: '#4f46e5', background: '#fff', border: '1px solid #b6a77a', borderRadius: 4, cursor: 'pointer', padding: '2px 8px', fontWeight: 500 }}
+                style={{ position: 'absolute', right: 8, top: 8, fontSize: 12, color: '#4f46e5', background: '#fff', border: '1px solid #b6a77a', borderRadius: 4, cursor: 'pointer', padding: '2px 8px', fontWeight: 500,  }}
               >
                 {copied ? '✓ Copied!' : 'Copy'}
               </button>
@@ -152,12 +109,14 @@ export default function Lobby() {
         <div style={{ width: '100%' }}>
           <h2 style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Players:</h2>
           <ul style={{ listStyle: 'none', padding: 0, margin: 0, width: '100%', display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {players.map((player) => {
-              const color = getPlayerAvatarColor(player);
+            {Array.isArray(players) && players.map((player) => {
+              if (!player || typeof player !== 'object') return null;
+              const avatar = getAvatarByFile(player.avatar || '');
+              const playerColor = player.color || avatar.color || '#b6a77a';
               return (
-                <li key={player.id} style={{
+                <li key={player.id || player.nickname} style={{
                   padding: 6,
-                  background: `linear-gradient(90deg, ${color} 0%, #f3e8ff 100%)`,
+                  background: `linear-gradient(90deg, ${playerColor} 0%, #f3e8ff 100%)`,
                   borderRadius: 6,
                   display: 'flex',
                   alignItems: 'center',
@@ -170,11 +129,11 @@ export default function Lobby() {
                         <img src={`/images/${player.avatar}`} alt="avatar" style={{ width: 24, height: 24, objectFit: 'cover', borderRadius: '50%' }} onError={e => (e.currentTarget.style.opacity = '0.2')} />
                       </span>
                     ) : (
-                      <div style={{ width: 28, height: 28, background: `linear-gradient(135deg, ${color} 0%, #6366f1 100%)`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13 }}>
-                        {player.nickname.substring(0, 2).toUpperCase()}
+                      <div style={{ width: 28, height: 28, background: `linear-gradient(135deg, ${playerColor} 0%, #6366f1 100%)`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13 }}>
+                        {typeof player.nickname === "string" ? player.nickname.substring(0, 2).toUpperCase() : ""}
                       </div>
                     )}
-                    <span style={{ fontWeight: 500, color: '#232323', fontSize: 13, textShadow: '0 1px 2px #fff8' }}>{player.nickname}</span>
+                    <span style={{ fontWeight: 500, color: '#374151', fontSize: 13, textShadow: '0 1px 2px #fff8' }}>{typeof player.nickname === 'string' ? player.nickname : ''}</span>
                   </div>
                   {player.progress > 0 && (
                     <div style={{ fontSize: 11, color: '#4f46e5', fontWeight: 500 }}>
@@ -200,10 +159,18 @@ export default function Lobby() {
                 Practice mode (start without waiting)
               </label>
             </div>
-            <button
-              onClick={handleStartGame}
-              disabled={!playAlone && players.length < 2}
-              style={{ width: '100%', padding: '10px 0', borderRadius: 6, background: '#fff', color: '#232323', fontWeight: 600, fontSize: 16, border: '1.5px solid #b6a77a', cursor: (!playAlone && players.length < 2) ? 'not-allowed' : 'pointer', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', transition: 'background 0.2s, transform 0.2s', marginBottom: 0 }}
+            <button 
+              disabled={!playAlone && players.length < 2} 
+              style={{ width: '100%', marginBottom: 0 }}
+              onClick={() => {
+                if (playAlone) {
+                  // Practice mode: use a default text or prompt for one
+                  startGame('Practice mode text', true);
+                } else {
+                  // Multiplayer: use a default or server-provided text
+                  startGame('');
+                }
+              }}
             >
               Start Game
             </button>

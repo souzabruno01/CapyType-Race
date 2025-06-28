@@ -4,12 +4,12 @@ import { useGameStore, Player } from '../store/gameStore';
 import ReactConfetti from 'react-confetti';
 import { useNavigate } from 'react-router-dom';
 
-const CapybaraIcon = () => (
+const CapybaraIcon = ({ avatar, color }: { avatar?: string; color?: string }) => (
   <img
-    src="/images/Capy-progress-bar-icon.svg"
+    src={avatar ? `/images/${avatar}` : "/images/Capy-progress-bar-icon.svg"}
     alt="Capybara"
-    className="w-9 h-9 transform -translate-y-2"
-    style={{ transform: 'scaleX(1)' }} // Face right by default
+    className="w-9 h-9 rounded-full border-2"
+    style={{ background: color || '#fff', borderColor: color || '#b6a77a', objectFit: 'cover' }}
   />
 );
 
@@ -79,31 +79,36 @@ const ResultsModal = ({ players, onReturnToLobby }: {
     >
       <h2 className="text-3xl font-bold text-indigo-600 mb-6 text-center">Race Results 🏁</h2>
       <div className="space-y-4">
-        {players
+        {Array.isArray(players) && players
           .sort((a, b) => b.progress - a.progress)
-          .map((player, index) => (
-            <div
-              key={player.id}
-              className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg"
-            >
-              <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-indigo-400 rounded-full flex items-center justify-center text-white font-bold">
-                  {player.nickname.substring(0, 2).toUpperCase()}
+          .map((player, index) => {
+            if (!player || typeof player !== 'object') return null;
+            const avatar = player.avatar;
+            const color = player.color;
+            return (
+              <div
+                key={player.id || player.nickname}
+                className="flex items-center justify-between p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg"
+              >
+                <div className="flex items-center space-x-4">
+                  <span style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: color || '#fff', border: `2px solid ${color || '#b6a77a'}` }}>
+                    <img src={avatar ? `/images/${avatar}` : "/images/Capy-progress-bar-icon.svg"} alt="avatar" style={{ width: 36, height: 36, objectFit: 'cover', borderRadius: '50%' }} />
+                  </span>
+                  <div>
+                    <h3 className="font-medium text-gray-700">{typeof player.nickname === 'string' ? player.nickname : ''}</h3>
+                    <p className="text-sm text-gray-500">
+                      {index + 1}
+                      {index === 0 ? 'st' : index === 1 ? 'nd' : index === 2 ? 'rd' : 'th'} Place
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-medium text-gray-700">{player.nickname}</h3>
-                  <p className="text-sm text-gray-500">
-                    {index + 1}
-                    {index === 0 ? 'st' : index === 1 ? 'nd' : index === 2 ? 'rd' : 'th'} Place
-                  </p>
+                <div className="text-right">
+                  <p className="text-xl font-bold text-indigo-600">{typeof player.progress === 'number' ? Math.round(player.progress) : 0}%</p>
+                  <p className="text-sm text-gray-500">Progress</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-xl font-bold text-indigo-600">{Math.round(player.progress)}%</p>
-                <p className="text-sm text-gray-500">Progress</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
       </div>
       <div className="mt-8 text-center">
         <button
@@ -199,6 +204,8 @@ export default function Game() {
   // Get the current player's nickname from the store
   const currentPlayer = players.find(player => player.id === useGameStore.getState().socket?.id);
   const playerName = currentPlayer?.nickname || 'Player';
+  const playerAvatar = currentPlayer?.avatar;
+  const playerColor = currentPlayer?.color;
 
   // Calculate initial timer based on text length (2 seconds per word)
   useEffect(() => {
@@ -420,160 +427,177 @@ export default function Game() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <AnimatePresence>
-        {showTimeUp && (
-          <TimeUpOverlay 
-            onAnimationComplete={() => setShowTimeUp(false)} 
-            onReturnToLobby={handleReturnToLobby}
-          />
-        )}
-        {showResults && (
-          <ResultsModal 
-            players={players}
-            onReturnToLobby={handleReturnToLobby}
-          />
-        )}
-      </AnimatePresence>
-
-      {showConfetti && (
-        <ReactConfetti
-          width={window.innerWidth}
-          height={window.innerHeight}
-          numberOfPieces={200}
-          recycle={false}
-          colors={['#818CF8', '#6366F1', '#4F46E5', '#4338CA', '#3730A3']}
-        />
-      )}
-      <div className="w-full max-w-4xl p-8 space-y-8 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg shadow-lg">
-        <div className="flex justify-between items-center mb-8">
-          <button
-            onClick={() => window.location.href = 'http://localhost:5173/'}
-            className="px-4 py-2 text-sm font-medium text-indigo-600 bg-white rounded-lg hover:bg-indigo-50 transition-colors shadow-sm"
-          >
-            ← Back to Login
-          </button>
-          <div className="text-center flex-1">
-            <h2 className="text-2xl font-bold text-indigo-600 mb-2">
-              {countdown !== null ? 'Get Ready!' : gameStarted ? (gameFinished ? 'Finished! 🎉' : 'GO!') : 'Ready to Race?'}
-            </h2>
-            {gameStarted && !gameFinished && timeLeft !== null && (
-              <p className="text-xl font-bold text-red-500">Time Left: {timeLeft}s</p>
+    <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'url(/images/capybara_background_multiple.png) no-repeat center center fixed', backgroundSize: 'cover' }}>
+      <div
+        className="w-full max-w-4xl p-0 flex items-center justify-center"
+        style={{ minHeight: '100vh' }}
+      >
+        <div
+          className="w-full max-w-3xl bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl shadow-2xl border-2 border-[#b6a77a] flex flex-col items-center justify-center relative"
+          style={{ padding: '48px 40px', minHeight: 600, boxShadow: '0 8px 48px rgba(0,0,0,0.18)', backdropFilter: 'blur(6px)' }}
+        >
+          <AnimatePresence>
+            {showTimeUp && (
+              <TimeUpOverlay 
+                onAnimationComplete={() => setShowTimeUp(false)} 
+                onReturnToLobby={handleReturnToLobby}
+              />
             )}
-            <p className="text-gray-600">Type as fast as you can to win the race!</p>
-          </div>
-          {gameStarted && !gameFinished && (
-            <button
-              onClick={handlePause}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
-            >
-              {isPaused ? 'Resume' : 'Pause'}
-            </button>
+            {showResults && (
+              <ResultsModal 
+                players={players}
+                onReturnToLobby={handleReturnToLobby}
+              />
+            )}
+          </AnimatePresence>
+
+          {showConfetti && (
+            <ReactConfetti
+              width={window.innerWidth}
+              height={window.innerHeight}
+              numberOfPieces={200}
+              recycle={false}
+              colors={['#818CF8', '#6366F1', '#4F46E5', '#4338CA', '#3730A3']}
+              style={{ position: 'fixed', top: 0, left: 0, zIndex: 1000 }}
+            />
           )}
-        </div>
 
-        <AnimatePresence mode="wait">
-          {countdown !== null ? (
-            <motion.div
-              key={countdown}
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="text-center"
+          {/* Header Row: Player, Title, Pause */}
+          <div className="w-full flex items-center justify-between mb-8">
+            <button
+              onClick={() => window.location.href = 'http://localhost:5173/' }
+              className="px-4 py-2 text-sm font-medium text-indigo-600 bg-white rounded-lg hover:bg-indigo-50 transition-colors shadow-sm border border-indigo-100"
             >
-              <h1 className="text-8xl font-bold text-indigo-600">{countdown}</h1>
-            </motion.div>
-          ) : gameStarted ? (
-            <div className="space-y-6">
-              {/* Player Stats Grid */}
-              <div className="grid grid-cols-5 gap-4 mb-6 bg-white p-4 rounded-lg shadow">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-indigo-400 rounded-full flex items-center justify-center text-white font-bold">
-                    {playerName.substring(0, 2).toUpperCase()}
-                  </div>
-                  <span className="font-medium text-gray-700">{playerName}</span>
-                </div>
-                <div className="text-center">
-                  <span className="text-sm text-gray-500">Position</span>
-                  <p className="font-bold text-indigo-600">{playerStats.position}st</p>
-                </div>
-                <div className="text-center">
-                  <span className="text-sm text-gray-500">Progress</span>
-                  <p className="font-bold text-indigo-600">{Math.round(progress)}%</p>
-                </div>
-                <div className="text-center">
-                  <span className="text-sm text-gray-500">Speed</span>
-                  <p className="font-bold text-green-600">{playerStats.wpm} WPM</p>
-                </div>
-                <div className="text-center">
-                  <span className="text-sm text-gray-500">Errors</span>
-                  <p className="font-bold text-red-600">{playerStats.errors}</p>
-                </div>
-              </div>
+              ← Back to Login
+            </button>
+            <div className="flex flex-col items-center flex-1">
+              <h2 className="text-3xl font-bold text-indigo-600 mb-1 tracking-tight">
+                {countdown !== null ? 'Get Ready!' : gameStarted ? (gameFinished ? 'Finished! 🎉' : 'GO!') : 'Ready to Race?'}
+              </h2>
+              {gameStarted && !gameFinished && timeLeft !== null && (
+                <p className="text-lg font-semibold text-red-500">Time Left: {timeLeft}s</p>
+              )}
+              <p className="text-base text-gray-600 mt-1">Type as fast as you can to win the race!</p>
+            </div>
+            {gameStarted && !gameFinished && (
+              <button
+                onClick={handlePause}
+                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm border border-indigo-700"
+              >
+                {isPaused ? 'Resume' : 'Pause'}
+              </button>
+            )}
+          </div>
 
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="mb-4">
-                  <HighlightedText 
-                    text={text} 
-                    input={input} 
-                    errorPositions={errorPositions}
-                    correctedPositions={correctedPositions}
+          {/* Main Content */}
+          <AnimatePresence mode="wait">
+            {countdown !== null ? (
+              <motion.div
+                key={countdown}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                transition={{ duration: 0.5 }}
+                className="flex flex-col items-center justify-center w-full py-16"
+              >
+                <h1 className="text-8xl font-bold text-indigo-600 drop-shadow-lg">{countdown}</h1>
+              </motion.div>
+            ) : gameStarted ? (
+              <div className="flex flex-col items-center w-full gap-8">
+                {/* Player Stats Row */}
+                <div className="grid grid-cols-5 gap-6 w-full bg-white/80 p-5 rounded-xl shadow border border-indigo-100 mb-2">
+                  <div className="flex flex-col items-center">
+                    <CapybaraIcon avatar={playerAvatar} color={playerColor} />
+                    <span className="font-semibold text-gray-700 mt-1 text-base">{playerName}</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs text-gray-500">Position</span>
+                    <span className="font-bold text-indigo-600 text-lg">{playerStats.position}st</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs text-gray-500">Progress</span>
+                    <span className="font-bold text-indigo-600 text-lg">{Math.round(progress)}%</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs text-gray-500">Speed</span>
+                    <span className="font-bold text-green-600 text-lg">{playerStats.wpm} WPM</span>
+                  </div>
+                  <div className="flex flex-col items-center">
+                    <span className="text-xs text-gray-500">Errors</span>
+                    <span className="font-bold text-red-600 text-lg">{playerStats.errors}</span>
+                  </div>
+                </div>
+
+                {/* Typing Area */}
+                <div className="w-full flex flex-col items-center bg-white/90 p-8 rounded-xl shadow border border-indigo-100">
+                  <div className="mb-6 w-full max-w-2xl mx-auto">
+                    <HighlightedText 
+                      text={text} 
+                      input={input} 
+                      errorPositions={errorPositions}
+                      correctedPositions={correctedPositions}
+                    />
+                  </div>
+                  <textarea
+                    value={input}
+                    onChange={handleInputChange}
+                    className="w-full max-w-2xl h-32 p-4 border-2 border-indigo-200 rounded-lg focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 font-mono text-lg shadow"
+                    placeholder={isPaused ? "Game Paused" : "Start typing..."}
+                    autoFocus
+                    disabled={gameFinished || timeLeft === 0 || isPaused}
                   />
                 </div>
-                <textarea
-                  value={input}
-                  onChange={handleInputChange}
-                  className="w-full h-32 p-4 border-2 border-indigo-200 rounded-lg focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 font-mono"
-                  placeholder={isPaused ? "Game Paused" : "Start typing..."}
-                  autoFocus
-                  disabled={gameFinished || timeLeft === 0 || isPaused}
-                />
-              </div>
 
-              <div className="relative w-full h-16">
-                {/* Player name box - aligned with progress line */}
-                <div className="flex items-center space-x-2 absolute top-0 left-0 mt-3">
-                  <div className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-3 py-1 rounded-md text-sm font-medium shadow-lg">
-                    {playerName}
+                {/* Race Track */}
+                <div className="relative w-full h-20 mt-2 flex items-center">
+                  {/* Player name box - aligned with progress line */}
+                  <div className="flex items-center space-x-2 absolute top-0 left-0 mt-5 z-10">
+                    <div className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white px-4 py-2 rounded-md text-base font-semibold shadow-lg">
+                      {playerName}
+                    </div>
                   </div>
+                  {/* Road */}
+                  <div className="absolute top-0 left-36 right-0 h-4 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full mt-7" />
+                  {/* Center road markings */}
+                  <div className="absolute top-0 left-36 right-0 h-4 mt-7 flex justify-center">
+                    <div className="w-full h-1 bg-white opacity-50 rounded-full" />
+                  </div>
+                  {/* Finish line */}
+                  <div className="absolute top-0 right-0 mt-3 z-10">
+                    <CheckeredFlag />
+                  </div>
+                  {/* Capybara with progress label */}
+                  <motion.div
+                    className="absolute top-0 flex flex-col items-center"
+                    style={{
+                      left: `calc(144px + (100% - 144px - 32px) * ${progress / 100})`,
+                      transition: 'left 0.1s ease-out',
+                      width: '40px',
+                      zIndex: 20
+                    }}
+                  >
+                    <span className="text-xs font-bold text-indigo-700 mb-1 bg-white/80 px-2 py-0.5 rounded shadow border border-indigo-100">
+                      {Math.round(progress)}%
+                    </span>
+                    <div style={{ width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <CapybaraIcon avatar={playerAvatar} color={playerColor} />
+                    </div>
+                  </motion.div>
                 </div>
-                {/* Road */}
-                <div className="absolute top-0 left-24 right-0 h-3 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full mt-5" />
-                {/* Center road markings */}
-                <div className="absolute top-0 left-24 right-0 h-3 mt-5 flex justify-center">
-                  <div className="w-full h-0.5 bg-white opacity-50" />
-                </div>
-                {/* Finish line */}
-                <div className="absolute top-0 right-0">
-                  <CheckeredFlag />
-                </div>
-                {/* Capybara */}
-                <motion.div
-                  className="absolute top-0"
-                  style={{
-                    left: `calc(96px + (100% - 96px - 32px) * ${progress / 100})`,
-                    transform: 'translateY(-8px)',
-                    transformOrigin: 'center',
-                    transition: 'left 0.1s ease-out'
-                  }}
-                >
-                  <CapybaraIcon />
-                </motion.div>
               </div>
-            </div>
-          ) : (
-            <div className="text-center">
-              <button
-                onClick={() => setCountdown(3)}
-                className="px-8 py-4 text-xl font-bold text-white bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg hover:from-purple-600 hover:to-indigo-600 transform hover:scale-105 transition-all shadow-lg"
-              >
-                Start Racing
-              </button>
-            </div>
-          )}
-        </AnimatePresence>
+            ) : (
+              <div className="flex flex-col items-center w-full py-16">
+                <button
+                  onClick={() => setCountdown(3)}
+                  className="px-10 py-5 text-2xl font-bold text-white bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl hover:from-purple-600 hover:to-indigo-600 transform hover:scale-105 transition-all shadow-lg"
+                >
+                  Start Racing
+                </button>
+              </div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
-} 
+}

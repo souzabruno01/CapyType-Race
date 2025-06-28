@@ -9,6 +9,7 @@ export interface Player {
   errors: number;
   position: number;
   avatar?: string; // Add avatar to Player
+  color?: string; // Add color to Player
 }
 
 interface PlayerResult {
@@ -43,8 +44,8 @@ interface GameStore extends GameState {
   setGameResults: (results: PlayerResult[]) => void;
   resetGame: () => void;
   connect: () => void;
-  createRoom: (nickname: string, avatar?: string) => void;
-  joinRoom: (roomId: string, nickname: string, avatar?: string) => void;
+  createRoom: (nickname: string, avatar?: string, color?: string) => void;
+  joinRoom: (roomId: string, nickname: string, avatar?: string, color?: string) => void;
   setAdmin: (isAdmin: boolean) => void;
 }
 
@@ -66,14 +67,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setText: (text) => set({ text }),
   updateProgress: (progress) => set({ progress }),
   startGame: (text, isPractice = false) => {
-    const { socket } = get();
+    const { socket, roomId } = get();
     if (socket?.connected) {
       if (isPractice) {
         // For practice mode, just set the text and game state locally
         set({ text, gameState: 'playing', isPractice: true, gameStarted: true });
       } else {
-        // For multiplayer mode, emit the start game event
-        socket.emit('startGame', { text });
+        // For multiplayer mode, emit the start game event with roomId
+        socket.emit('startGame', { roomId, text });
       }
     }
   },
@@ -163,12 +164,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ socket });
   },
 
-  createRoom: (nickname, avatar) => {
+  createRoom: (nickname, avatar, color) => {
     const { socket } = get();
-    console.log('createRoom called with nickname:', nickname, 'avatar:', avatar);
+    console.log('createRoom called with nickname:', nickname, 'avatar:', avatar, 'color:', color);
     if (socket?.connected) {
       console.log('Socket is connected, emitting createRoom');
-      socket.emit('createRoom', { nickname, avatar });
+      socket.emit('createRoom', { nickname, avatar, color });
     } else {
       console.error('Socket not connected');
       // Try to reconnect if not connected
@@ -176,7 +177,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
-  joinRoom: (roomId, nickname, avatar) => {
+  joinRoom: (roomId, nickname, avatar, color) => {
     const { socket } = get();
     if (!socket) {
       // If no socket exists, try to connect first
@@ -185,8 +186,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       setTimeout(() => {
         const newSocket = get().socket;
         if (newSocket?.connected) {
-          console.log('Joining room:', roomId, 'with nickname:', nickname, 'avatar:', avatar);
-          newSocket.emit('joinRoom', { roomId, nickname, avatar });
+          console.log('Joining room:', roomId, 'with nickname:', nickname, 'avatar:', avatar, 'color:', color);
+          newSocket.emit('joinRoom', { roomId, nickname, avatar, color });
           // Set the roomId in the store
           set({ roomId });
         } else {
@@ -194,8 +195,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }
       }, 1000); // Wait 1 second for connection
     } else if (socket.connected) {
-      console.log('Joining room:', roomId, 'with nickname:', nickname, 'avatar:', avatar);
-      socket.emit('joinRoom', { roomId, nickname, avatar });
+      console.log('Joining room:', roomId, 'with nickname:', nickname, 'avatar:', avatar, 'color:', color);
+      socket.emit('joinRoom', { roomId, nickname, avatar, color });
       // Set the roomId in the store
       set({ roomId });
     } else {
@@ -204,8 +205,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Wait for socket to connect
       setTimeout(() => {
         if (socket.connected) {
-          console.log('Joining room:', roomId, 'with nickname:', nickname, 'avatar:', avatar);
-          socket.emit('joinRoom', { roomId, nickname, avatar });
+          console.log('Joining room:', roomId, 'with nickname:', nickname, 'avatar:', avatar, 'color:', color);
+          socket.emit('joinRoom', { roomId, nickname, avatar, color });
           // Set the roomId in the store
           set({ roomId });
         } else {
