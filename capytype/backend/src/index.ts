@@ -141,10 +141,19 @@ io.on('connection', (socket) => {
   socket.on('createRoom', ({ nickname, avatar }) => {
     console.log(`User connected: ${socket.id} with nickname: ${nickname}, avatar: ${avatar}`);
     const roomId = uuidv4().toLowerCase();
+    const player = {
+      id: socket.id,
+      nickname,
+      progress: 0,
+      wpm: 0,
+      errors: 0,
+      position: 1,
+      avatar
+    };
     const room = {
       id: roomId,
       admin: socket.id,
-      players: new Map([[socket.id, { id: socket.id, nickname, progress: 0, avatar }]]),
+      players: new Map([[socket.id, player]]),
       gameState: 'waiting',
       text: '',
       startTime: null
@@ -176,11 +185,19 @@ io.on('connection', (socket) => {
       return;
     }
 
-    room.players.set(socket.id, { id: socket.id, nickname, progress: 0, avatar });
+    const player = {
+      id: socket.id,
+      nickname,
+      progress: 0,
+      wpm: 0,
+      errors: 0,
+      position: room.players.size + 1,
+      avatar
+    };
+    room.players.set(socket.id, player);
     socket.join(normalizedRoomId);
     io.to(normalizedRoomId).emit('playerJoined', Array.from(room.players.values()));
-    console.log(`[ROOM JOIN] Room ID: ${normalizedRoomId} | Nickname: ${nickname} | Socket: ${socket.id}`);
-    logWithInfo(`connected and joined room ${normalizedRoomId} with nickname: ${nickname}`);
+    logWithInfo(`joined room ${normalizedRoomId} with nickname: ${nickname}`);
   });
 
   // Start the game
