@@ -6,6 +6,46 @@ import { generateRoomName } from '../utils/roomUtils';
 // Removed unused Player import
 import { getAvatarByFile } from '../utils/avatars';
 
+// Style for modern, rounded, black buttons
+const modernButtonStyle = {
+  background: '#232323',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 999,
+  padding: '12px 28px',
+  fontWeight: 700,
+  fontSize: 16,
+  boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+  cursor: 'pointer',
+  transition: 'background 0.2s',
+  margin: '8px 0',
+  letterSpacing: '0.5px',
+};
+
+// Modern, rounded, light black checkbox style
+const modernCheckboxStyle = {
+  width: 20,
+  height: 20,
+  accentColor: '#232323', // light black
+  borderRadius: 6,
+  border: '2px solid #232323',
+  background: '#fff',
+  marginRight: 8,
+  verticalAlign: 'middle',
+};
+
+// CapyType Race title style
+const capyTitleStyle = {
+  fontSize: '2.25rem',
+  fontWeight: 700,
+  color: '#232323', // light black
+  marginBottom: 8,
+  letterSpacing: '1.2px',
+  textAlign: 'center' as const,
+  fontFamily: 'inherit',
+  textShadow: '0 1px 4px #fff8',
+};
+
 export default function Lobby() {
   const navigate = useNavigate();
   const { roomId, players, isAdmin, gameState, startGame } = useGameStore();
@@ -63,11 +103,11 @@ export default function Lobby() {
 
   return (
     <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'url(/images/capybara_background_multiple.png) no-repeat center center fixed', backgroundSize: 'cover' }}>
-      <div style={{ width: '100%', maxWidth: 400, padding: 32, background: 'rgba(235, 228, 200, 0.92)', borderRadius: 16, boxShadow: '0 4px 32px rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)', border: '1.5px solid #b6a77a', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>        <button onClick={handleBackToLogin} style={{ alignSelf: 'flex-start', marginBottom: 8,  padding: '6px 12px', fontSize: 13,  }}>
+      <div style={{ width: '100%', maxWidth: 400, padding: 32, background: 'rgba(235, 228, 200, 0.92)', borderRadius: 16, boxShadow: '0 4px 32px rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)', border: '1.5px solid #b6a77a', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>        <button onClick={handleBackToLogin} style={{ ...modernButtonStyle, alignSelf: 'flex-start', marginBottom: 8, padding: '6px 12px', fontSize: 13 }}>
           ← Back to Login
         </button>
         <div style={{ textAlign: 'center', width: '100%' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#4f46e5', marginBottom: 4 }}>{roomName.readableId}</h2>
+          <h2 style={{ ...capyTitleStyle, marginBottom: 4 }}>{roomName.readableId}</h2>
           <p style={{ color: '#4b5563', marginBottom: 12 }}>Waiting for players to join...</p>
         </div>
         <div style={{ width: '100%', display: 'flex', alignItems: 'center', margin: '0 0 8px 0' }}>
@@ -90,7 +130,7 @@ export default function Lobby() {
         <div style={{ width: '100%', marginBottom: 8 }}>
           <button
             onClick={() => setShowFullId(!showFullId)}
-            style={{ fontSize: 13, color: '#4f46e5', background: '#fff', border: '1.5px solid #b6a77a', borderRadius: 6, cursor: 'pointer', marginBottom: 4, padding: '4px 12px', fontWeight: 500, boxShadow: '0 1px 4px rgba(0,0,0,0.04)',  }}
+            style={{ ...modernButtonStyle, fontSize: 13, background: '#fff', color: '#232323', border: '1.5px solid #b6a77a', borderRadius: 6, margin: 0, padding: '4px 12px', fontWeight: 500, boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}
           >
             {showFullId ? 'Hide ID' : 'Show ID'} ▾
           </button>
@@ -99,7 +139,7 @@ export default function Lobby() {
               <p style={{ fontSize: 13, color: '#6b7280', background: 'rgba(255,255,255,0.85)', padding: 8, borderRadius: 6, fontFamily: 'monospace', wordBreak: 'break-all', marginBottom: 0, border: '1px solid #d1d5db' }}>{roomName.fullId}</p>
               <button
                 onClick={handleCopyRoomId}
-                style={{ position: 'absolute', right: 8, top: 8, fontSize: 12, color: '#4f46e5', background: '#fff', border: '1px solid #b6a77a', borderRadius: 4, cursor: 'pointer', padding: '2px 8px', fontWeight: 500,  }}
+                style={{ ...modernButtonStyle, position: 'absolute', right: 8, top: 8, fontSize: 12, background: '#fff', color: '#232323', border: '1px solid #b6a77a', borderRadius: 4, margin: 0, padding: '2px 8px', fontWeight: 500 }}
               >
                 {copied ? '✓ Copied!' : 'Copy'}
               </button>
@@ -153,7 +193,7 @@ export default function Lobby() {
                 id="playAlone"
                 checked={playAlone}
                 onChange={(e) => setPlayAlone(e.target.checked)}
-                style={{ width: 16, height: 16, accentColor: '#6366f1', borderRadius: 4 }}
+                style={modernCheckboxStyle}
               />
               <label htmlFor="playAlone" style={{ fontSize: 13, color: '#374151' }}>
                 Practice mode (start without waiting)
@@ -161,7 +201,7 @@ export default function Lobby() {
             </div>
             <button 
               disabled={!playAlone && players.length < 2} 
-              style={{ width: '100%', marginBottom: 0 }}
+              style={{ ...modernButtonStyle, width: '100%', marginBottom: 0 }}
               onClick={() => {
                 if (playAlone) {
                   // Practice mode: use a default text or prompt for one

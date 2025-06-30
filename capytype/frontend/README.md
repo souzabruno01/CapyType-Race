@@ -1,3 +1,36 @@
+# CapyType Race Frontend
+
+## Major UI/UX Update (June 2025)
+
+### Summary of Changes
+- Redesigned the `/game` modal for a larger, modern, and visually coherent experience.
+- All game information (player stats, typing area, controls) is now in a single, rectangular modal matching the app's modal style but larger and more prominent.
+- Improved alignment and styling of all buttons and text fields for a consistent, senior-level UI/UX.
+- The race track now features:
+  - A smaller, visually balanced capybara avatar.
+  - A progress percentage label above the avatar.
+  - Smoother and clearer progress feedback.
+- Added new utility files for avatars and a reusable Button component.
+- Added a PowerShell script for easier frontend git commit/push automation.
+
+### New/Updated Technologies
+- **Framer Motion**: For smooth modal and UI animations.
+- **react-confetti**: For celebratory effects on game finish.
+- **Custom Button Component**: For consistent button UI.
+- **Avatars Utility**: Centralized avatar/color management.
+
+### File Changes
+- `src/pages/Game.tsx`: Major refactor for modal, layout, and race track.
+- `src/components/Button.tsx`: New reusable button component.
+- `src/utils/avatars.ts`: New avatar/color utility.
+- `commit-and-push-frontend.ps1`: PowerShell script for git automation.
+
+### How to Use
+- Run the app as before (`npm run dev`).
+- To commit and push frontend changes, you can use the provided PowerShell script for convenience.
+
+---
+
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

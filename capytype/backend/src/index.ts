@@ -137,9 +137,9 @@ io.on('connection', (socket) => {
     console.log(`[${timestamp}] User ${action}: ${socket.id}${nickname ? ' (' + nickname + ')' : ''}`);
   };
 
-  // Store nickname and avatar when user creates or joins a room
-  socket.on('createRoom', ({ nickname, avatar }) => {
-    console.log(`User connected: ${socket.id} with nickname: ${nickname}, avatar: ${avatar}`);
+  // Store nickname, avatar, and color when user creates or joins a room
+  socket.on('createRoom', ({ nickname, avatar, color }) => {
+    console.log(`User connected: ${socket.id} with nickname: ${nickname}, avatar: ${avatar}, color: ${color}`);
     const roomId = uuidv4().toLowerCase();
     const player = {
       id: socket.id,
@@ -148,7 +148,8 @@ io.on('connection', (socket) => {
       wpm: 0,
       errors: 0,
       position: 1,
-      avatar
+      avatar,
+      color
     };
     const room = {
       id: roomId,
@@ -166,8 +167,8 @@ io.on('connection', (socket) => {
     logWithInfo(`connected and created room with nickname: ${nickname}`);
   });
 
-  socket.on('joinRoom', ({ roomId, nickname, avatar }) => {
-    console.log(`User connected: ${socket.id} with nickname: ${nickname}, avatar: ${avatar}`);
+  socket.on('joinRoom', ({ roomId, nickname, avatar, color }) => {
+    console.log(`User connected: ${socket.id} with nickname: ${nickname}, avatar: ${avatar}, color: ${color}`);
     const normalizedRoomId = roomId.toLowerCase();
     const room = rooms.get(normalizedRoomId);
     if (!room) {
@@ -192,7 +193,8 @@ io.on('connection', (socket) => {
       wpm: 0,
       errors: 0,
       position: room.players.size + 1,
-      avatar
+      avatar,
+      color
     };
     room.players.set(socket.id, player);
     socket.join(normalizedRoomId);

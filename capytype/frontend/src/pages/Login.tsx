@@ -34,11 +34,33 @@ function isValidNickname(nickname: string) {
   return true;
 }
 
-// Pick a random default avatar color on each page load (if not in localStorage)
-function getRandomAvatarColor() {
-  const idx = Math.floor(Math.random() * CAPYBARA_AVATARS.length);
-  return CAPYBARA_AVATARS[idx].color;
-}
+// Style for modern, rounded, black buttons
+const modernButtonStyle = {
+  background: '#232323',
+  color: '#fff',
+  border: 'none',
+  borderRadius: 999,
+  padding: '12px 28px',
+  fontWeight: 700,
+  fontSize: 16,
+  boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+  cursor: 'pointer',
+  transition: 'background 0.2s',
+  margin: '8px 0',
+  letterSpacing: '0.5px',
+};
+
+// CapyType Race title style
+const capyTitleStyle = {
+  fontSize: '2.25rem',
+  fontWeight: 700,
+  color: '#232323', // light black
+  marginBottom: 8,
+  letterSpacing: '1.2px',
+  textAlign: 'center' as const,
+  fontFamily: 'inherit',
+  textShadow: '0 1px 4px #fff8',
+};
 
 export default function Login() {
   const navigate = useNavigate();
@@ -51,13 +73,16 @@ export default function Login() {
   // Avatar color state
   const [selectedAvatarColor, setSelectedAvatarColor] = useState(() => {
     const stored = sessionStorage.getItem('capy_avatar_color');
-    if (stored && CAPYBARA_AVATARS.some(a => a.color === stored)) return stored;
-    const random = getRandomAvatarColor();
-    sessionStorage.setItem('capy_avatar_color', random);
-    // Also set the avatar file for persistence
-    const avatarFile = CAPYBARA_AVATARS.find(a => a.color === random)?.file || 'Capy-face-blue.png';
-    sessionStorage.setItem('capy_avatar_file', avatarFile);
-    return random;
+    if (stored && CAPYBARA_AVATARS.some(a => a.color === stored)) {
+      console.log('[Avatar Persist] Loaded color from sessionStorage:', stored);
+      return stored;
+    }
+    // Only use default if nothing is stored
+    const fallback = CAPYBARA_AVATARS[0].color;
+    sessionStorage.setItem('capy_avatar_color', fallback);
+    sessionStorage.setItem('capy_avatar_file', CAPYBARA_AVATARS[0].file);
+    console.log('[Avatar Persist] No valid color found, set to default:', fallback);
+    return fallback;
   });
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const avatarBtnRef = useRef<HTMLButtonElement>(null);
@@ -84,22 +109,17 @@ export default function Login() {
   useEffect(() => {
     const stored = sessionStorage.getItem('capy_avatar_color');
     const storedFile = sessionStorage.getItem('capy_avatar_file');
-    let fallbackColor = CAPYBARA_AVATARS[0].color;
-    let fallbackFile = CAPYBARA_AVATARS[0].file;
     if (!stored || !CAPYBARA_AVATARS.some(a => a.color === stored)) {
-      setSelectedAvatarColor(fallbackColor);
-      sessionStorage.setItem('capy_avatar_color', fallbackColor);
-      sessionStorage.setItem('capy_avatar_file', fallbackFile);
+      // Only correct if missing or invalid
+      sessionStorage.setItem('capy_avatar_color', CAPYBARA_AVATARS[0].color);
+      sessionStorage.setItem('capy_avatar_file', CAPYBARA_AVATARS[0].file);
+      setSelectedAvatarColor(CAPYBARA_AVATARS[0].color);
+      console.log('[Avatar Persist] Invalid/missing color, set to default.');
     } else if (!storedFile || !CAPYBARA_AVATARS.some(a => a.file === storedFile)) {
       // If file missing or invalid, restore it from color
-      const avatarFile = CAPYBARA_AVATARS.find(a => a.color === stored)?.file || fallbackFile;
+      const avatarFile = CAPYBARA_AVATARS.find(a => a.color === stored)?.file || CAPYBARA_AVATARS[0].file;
       sessionStorage.setItem('capy_avatar_file', avatarFile);
-    } else {
-      // If both are present, sync color to match file if needed
-      const found = CAPYBARA_AVATARS.find(a => a.file === storedFile);
-      if (found && found.color !== selectedAvatarColor) {
-        setSelectedAvatarColor(found.color);
-      }
+      console.log('[Avatar Persist] Invalid/missing file, set from color.');
     }
   }, []); // Only run on mount
 
@@ -203,6 +223,21 @@ export default function Login() {
     joinRoom(normalizedRoomCode, nickname, avatarFile, selectedAvatarColor);
   };
 
+  // Capybara avatar/color selection handler (for modal)
+  const handleAvatarSelect = (avatar: typeof CAPYBARA_AVATARS[0]) => {
+    setSelectedAvatarColor(avatar.color);
+    sessionStorage.setItem('capy_avatar_color', avatar.color);
+    sessionStorage.setItem('capy_avatar_file', avatar.file);
+    // If you use a store for player info, update it here as well
+    if (typeof window !== 'undefined' && window.localStorage) {
+      // Optionally sync to localStorage for extra persistence
+      localStorage.setItem('capy_avatar_color', avatar.color);
+      localStorage.setItem('capy_avatar_file', avatar.file);
+    }
+    setShowAvatarModal(false);
+    console.log('[Avatar Persist] User selected:', avatar.color, avatar.file);
+  };
+
   useEffect(() => {
     // Track last page for smarter room code persistence
     sessionStorage.setItem('capy_last_page', 'login');
@@ -232,7 +267,7 @@ export default function Login() {
     <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'url(/images/capybara_background_multiple.png) no-repeat center center fixed', backgroundSize: 'cover' }}>
       <div style={{ width: '100%', maxWidth: 400, padding: 32, background: 'rgba(235, 228, 200, 0.92)', borderRadius: 16, boxShadow: '0 4px 32px rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)', border: '1.5px solid #b6a77a' }}>
         <div style={{ textAlign: 'center' }}>
-          <h1 style={{ fontSize: '2.25rem', fontWeight: 700, color: '#4f46e5', marginBottom: 8 }}>CapyType Race</h1>
+          <h1 style={capyTitleStyle}>CapyType Race</h1>
           <p style={{ color: '#4b5563', marginBottom: 24 }}>Join the race and test your typing speed!</p>
         </div>
         <form style={{ display: 'flex', flexDirection: 'column', gap: 24 }} onSubmit={handleCreateRoom}>
@@ -319,12 +354,7 @@ export default function Login() {
                       cursor: 'pointer',
                       boxShadow: selectedAvatarColor === avatar.color ? '0 0 0 2px #a5b4fc' : undefined
                     }}
-                    onClick={() => {
-                      setSelectedAvatarColor(avatar.color);
-                      sessionStorage.setItem('capy_avatar_color', avatar.color);
-                      sessionStorage.setItem('capy_avatar_file', avatar.file);
-                      setShowAvatarModal(false);
-                    }}
+                    onClick={() => handleAvatarSelect(avatar)}
                   >
                     <img
                       src={`/images/${avatar.file}`}
@@ -377,8 +407,17 @@ export default function Login() {
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             <button
               type="submit"
-            >Create Room</button>
-            <button  type="button" onClick={handleJoinRoom}>Join Room</button>
+              style={modernButtonStyle}
+            >
+              Create Room
+            </button>
+            <button
+              type="button"
+              onClick={handleJoinRoom}
+              style={modernButtonStyle}
+            >
+              Join Room
+            </button>
           </div>
         </form>
       </div>

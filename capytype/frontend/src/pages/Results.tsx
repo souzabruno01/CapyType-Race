@@ -5,108 +5,140 @@ import { motion } from 'framer-motion';
 
 export default function Results() {
   const navigate = useNavigate();
-  const { gameResults } = useGameStore();
+  const { gameResults, players } = useGameStore();
 
   useEffect(() => {
-    // If there are no results, redirect back to lobby
     if (!gameResults || gameResults.length === 0) {
       navigate('/lobby');
     }
   }, [gameResults, navigate]);
 
-  const sortedResults = [...(gameResults || [])].sort((a, b) => a.position - b.position);
+  // Merge player info (avatar, color, progress) into results for display
+  const mergedResults = (gameResults || []).map(result => {
+    const player = players.find(p => p.id === result.id);
+    return {
+      ...result,
+      avatar: player?.avatar,
+      color: player?.color,
+      progress: player?.progress,
+    };
+  });
 
-  const getPositionSuffix = (position: number) => {
-    if (position === 1) return 'st';
-    if (position === 2) return 'nd';
-    if (position === 3) return 'rd';
-    return 'th';
-  };
-
-  const getPositionColor = (position: number) => {
-    switch (position) {
-      case 1:
-        return 'from-yellow-400 to-yellow-500'; // Gold
-      case 2:
-        return 'from-gray-300 to-gray-400'; // Silver
-      case 3:
-        return 'from-amber-600 to-amber-700'; // Bronze
-      default:
-        return 'from-purple-500 to-indigo-500';
-    }
-  };
+  // Assume socket id is available for current user highlight
+  const socketId = useGameStore.getState().socket?.id;
+  const sortedResults = [...mergedResults].sort((a, b) => a.position - b.position);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl font-bold text-indigo-600 mb-4">Race Results 🏁</h1>
-          <p className="text-gray-600">Great race, everyone! Here's how you did:</p>
-        </motion.div>
-
-        <div className="space-y-4">
-          {sortedResults.map((result, index) => (
-            <motion.div
-              key={result.id}
-              initial={{ x: -20, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              transition={{ delay: index * 0.1 }}
-              className="bg-white rounded-lg shadow-lg overflow-hidden"
-            >
-              <div className={`bg-gradient-to-r ${getPositionColor(result.position)} p-4`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl font-bold text-indigo-600">
-                      {result.position}
-                    </div>
-                    <div className="text-white">
-                      <h3 className="text-xl font-bold">{result.nickname}</h3>
-                      <p className="text-white opacity-90">
-                        {result.position}
-                        {getPositionSuffix(result.position)} Place
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right text-white">
-                    <p className="text-2xl font-bold">{result.wpm} WPM</p>
-                    <p className="opacity-90">Speed</p>
-                  </div>
+    <div className="min-h-screen w-full flex items-end justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 50 }}
+        transition={{ duration: 0.5 }}
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center justify-center"
+        style={{
+          maxWidth: '90vw',
+          width: 'fit-content',
+          minWidth: '70vw',
+          backdropFilter: 'blur(6px)',
+          backgroundColor: 'rgba(255,255,255,0.85)',
+          borderRadius: '1.5rem',
+          boxShadow: '0 8px 40px rgba(80,60,120,0.18)',
+          border: '2px solid #b6a77a',
+          padding: '2rem 2.5rem',
+        }}
+      >
+        <h2 className="text-3xl font-bold text-indigo-600 mb-4 text-center">
+          Resultados da Corrida 🏁
+        </h2>
+        <div className="flex flex-wrap justify-center gap-6 mb-6 w-full">
+          {sortedResults.map((result, index) => {
+            const isCurrentUser = result.id === socketId;
+            return (
+              <div
+                key={result.id}
+                className={`flex flex-col items-center p-4 rounded-lg shadow-md transition-all duration-300 ${
+                  isCurrentUser
+                    ? 'bg-gradient-to-r from-purple-200 to-indigo-200 border-2 border-indigo-500'
+                    : 'bg-gray-50 border border-gray-200'
+                }`}
+                style={{
+                  minWidth: '180px',
+                  flexGrow: 1,
+                  maxWidth: '250px',
+                }}
+              >
+                {/* Avatar placeholder, replace with <CapybaraIcon avatar={result.avatar} color={result.color} /> if available */}
+                <div
+                  className="w-14 h-14 rounded-full mb-2 border-4"
+                  style={{
+                    background: result.color || '#eee',
+                    borderColor: result.color || '#b6a77a',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {result.avatar ? (
+                    <img
+                      src={
+                        typeof result.avatar === 'string'
+                          ? `/images/${result.avatar}`
+                          : result.avatar
+                      }
+                      alt="avatar"
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl">🐹</span>
+                  )}
                 </div>
-              </div>
-              <div className="p-4 grid grid-cols-2 gap-4 bg-gradient-to-b from-white to-indigo-50">
-                <div className="text-center">
-                  <p className="text-gray-500">Time</p>
-                  <p className="text-xl font-bold text-indigo-600">
-                    {result.time.toFixed(1)}s
+                <h3 className="font-semibold text-gray-800 mt-1 text-lg">
+                  {result.nickname || 'Jogador'}
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  <span className="font-bold text-indigo-700">
+                    {index + 1}º Lugar
+                  </span>
+                </p>
+                <p className="text-sm text-gray-600">
+                  Progresso:{' '}
+                  <span className="font-bold text-green-600">
+                    {typeof result.progress === 'number'
+                      ? Math.round(result.progress)
+                      : 0}
+                    %
+                  </span>
+                </p>
+                {result.wpm !== undefined && (
+                  <p className="text-sm text-gray-600">
+                    WPM:{' '}
+                    <span className="font-bold text-blue-600">
+                      {Math.round(result.wpm)}
+                    </span>
                   </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-gray-500">Errors</p>
-                  <p className="text-xl font-bold text-red-500">{result.errors}</p>
-                </div>
+                )}
+                {result.errors !== undefined && (
+                  <p className="text-sm text-gray-600">
+                    Erros:{' '}
+                    <span className="font-bold text-red-600">
+                      {result.errors}
+                    </span>
+                  </p>
+                )}
               </div>
-            </motion.div>
-          ))}
+            );
+          })}
         </div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="mt-8 text-center"
-        >
+        <div className="flex justify-center gap-4 w-full">
           <button
             onClick={() => navigate('/lobby')}
-            className="px-8 py-4 text-xl font-bold text-white bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg hover:from-purple-600 hover:to-indigo-600 transform hover:scale-105 transition-all shadow-lg"
+            className="px-6 py-3 text-lg font-medium text-white bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg hover:from-purple-600 hover:to-indigo-600 transform hover:scale-105 transition-all shadow-lg"
           >
-            Back to Lobby
+            Voltar para o Lobby
           </button>
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
     </div>
   );
-} 
+}
