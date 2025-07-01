@@ -117,19 +117,9 @@ export default function Lobby() {
     navigate('/login');
   };
 
-  const handleLeaveRoom = () => {
-    const socket = useGameStore.getState().socket;
-    if (socket) {
-      socket.emit('leaveRoom');
-      socket.disconnect();
-    }
-    useGameStore.getState().resetGame();
-    navigate('/');
-  };
-
   return (
     <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'url(/images/capybara_background_multiple.png) no-repeat center center fixed', backgroundSize: 'cover' }}>
-      <div style={{ width: '100%', maxWidth: 400, padding: 32, background: 'rgba(235, 228, 200, 0.92)', borderRadius: 16, boxShadow: '0 4px 32px rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)', border: '1.5px solid #b6a77a', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>        <button onClick={handleBackToLogin} style={{ ...modernButtonStyle, alignSelf: 'flex-start', marginBottom: 8, padding: '6px 12px', fontSize: 13 }}>
+      <div style={{ width: '100%', maxWidth: 400, padding: 32, background: 'rgba(235, 228, 200, 0.64)', borderRadius: 16, boxShadow: '0 4px 32px rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)', border: '1.5px solid #b6a77a', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>        <button onClick={handleBackToLogin} style={{ ...modernButtonStyle, alignSelf: 'flex-start', marginBottom: 8, padding: '6px 12px', fontSize: 13 }}>
           ← Back to Login
         </button>
         <div style={{ textAlign: 'center', width: '100%' }}>
@@ -252,32 +242,6 @@ export default function Lobby() {
             Waiting for the host to start the game...
           </div>
         )}
-        {showLeaveConfirmation && (
-          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', zIndex: 1000 }}>
-            <div style={{ background: '#fff', borderRadius: 8, padding: 24, maxWidth: 400, width: '90%', boxShadow: '0 4px 16px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 600, color: '#374151', margin: 0, textAlign: 'center' }}>
-                Confirm Leave
-              </h3>
-              <p style={{ fontSize: 14, color: '#6b7280', margin: 0, textAlign: 'center' }}>
-                Are you sure you want to leave the room? You will be disconnected.
-              </p>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
-                <button
-                  onClick={() => setShowLeaveConfirmation(false)}
-                  style={{ ...modernButtonStyle, background: '#4caf50', color: '#fff', padding: '10px 20px', fontSize: 14, borderRadius: 6, flex: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
-                >
-                  Stay
-                </button>
-                <button
-                  onClick={handleLeaveRoom}
-                  style={{ ...modernButtonStyle, background: '#f44336', color: '#fff', padding: '10px 20px', fontSize: 14, borderRadius: 6, flex: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
-                >
-                  Leave
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
       
       {/* Leave Confirmation Dialog */}
@@ -298,7 +262,7 @@ export default function Lobby() {
             background: 'rgba(235, 228, 200, 0.98)', 
             borderRadius: 16, 
             padding: 24, 
-            maxWidth: 400, 
+            maxWidth: 260, 
             width: '90%',
             boxShadow: '0 8px 32px rgba(0,0,0,0.25)', 
             border: '1.5px solid #b6a77a',
@@ -335,7 +299,8 @@ export default function Lobby() {
                   color: '#232323', 
                   border: '1.5px solid #b6a77a',
                   margin: 0,
-                  fontSize: 14
+                  fontSize: 11,
+                  padding: '10px 22px'
                 }}
               >
                 Cancel
@@ -346,7 +311,8 @@ export default function Lobby() {
                   ...modernButtonStyle, 
                   background: '#dc2626', 
                   margin: 0,
-                  fontSize: 14
+                  fontSize: 11,
+                  padding: '10px 22px'
                 }}
               >
                 {isAdmin ? 'Close Room' : 'Leave Room'}
