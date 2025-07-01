@@ -15,6 +15,7 @@ const CapybaraIcon = ({ avatar, color, size = 32 }: { avatar?: string; color?: s
   />
 );
 
+/*
 const CheckeredFlag = () => (
   <div className="w-8 h-8 flex">
     {[...Array(4)].map((_, i) => (
@@ -29,6 +30,7 @@ const CheckeredFlag = () => (
     ))}
   </div>
 );
+*/
 
 const TimeUpOverlay = ({ onAnimationComplete, onReturnToLobby }: { 
   onAnimationComplete: () => void;
@@ -235,9 +237,9 @@ export default function Game() {
   
   // Get the current player's nickname from the store
   const currentPlayer = players.find(player => player.id === useGameStore.getState().socket?.id);
-  const playerName = currentPlayer?.nickname || 'Player';
-  const playerAvatar = currentPlayer?.avatar;
-  const playerColor = currentPlayer?.color;
+  // const playerName = currentPlayer?.nickname || 'Player';
+  // const playerAvatar = currentPlayer?.avatar;
+  // const playerColor = currentPlayer?.color;
 
   // Calculate initial timer based on text length (2 seconds per word)
   useEffect(() => {
@@ -553,7 +555,7 @@ export default function Game() {
         {/* Player Lanes */}
         {gameStarted && !gameFinished && (
           <div style={{ width: '100%', maxWidth: 700, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
-            {players.map((player, idx) => {
+            {players.map((player) => {
               const isCurrent = player.id === currentPlayer?.id;
               const laneProgress = typeof player.progress === 'number' ? player.progress : 0;
               return (
