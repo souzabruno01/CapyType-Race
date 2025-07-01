@@ -54,6 +54,8 @@ export default function Lobby() {
   const [showFullId, setShowFullId] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   useEffect(() => {
     if (!roomId) {
@@ -104,7 +106,25 @@ export default function Lobby() {
   };
 
   const handleBackToLogin = () => {
-    setShowLeaveConfirmation(true);
+    // If host and alone in room, close room directly without confirmation
+    if (isAdmin && players.length <= 1) {
+      const socket = useGameStore.getState().socket;
+      if (socket) {
+        socket.emit('leaveRoom');
+        socket.disconnect();
+      }
+      useGameStore.getState().resetGame();
+      
+      // Show notification briefly
+      setNotificationMessage('Room closed');
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 2000);
+      
+      navigate('/login');
+    } else {
+      // Show confirmation modal for other cases
+      setShowLeaveConfirmation(true);
+    }
   };
 
   const confirmLeave = () => {
@@ -123,6 +143,21 @@ export default function Lobby() {
           ← Back to Login
         </button>
         <div style={{ textAlign: 'center', width: '100%' }}>
+          {isAdmin && (
+            <div style={{
+              background: 'rgba(79, 70, 229, 0.1)',
+              color: '#4f46e5',
+              padding: '6px 12px',
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 500,
+              marginBottom: 8,
+              border: '1px solid rgba(79, 70, 229, 0.2)',
+              display: 'inline-block'
+            }}>
+              👑 Host
+            </div>
+          )}
           <h2 style={{ ...capyTitleStyle, marginBottom: 4 }}>{roomName.readableId}</h2>
           <p style={{ color: '#4b5563', marginBottom: 12 }}>Waiting for players to join...</p>
         </div>
@@ -319,6 +354,25 @@ export default function Lobby() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      
+      {/* Small notification */}
+      {showNotification && (
+        <div style={{
+          position: 'fixed',
+          top: 20,
+          right: 20,
+          background: 'rgba(34, 197, 94, 0.9)',
+          color: '#fff',
+          padding: '8px 16px',
+          borderRadius: 8,
+          fontSize: 14,
+          fontWeight: 500,
+          zIndex: 1100,
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+        }}>
+          ✓ {notificationMessage}
         </div>
       )}
     </div>

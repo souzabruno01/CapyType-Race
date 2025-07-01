@@ -95,31 +95,42 @@ export default function Login() {
 
   // Always derive selectedAvatar from selectedAvatarColor
   const selectedAvatar = (() => {
-    // Try to use the avatar file from sessionStorage if available
+    // Always use the current selectedAvatarColor state as the source of truth
+    const avatarByColor = CAPYBARA_AVATARS.find(a => a.color === selectedAvatarColor);
+    console.log('[Avatar Debug] selectedAvatarColor:', selectedAvatarColor, 'found avatar:', avatarByColor);
+    if (avatarByColor) return avatarByColor;
+    
+    // Fallback to stored file if color lookup fails
     const storedFile = sessionStorage.getItem('capy_avatar_file');
     if (storedFile) {
       const found = CAPYBARA_AVATARS.find(a => a.file === storedFile);
       if (found) return found;
     }
-    // Fallback to color
-    return CAPYBARA_AVATARS.find(a => a.color === selectedAvatarColor) || CAPYBARA_AVATARS[0];
+    
+    // Final fallback
+    return CAPYBARA_AVATARS[0];
   })();
 
   // On mount, ensure the color and avatar file in sessionStorage are valid and sync selectedAvatarColor if needed
   useEffect(() => {
     const stored = sessionStorage.getItem('capy_avatar_color');
     const storedFile = sessionStorage.getItem('capy_avatar_file');
-    if (!stored || !CAPYBARA_AVATARS.some(a => a.color === stored)) {
-      // Only correct if missing or invalid
-      sessionStorage.setItem('capy_avatar_color', CAPYBARA_AVATARS[0].color);
-      sessionStorage.setItem('capy_avatar_file', CAPYBARA_AVATARS[0].file);
-      setSelectedAvatarColor(CAPYBARA_AVATARS[0].color);
-      console.log('[Avatar Persist] Invalid/missing color, set to default.');
-    } else if (!storedFile || !CAPYBARA_AVATARS.some(a => a.file === storedFile)) {
-      // If file missing or invalid, restore it from color
-      const avatarFile = CAPYBARA_AVATARS.find(a => a.color === stored)?.file || CAPYBARA_AVATARS[0].file;
-      sessionStorage.setItem('capy_avatar_file', avatarFile);
-      console.log('[Avatar Persist] Invalid/missing file, set from color.');
+    
+    // Check if we have valid stored data
+    const validStoredColor = stored && CAPYBARA_AVATARS.some(a => a.color === stored);
+    const validStoredFile = storedFile && CAPYBARA_AVATARS.some(a => a.file === storedFile);
+    
+    if (!validStoredColor || !validStoredFile) {
+      // Reset to default if any stored data is invalid
+      const defaultAvatar = CAPYBARA_AVATARS[0];
+      sessionStorage.setItem('capy_avatar_color', defaultAvatar.color);
+      sessionStorage.setItem('capy_avatar_file', defaultAvatar.file);
+      setSelectedAvatarColor(defaultAvatar.color);
+      console.log('[Avatar Persist] Reset to default:', defaultAvatar.color, defaultAvatar.file);
+    } else if (selectedAvatarColor !== stored) {
+      // Sync state with storage if they differ
+      setSelectedAvatarColor(stored);
+      console.log('[Avatar Persist] Synced state with storage:', stored);
     }
   }, []); // Only run on mount
 
@@ -225,17 +236,26 @@ export default function Login() {
 
   // Capybara avatar/color selection handler (for modal)
   const handleAvatarSelect = (avatar: typeof CAPYBARA_AVATARS[0]) => {
-    setSelectedAvatarColor(avatar.color);
+    console.log('[Avatar Persist] User selecting:', avatar.color, avatar.file);
+    
+    // Update sessionStorage first
     sessionStorage.setItem('capy_avatar_color', avatar.color);
     sessionStorage.setItem('capy_avatar_file', avatar.file);
-    // If you use a store for player info, update it here as well
+    
+    // Optional localStorage sync
     if (typeof window !== 'undefined' && window.localStorage) {
-      // Optionally sync to localStorage for extra persistence
       localStorage.setItem('capy_avatar_color', avatar.color);
       localStorage.setItem('capy_avatar_file', avatar.file);
     }
-    setShowAvatarModal(false);
-    console.log('[Avatar Persist] User selected:', avatar.color, avatar.file);
+    
+    // Update the state after storage
+    setSelectedAvatarColor(avatar.color);
+    
+    // Close modal after a small delay to ensure state update completes
+    setTimeout(() => {
+      setShowAvatarModal(false);
+      console.log('[Avatar Persist] Selection complete:', avatar.color, avatar.file);
+    }, 50);
   };
 
   useEffect(() => {
@@ -255,8 +275,13 @@ export default function Login() {
   useEffect(() => {
     if (!showAvatarModal) return;
     function handleClick(e: MouseEvent) {
-      if (avatarBtnRef.current && !avatarBtnRef.current.contains(e.target as Node)) {
-        setShowAvatarModal(false);
+      const target = e.target as Node;
+      if (avatarBtnRef.current && !avatarBtnRef.current.contains(target)) {
+        // Check if click is inside the modal
+        const modal = document.querySelector('[data-avatar-modal]');
+        if (modal && !modal.contains(target)) {
+          setShowAvatarModal(false);
+        }
       }
     }
     document.addEventListener('mousedown', handleClick);
@@ -331,6 +356,7 @@ export default function Login() {
             </button>
             {showAvatarModal && (
               <div
+                data-avatar-modal="true"
                 style={{
                   position: 'absolute',
                   left: 0,
