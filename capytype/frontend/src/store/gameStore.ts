@@ -8,8 +8,8 @@ export interface Player {
   wpm: number;
   errors: number;
   position: number;
-  avatar?: string; // Add avatar to Player
-  color?: string; // Add color to Player
+  avatar: string; // Required field
+  color: string; // Required field
 }
 
 interface PlayerResult {
@@ -19,6 +19,8 @@ interface PlayerResult {
   errors: number;
   time: number;
   position: number;
+  avatar: string; // Add avatar
+  color: string; // Add color
 }
 
 interface GameState {
@@ -44,8 +46,8 @@ interface GameStore extends GameState {
   setGameResults: (results: PlayerResult[]) => void;
   resetGame: () => void;
   connect: () => void;
-  createRoom: (nickname: string, avatar?: string, color?: string) => void;
-  joinRoom: (roomId: string, nickname: string, avatar?: string, color?: string) => void;
+  createRoom: (nickname: string, avatar: string, color: string) => void;
+  joinRoom: (roomId: string, nickname: string, avatar: string, color: string) => void;
   setAdmin: (isAdmin: boolean) => void;
 }
 
@@ -70,10 +72,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { socket, roomId } = get();
     if (socket?.connected) {
       if (isPractice) {
-        // For practice mode, just set the text and game state locally
         set({ text, gameState: 'playing', isPractice: true, gameStarted: true });
       } else {
-        // For multiplayer mode, emit the start game event with roomId
         socket.emit('startGame', { roomId, text });
       }
     }
@@ -103,7 +103,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
 
     socket.on('connect', () => {
-      console.log('Connected to server');
+      console.log('[Avatar] Connected to server');
+      // When connecting, ensure we have avatar/color in sessionStorage
+      const storedColor = sessionStorage.getItem('capy_avatar_color');
+      const storedFile = sessionStorage.getItem('capy_avatar_file');
+      if (!storedColor || !storedFile) {
+        // Set defaults if missing
+        sessionStorage.setItem('capy_avatar_color', '#6ee7b7');
+        sessionStorage.setItem('capy_avatar_file', 'Capy-face-green.png');
+      }
       set({ socket });
     });
 
@@ -113,13 +121,39 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
 
     socket.on('playerJoined', (players: Player[]) => {
-      console.log('Players updated:', players);
-      set({ players });
+      console.log('[Avatar] Players updated:', players);
+      // Ensure all player objects have avatar and color
+      const validatedPlayers = players.map(player => {
+        // For the current player, use the values from sessionStorage if available
+        if (player.id === socket.id) {
+          const storedColor = sessionStorage.getItem('capy_avatar_color');
+          const storedFile = sessionStorage.getItem('capy_avatar_file');
+          return {
+            ...player,
+            avatar: storedFile || player.avatar || 'Capy-face-blue.png',
+            color: storedColor || player.color || '#60a5fa'
+          };
+        }
+        // For other players, use their provided values or defaults
+        return {
+          ...player,
+          avatar: player.avatar || 'Capy-face-blue.png',
+          color: player.color || '#60a5fa'
+        };
+      });
+      console.log('[Avatar] Validated players:', validatedPlayers);
+      set({ players: validatedPlayers });
     });
 
     socket.on('playerLeft', (players: Player[]) => {
       console.log('Player left, new players:', players);
-      set({ players });
+      // Ensure all player objects have avatar and color
+      const validatedPlayers = players.map(player => ({
+        ...player,
+        avatar: player.avatar || 'Capy-face-blue.png',
+        color: player.color || '#60a5fa'
+      }));
+      set({ players: validatedPlayers });
     });
 
     socket.on('gameStarting', ({ text }: { text: string }) => {
@@ -129,7 +163,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     socket.on('gameStarted', () => {
       console.log('Game started');
-      set({ gameState: 'playing' });
+      set({ gameState: 'playing', gameStarted: true });
     });
 
     socket.on('progressUpdate', ({ playerId, progress }: { playerId: string; progress: number }) => {
@@ -141,12 +175,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
 
     socket.on('playerFinished', (result: PlayerResult) => {
+      // Ensure avatar and color are included in the result
+      const player = get().players.find(p => p.id === result.id);
       set((state) => ({
         gameResults: [
           ...state.gameResults,
           {
             ...result,
             position: state.gameResults.length + 1,
+            avatar: player?.avatar || 'Capy-face-blue.png',
+            color: player?.color || '#60a5fa'
           },
         ],
       }));
@@ -166,53 +204,77 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   createRoom: (nickname, avatar, color) => {
     const { socket } = get();
-    console.log('createRoom called with nickname:', nickname, 'avatar:', avatar, 'color:', color);
+    console.log('[Avatar] createRoom called with:', { nickname, avatar, color });
+    
+    // Ensure we're using the correct avatar/color from session storage
+    const storedColor = sessionStorage.getItem('capy_avatar_color');
+    const storedFile = sessionStorage.getItem('capy_avatar_file');
+    
+    // Use stored values if available, otherwise use provided values
+    const finalAvatar = storedFile || avatar;
+    const finalColor = storedColor || color;
+    
+    console.log('[Avatar] Using values:', { finalAvatar, finalColor });
+    
     if (socket?.connected) {
-      console.log('Socket is connected, emitting createRoom');
-      socket.emit('createRoom', { nickname, avatar, color });
+      console.log('[Avatar] Socket is connected, emitting createRoom');
+      socket.emit('createRoom', { 
+        nickname, 
+        avatar: finalAvatar, 
+        color: finalColor 
+      });
     } else {
       console.error('Socket not connected');
-      // Try to reconnect if not connected
       get().connect();
     }
   },
 
   joinRoom: (roomId, nickname, avatar, color) => {
     const { socket } = get();
+    
+    // Ensure we're using the correct avatar/color from session storage
+    const storedColor = sessionStorage.getItem('capy_avatar_color');
+    const storedFile = sessionStorage.getItem('capy_avatar_file');
+    
+    // Use stored values if available, otherwise use provided values
+    const finalAvatar = storedFile || avatar;
+    const finalColor = storedColor || color;
+    
+    console.log('[Avatar] joinRoom with values:', { 
+      roomId, 
+      nickname, 
+      avatar: finalAvatar, 
+      color: finalColor 
+    });
+
+    const emitJoinRoom = (socket: Socket) => {
+      if (socket.connected) {
+        console.log('[Avatar] Emitting joinRoom');
+        socket.emit('joinRoom', { 
+          roomId, 
+          nickname, 
+          avatar: finalAvatar, 
+          color: finalColor 
+        });
+        set({ roomId });
+      } else {
+        console.error('Failed to connect to server');
+      }
+    };
+
     if (!socket) {
-      // If no socket exists, try to connect first
       get().connect();
-      // Wait for socket to connect
       setTimeout(() => {
         const newSocket = get().socket;
-        if (newSocket?.connected) {
-          console.log('Joining room:', roomId, 'with nickname:', nickname, 'avatar:', avatar, 'color:', color);
-          newSocket.emit('joinRoom', { roomId, nickname, avatar, color });
-          // Set the roomId in the store
-          set({ roomId });
-        } else {
-          console.error('Failed to connect to server');
-        }
-      }, 1000); // Wait 1 second for connection
+        if (newSocket) emitJoinRoom(newSocket);
+      }, 1000);
     } else if (socket.connected) {
-      console.log('Joining room:', roomId, 'with nickname:', nickname, 'avatar:', avatar, 'color:', color);
-      socket.emit('joinRoom', { roomId, nickname, avatar, color });
-      // Set the roomId in the store
-      set({ roomId });
+      emitJoinRoom(socket);
     } else {
-      // If socket exists but not connected, try to reconnect
       socket.connect();
-      // Wait for socket to connect
       setTimeout(() => {
-        if (socket.connected) {
-          console.log('Joining room:', roomId, 'with nickname:', nickname, 'avatar:', avatar, 'color:', color);
-          socket.emit('joinRoom', { roomId, nickname, avatar, color });
-          // Set the roomId in the store
-          set({ roomId });
-        } else {
-          console.error('Failed to connect to server');
-        }
-      }, 1000); // Wait 1 second for connection
+        if (socket) emitJoinRoom(socket);
+      }, 1000);
     }
   },
 }));
