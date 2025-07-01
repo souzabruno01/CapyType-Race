@@ -13,7 +13,10 @@ graph TB
         A --> D[Game Components]
         A --> E[Lobby Components]
         A --> F[Results Components]
-        
+        D --> DA[Reusable Button Component]
+        D --> DB[Avatars Utility]
+        D --> DC[Framer Motion]
+        D --> DD[React Confetti]
         subgraph "Frontend Features"
             G[Real-time Typing]
             H[Progress Tracking]
@@ -59,6 +62,10 @@ graph TB
         FF --> GG[UI Update]
     end
     
+    style DA fill:#e0e7ff,stroke:#6366f1
+    style DB fill:#fef9c3,stroke:#b6a77a
+    style DC fill:#f3e8ff,stroke:#a78bfa
+    style DD fill:#e0f2fe,stroke:#38bdf8
     style A fill:#e3f2fd
     style K fill:#f3e5f5
     style C fill:#fff8e1
@@ -113,26 +120,29 @@ graph LR
         D --> E[Framer Motion]
         E --> F[Socket.IO Client]
         F --> G[Zustand]
+        G --> H[Reusable Button Component]
+        H --> I[Avatars Utility]
+        I --> J[React Confetti]
     end
     
     subgraph "Backend Stack"
-        H[Node.js] --> I[Express.js]
-        I --> J[Socket.IO Server]
-        J --> K[TypeScript]
-        K --> L[CORS]
-        L --> M[dotenv]
+        K[Node.js] --> L[Express.js]
+        L --> M[Socket.IO Server]
+        M --> N[TypeScript]
+        N --> O[CORS]
+        O --> P[dotenv]
     end
     
     subgraph "Development Tools"
-        N[ESLint] --> O[Prettier]
-        O --> P[Git]
-        P --> Q[npm/yarn]
+        Q[ESLint] --> R[Prettier]
+        R --> S[Git]
+        S --> T[npm/yarn]
     end
     
     subgraph "Deployment"
-        R[Firebase Hosting] --> S[Render/Railway]
-        S --> T[Environment Variables]
-        T --> U[CI/CD Pipeline]
+        U[Firebase Hosting] --> V[Render/Railway]
+        V --> W[Environment Variables]
+        W --> X[CI/CD Pipeline]
     end
 ```
 

@@ -65,11 +65,12 @@ const capyTitleStyle = {
 export default function Login() {
   const navigate = useNavigate();
   const { roomId, createRoom, joinRoom } = useGameStore();
-  // Use sessionStorage for nickname, but do NOT prefill input from sessionStorage
   const [nickname, setNickname] = useState('');
-  // Room code state: always start empty on login page
   const [roomCode, setRoomCode] = useState('');
   const [error, setError] = useState('');
+  const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [roomClosureMessage, setRoomClosureMessage] = useState('');
+  
   // Avatar color state
   const [selectedAvatarColor, setSelectedAvatarColor] = useState(() => {
     const stored = sessionStorage.getItem('capy_avatar_color');
@@ -84,7 +85,6 @@ export default function Login() {
     console.log('[Avatar Persist] No valid color found, set to default:', fallback);
     return fallback;
   });
-  const [showAvatarModal, setShowAvatarModal] = useState(false);
   const avatarBtnRef = useRef<HTMLButtonElement>(null);
 
   // Room code validation state
@@ -263,6 +263,17 @@ export default function Login() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, [showAvatarModal]);
 
+  // Check for room closure message on component mount
+  useEffect(() => {
+    const closureReason = sessionStorage.getItem('roomClosureReason');
+    if (closureReason) {
+      sessionStorage.removeItem('roomClosureReason');
+      setRoomClosureMessage(closureReason);
+      // Clear the message after 5 seconds
+      setTimeout(() => setRoomClosureMessage(''), 5000);
+    }
+  }, []);
+
   return (
     <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'url(/images/capybara_background_multiple.png) no-repeat center center fixed', backgroundSize: 'cover' }}>
       <div style={{ width: '100%', maxWidth: 400, padding: 32, background: 'rgba(235, 228, 200, 0.92)', borderRadius: 16, boxShadow: '0 4px 32px rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)', border: '1.5px solid #b6a77a' }}>
@@ -404,6 +415,20 @@ export default function Login() {
             )}
           </div>
           {error && <div style={{ color: '#e11d48', fontSize: 14, marginBottom: 8, textAlign: 'center' }}>{error}</div>}
+          {roomClosureMessage && (
+            <div style={{ 
+              color: '#d97706', 
+              fontSize: 14, 
+              marginBottom: 12, 
+              textAlign: 'center', 
+              background: 'rgba(251, 191, 36, 0.1)', 
+              padding: 8, 
+              borderRadius: 6, 
+              border: '1px solid rgba(251, 191, 36, 0.3)' 
+            }}>
+              ⚠️ {roomClosureMessage}
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
             <button
               type="submit"

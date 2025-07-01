@@ -53,6 +53,7 @@ export default function Lobby() {
   const [roomName, setRoomName] = useState({ readableId: '', fullId: '' });
   const [showFullId, setShowFullId] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
 
   useEffect(() => {
     if (!roomId) {
@@ -83,6 +84,17 @@ export default function Lobby() {
     };
   }, [roomId]);
 
+  useEffect(() => {
+    // Check for room closure notification
+    const closureReason = sessionStorage.getItem('roomClosureReason');
+    if (closureReason) {
+      sessionStorage.removeItem('roomClosureReason');
+      // Show notification and redirect
+      alert(closureReason);
+      navigate('/login');
+    }
+  }, [navigate]);
+
   const handleCopyRoomId = () => {
     if (roomId) {
       navigator.clipboard.writeText(roomId);
@@ -92,6 +104,10 @@ export default function Lobby() {
   };
 
   const handleBackToLogin = () => {
+    setShowLeaveConfirmation(true);
+  };
+
+  const confirmLeave = () => {
     const socket = useGameStore.getState().socket;
     if (socket) {
       socket.emit('leaveRoom');
@@ -99,6 +115,16 @@ export default function Lobby() {
     }
     useGameStore.getState().resetGame();
     navigate('/login');
+  };
+
+  const handleLeaveRoom = () => {
+    const socket = useGameStore.getState().socket;
+    if (socket) {
+      socket.emit('leaveRoom');
+      socket.disconnect();
+    }
+    useGameStore.getState().resetGame();
+    navigate('/');
   };
 
   return (
@@ -226,7 +252,109 @@ export default function Lobby() {
             Waiting for the host to start the game...
           </div>
         )}
+        {showLeaveConfirmation && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)', zIndex: 1000 }}>
+            <div style={{ background: '#fff', borderRadius: 8, padding: 24, maxWidth: 400, width: '90%', boxShadow: '0 4px 16px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 600, color: '#374151', margin: 0, textAlign: 'center' }}>
+                Confirm Leave
+              </h3>
+              <p style={{ fontSize: 14, color: '#6b7280', margin: 0, textAlign: 'center' }}>
+                Are you sure you want to leave the room? You will be disconnected.
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
+                <button
+                  onClick={() => setShowLeaveConfirmation(false)}
+                  style={{ ...modernButtonStyle, background: '#4caf50', color: '#fff', padding: '10px 20px', fontSize: 14, borderRadius: 6, flex: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+                >
+                  Stay
+                </button>
+                <button
+                  onClick={handleLeaveRoom}
+                  style={{ ...modernButtonStyle, background: '#f44336', color: '#fff', padding: '10px 20px', fontSize: 14, borderRadius: 6, flex: 1, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+                >
+                  Leave
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+      
+      {/* Leave Confirmation Dialog */}
+      {showLeaveConfirmation && (
+        <div style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          right: 0, 
+          bottom: 0, 
+          background: 'rgba(0, 0, 0, 0.5)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          zIndex: 1000 
+        }}>
+          <div style={{ 
+            background: 'rgba(235, 228, 200, 0.98)', 
+            borderRadius: 16, 
+            padding: 24, 
+            maxWidth: 400, 
+            width: '90%',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.25)', 
+            border: '1.5px solid #b6a77a',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ 
+              fontSize: 18, 
+              fontWeight: 700, 
+              color: '#232323', 
+              marginBottom: 16, 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: 8 
+            }}>
+              ⚠️ {isAdmin ? 'Close Room?' : 'Leave Room?'}
+            </h3>
+            <p style={{ 
+              color: '#4b5563', 
+              marginBottom: 20, 
+              lineHeight: 1.5 
+            }}>
+              {isAdmin 
+                ? 'If you leave, this room will be closed and all other players will be disconnected.'
+                : 'You will be disconnected from the room and won\'t be able to rejoin with the same link.'
+              }
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button 
+                onClick={() => setShowLeaveConfirmation(false)}
+                style={{ 
+                  ...modernButtonStyle, 
+                  background: '#fff', 
+                  color: '#232323', 
+                  border: '1.5px solid #b6a77a',
+                  margin: 0,
+                  fontSize: 14
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmLeave}
+                style={{ 
+                  ...modernButtonStyle, 
+                  background: '#dc2626', 
+                  margin: 0,
+                  fontSize: 14
+                }}
+              >
+                {isAdmin ? 'Close Room' : 'Leave Room'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

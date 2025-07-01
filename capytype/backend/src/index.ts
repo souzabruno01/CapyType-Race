@@ -39,6 +39,41 @@ const io = new Server(httpServer, {
 // Store active rooms
 const rooms = new Map();
 
+// Helper function to handle player leaving (either explicit leave or disconnect)
+function handlePlayerLeaving(socketId: string, isExplicitLeave: boolean = false) {
+  // Find and remove player from rooms
+  for (const [roomId, room] of rooms.entries()) {
+    if (room.players.has(socketId)) {
+      const leavingPlayer = room.players.get(socketId);
+      const isAdmin = room.admin === socketId;
+      
+      room.players.delete(socketId);
+      
+      // If the leaving player is the admin and there are other players
+      if (isAdmin && room.players.size > 0) {
+        console.log(`[ROOM CLOSED] Admin ${socketId} left room ${roomId}, closing room for ${room.players.size} remaining players`);
+        // Notify all remaining players that the room is being closed
+        io.to(roomId).emit('roomClosed', { 
+          reason: 'host_left',
+          message: 'The host has left the room. You will be redirected to the login screen.'
+        });
+        // Remove all players and delete the room
+        room.players.clear();
+        rooms.delete(roomId);
+      } else if (room.players.size === 0) {
+        // Room is now empty, delete it
+        console.log(`[ROOM DELETED] Room ${roomId} is now empty`);
+        rooms.delete(roomId);
+      } else {
+        // Normal player left, just update the player list
+        console.log(`[PLAYER LEFT] Player ${socketId} left room ${roomId}, ${room.players.size} players remaining`);
+        io.to(roomId).emit('playerLeft', Array.from(room.players.values()));
+      }
+      break;
+    }
+  }
+}
+
 app.use(express.json());
 
 // Health check endpoint for deployment services
@@ -229,6 +264,12 @@ io.on('connection', (socket) => {
     }, 1000);
   });
 
+  // Handle player leaving room (explicit leave vs disconnect)
+  socket.on('leaveRoom', () => {
+    logWithInfo('leaving room explicitly');
+    handlePlayerLeaving(socket.id, true); // true = explicit leave
+  });
+
   // Update player progress
   socket.on('updateProgress', ({ roomId, progress }) => {
     const room = rooms.get(roomId);
@@ -257,18 +298,7 @@ io.on('connection', (socket) => {
   // Handle disconnection
   socket.on('disconnect', () => {
     logWithInfo('disconnected');
-    // Find and remove player from rooms
-    for (const [roomId, room] of rooms.entries()) {
-      if (room.players.has(socket.id)) {
-        room.players.delete(socket.id);
-        io.to(roomId).emit('playerLeft', Array.from(room.players.values()));
-        
-        // If room is empty, delete it
-        if (room.players.size === 0) {
-          rooms.delete(roomId);
-        }
-      }
-    }
+    handlePlayerLeaving(socket.id, false); // false = disconnect, not explicit leave
   });
 });
 

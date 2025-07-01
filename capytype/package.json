@@ -6,9 +6,13 @@
     "start:frontend": "cd frontend && npm run dev",
     "start:backend": "cd backend && npm run dev",
     "dev": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
-    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+    "deploy": "npm run build --prefix frontend && firebase deploy"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "crypto-js": "^4.2.0"
   }
-} 
+}

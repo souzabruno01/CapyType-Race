@@ -156,6 +156,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ players: validatedPlayers });
     });
 
+    socket.on('roomClosed', ({ reason, message }: { reason: string; message: string }) => {
+      console.log('Room closed:', reason, message);
+      // Store the closure reason for display
+      sessionStorage.setItem('roomClosureReason', message);
+      // Reset game state and disconnect
+      get().resetGame();
+      // The redirect will be handled by the component that detects the closure reason
+    });
+
     socket.on('gameStarting', ({ text }: { text: string }) => {
       console.log('Game starting with text:', text);
       set({ text });
