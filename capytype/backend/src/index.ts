@@ -270,6 +270,31 @@ io.on('connection', (socket) => {
     handlePlayerLeaving(socket.id, true); // true = explicit leave
   });
 
+  // Change player color
+  socket.on('changePlayerColor', ({ playerId, color }) => {
+    logWithInfo(`changing color for player ${playerId} to ${color}`);
+    
+    // Find the room this player is in
+    for (const [roomId, room] of rooms.entries()) {
+      if (room.players.has(playerId)) {
+        const player = room.players.get(playerId);
+        if (player) {
+          // Update the player's color
+          player.color = color;
+          
+          // Notify all players in the room about the color change
+          io.to(roomId).emit('playerColorChanged', { playerId, color });
+          
+          // Also update the player list
+          io.to(roomId).emit('playerJoined', Array.from(room.players.values()));
+          
+          logWithInfo(`color updated for player ${playerId} in room ${roomId}`);
+        }
+        break;
+      }
+    }
+  });
+
   // Update player progress
   socket.on('updateProgress', ({ roomId, progress }) => {
     const room = rooms.get(roomId);
