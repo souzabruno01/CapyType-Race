@@ -5,10 +5,11 @@ A real-time multiplayer typing game with a capybara theme where players race aga
 ## 🚀 Features
 
 - **Real-time Multiplayer Racing** - Compete with friends in live typing races
-- **Capybara-themed UI** - Cute and engaging interface
-- **Room-based Gameplay** - Create or join private rooms
-- **Practice Mode** - Improve your skills solo
-- **Live Progress Tracking** - See everyone's progress in real-time
+- **Capybara-themed UI** - Cute and engaging interface with customizable avatar colors
+- **Room-based Gameplay** - Create or join private rooms with readable room names
+- **Avatar Customization** - Choose from 10 different capybara colors and personalities
+- **Enhanced Visibility** - Improved UI transparency and color contrast
+- **Live Progress Tracking** - See everyone's progress in real-time with vibrant player cards
 - **Performance Metrics** - Track WPM, errors, and accuracy
 - **Results Dashboard** - Compare your performance with others
 
@@ -30,31 +31,44 @@ graph TB
         B --> C[Socket.IO Client]
         A --> D[Game Components]
         A --> E[Lobby Components]
+        A --> F[Avatar System]
+        F --> G[Color Picker]
     end
     
-    subgraph "Backend (Render/Railway)"
-        F[Express Server] --> G[Socket.IO Server]
-        G --> H[Room Manager]
-        H --> I[Game Logic]
+    subgraph "Backend (Railway/Render)"
+        H[Express Server] --> I[Socket.IO Server]
+        I --> J[Room Manager]
+        J --> K[Game Logic]
+        I --> L[Player Management]
+        L --> M[Avatar Color Sync]
     end
     
     subgraph "Real-time Communication"
-        C <--> G
+        C <--> I
+        G <--> M
     end
     
     subgraph "Game Flow"
-        J[Login] --> K[Create/Join Room]
-        K --> L[Lobby]
-        L --> M[Game Start]
-        M --> N[Typing Race]
-        N --> O[Results]
-        O --> L
+        N[Login & Avatar Selection] --> O[Create/Join Room]
+        O --> P[Lobby with Player Cards]
+        P --> Q[Game Start]
+        Q --> R[Typing Race]
+        R --> S[Results]
+        S --> P
+    end
+    
+    subgraph "UI Improvements"
+        T[Enhanced Transparency]
+        U[Better Color Visibility]
+        V[Improved Player Cards]
     end
     
     style A fill:#e1f5fe
-    style F fill:#f3e5f5
+    style H fill:#f3e5f5
     style C fill:#fff3e0
-    style G fill:#fff3e0
+    style I fill:#fff3e0
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
 ```
 
 ## 🚀 Quick Start
@@ -128,11 +142,13 @@ firebase deploy
 ## 🎮 How to Play
 
 1. **Enter your nickname** on the login screen
-2. **Create a room** or **join an existing room** with a room ID
-3. **Wait in the lobby** for other players to join
-4. **Start the game** when ready (room admin only)
-5. **Type the displayed text** as fast and accurately as possible
-6. **View results** and compare your performance with others
+2. **Choose your capybara avatar** by clicking on the capybara face (10 colors available)
+3. **Create a room** or **join an existing room** with a room ID
+4. **Wait in the lobby** for other players to join (you'll see colorful player cards)
+5. **Customize your color** anytime in the lobby using the edit button on your player card
+6. **Start the game** when ready (room admin only)
+7. **Type the displayed text** as fast and accurately as possible
+8. **View results** and compare your performance with others
 
 ## 📊 Game Metrics
 
@@ -176,11 +192,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🚀 Recent Updates
 
-- ✅ Fixed environment variable configuration
-- ✅ Updated CORS settings for production
-- ✅ Resolved TypeScript compilation errors
-- ✅ Improved error handling and connection stability
-- ✅ Added support for multiple deployment environments
+- ✅ **Enhanced UI Visibility** - Improved transparency for login card and player cards in lobby
+- ✅ **Avatar Customization** - Added 10 capybara color options with real-time color picker
+- ✅ **Better Player Cards** - Increased color opacity for better visibility on the lobby board
+- ✅ **Railway Deployment** - Optimized backend deployment configuration
+- ✅ **Improved UX** - Better color contrast and visual feedback
+- ✅ **Real-time Color Sync** - Avatar colors update instantly across all connected players
+- ✅ **Fixed environment variable configuration**
+- ✅ **Updated CORS settings for production**
+- ✅ **Resolved TypeScript compilation errors**
+- ✅ **Improved error handling and connection stability**
 
 ---
 

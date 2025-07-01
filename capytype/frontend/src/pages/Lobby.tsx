@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { generateRoomName } from '../utils/roomUtils';
 // Removed unused Player import
-import { getAvatarByFile } from '../utils/avatars';
+import { getAvatarByFile, CAPYBARA_AVATARS } from '../utils/avatars';
 
 // Style for modern, rounded, black buttons
 const modernButtonStyle = {
@@ -56,6 +56,31 @@ export default function Lobby() {
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
+  const [showColorPicker, setShowColorPicker] = useState<string | null>(null);
+
+  // Get actual capybara colors from avatars
+  const capyColors = CAPYBARA_AVATARS.map(avatar => avatar.color);
+
+  const handleColorChange = (newColor: string, playerId: string) => {
+    const socket = useGameStore.getState().socket;
+    if (socket) {
+      // If this is the current player, update session storage
+      if (socket.id === playerId) {
+        sessionStorage.setItem('capy_avatar_color', newColor);
+        // Find the matching avatar file for this color
+        const matchingAvatar = CAPYBARA_AVATARS.find(avatar => avatar.color === newColor);
+        if (matchingAvatar) {
+          sessionStorage.setItem('capy_avatar_file', matchingAvatar.file);
+        }
+      }
+      
+      socket.emit('changePlayerColor', { playerId, color: newColor });
+      setShowColorPicker(null);
+      setNotificationMessage('Color updated!');
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (!roomId) {
@@ -96,6 +121,50 @@ export default function Lobby() {
       navigate('/login');
     }
   }, [navigate]);
+
+  useEffect(() => {
+    // Close color picker when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showColorPicker && !(event.target as Element).closest('[data-color-picker]')) {
+        setShowColorPicker(null);
+      }
+    };
+
+    if (showColorPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showColorPicker]);
+
+  useEffect(() => {
+    // Listen for color change updates from server
+    const socket = useGameStore.getState().socket;
+    
+    const handlePlayerColorChanged = ({ playerId, color }: { playerId: string; color: string }) => {
+      // Find matching avatar for the color
+      const matchingAvatar = CAPYBARA_AVATARS.find(avatar => avatar.color === color);
+      
+      // Update players in store
+      useGameStore.setState((state) => ({
+        players: state.players.map((player) =>
+          player.id === playerId 
+            ? { 
+                ...player, 
+                color, 
+                avatar: matchingAvatar ? matchingAvatar.file : player.avatar 
+              } 
+            : player
+        ),
+      }));
+    };
+
+    if (socket) {
+      socket.on('playerColorChanged', handlePlayerColorChanged);
+      return () => {
+        socket.off('playerColorChanged', handlePlayerColorChanged);
+      };
+    }
+  }, []);
 
   const handleCopyRoomId = () => {
     if (roomId) {
@@ -139,7 +208,22 @@ export default function Lobby() {
 
   return (
     <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'url(/images/capybara_background_multiple.png) no-repeat center center fixed', backgroundSize: 'cover' }}>
-      <div style={{ width: '100%', maxWidth: 400, padding: 32, background: 'rgba(235, 228, 200, 0.64)', borderRadius: 16, boxShadow: '0 4px 32px rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)', border: '1.5px solid #b6a77a', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>        <button onClick={handleBackToLogin} style={{ ...modernButtonStyle, alignSelf: 'flex-start', marginBottom: 8, padding: '6px 12px', fontSize: 13 }}>
+      <div style={{ 
+        width: '100%', 
+        maxWidth: 600, // Increased from 500 to 600
+        padding: 32, 
+        background: 'rgba(235, 228, 200, 0.64)', 
+        borderRadius: 16, 
+        boxShadow: '0 4px 32px rgba(0,0,0,0.15)', 
+        backdropFilter: 'blur(4px)', 
+        border: '1.5px solid #b6a77a', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        gap: 24,
+        maxHeight: '90vh',
+        overflowY: 'auto'
+      }}>        <button onClick={handleBackToLogin} style={{ ...modernButtonStyle, alignSelf: 'flex-start', marginBottom: 8, padding: '6px 12px', fontSize: 13 }}>
           ← Back to Login
         </button>
         <div style={{ textAlign: 'center', width: '100%' }}>
@@ -198,43 +282,219 @@ export default function Lobby() {
           )}
         </div>
         <div style={{ width: '100%' }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 8 }}>Players:</h2>
-          <ul style={{ listStyle: 'none', padding: 0, margin: 0, width: '100%', display: 'flex', flexDirection: 'column', gap: 4 }}>
-            {Array.isArray(players) && players.map((player) => {
-              if (!player || typeof player !== 'object') return null;
-              const avatar = getAvatarByFile(player.avatar || '');
-              const playerColor = player.color || avatar.color || '#b6a77a';
-              return (
-                <li key={player.id || player.nickname} style={{
-                  padding: 6,
-                  background: `linear-gradient(90deg, ${playerColor} 0%, #f3e8ff 100%)`,
-                  borderRadius: 6,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    {player.avatar ? (
-                      <span style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', border: '1.5px solid #b6a77a' }}>
-                        <img src={`/images/${player.avatar}`} alt="avatar" style={{ width: 24, height: 24, objectFit: 'cover', borderRadius: '50%' }} onError={e => (e.currentTarget.style.opacity = '0.2')} />
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
+            Players ({Array.isArray(players) ? players.length : 0}/32):
+          </h2>
+          
+          {/* Warm brown board style player grid */}
+          <div style={{
+            background: 'rgba(139, 117, 96, 0.3)', // warm brown with 30% transparency
+            borderRadius: 12,
+            padding: 20, // Increased from 16 to 20
+            border: '2px solid rgba(139, 117, 96, 0.4)',
+            boxShadow: '0 2px 8px rgba(139, 117, 96, 0.15)',
+            minHeight: 120,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12 // Increased from 8 to 12
+          }}>
+            {Array.isArray(players) && players.length > 0 ? (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', // Increased from 85px to 90px
+                gap: 12, // Increased from 8 to 12
+                justifyItems: 'center',
+                maxWidth: '100%'
+              }}>
+                {players.map((player) => {
+                  if (!player || typeof player !== 'object') return null;
+                  const avatar = getAvatarByFile(player.avatar || '');
+                  const playerColor = player.color || avatar.color || '#b6a77a';
+                  const currentPlayer = useGameStore.getState().socket?.id === player.id;
+                  
+                  return (
+                    <div key={player.id || player.nickname} style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: 8,
+                      borderRadius: 10,
+                      background: player.progress > 0 
+                        ? `linear-gradient(135deg, ${playerColor}60, rgba(79, 70, 229, 0.2))` 
+                        : `${playerColor}50`, // Increased opacity from 20 to 50 for better visibility
+                      border: `2px solid ${playerColor}80`, // Increased border opacity from 60 to 80
+                      minWidth: 90, // Increased from 85 to 90
+                      maxWidth: 110, // Increased from 100 to 110
+                      transition: 'all 0.2s ease',
+                      boxShadow: `0 2px 6px ${playerColor}30`, // Increased shadow opacity from 20 to 30
+                      position: 'relative'
+                    }}>
+                      {/* Edit Color Button - only for current player */}
+                      {currentPlayer && (
+                        <button
+                          onClick={() => setShowColorPicker(showColorPicker === player.id ? null : player.id)}
+                          style={{
+                            position: 'absolute',
+                            top: 2,
+                            right: 2,
+                            width: 18,
+                            height: 18,
+                            borderRadius: '50%',
+                            background: 'rgba(255, 255, 255, 0.9)',
+                            border: '1px solid #d1d5db',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            fontSize: 8,
+                            padding: 0,
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                            zIndex: 10
+                          }}
+                          title="Edit Color"
+                        >
+                          ✏️
+                        </button>
+                      )}
+
+                      {/* Color Picker Dropdown */}
+                      {showColorPicker === player.id && (
+                        <div 
+                          data-color-picker
+                          style={{
+                            position: 'absolute',
+                            top: 22,
+                            right: 2,
+                            background: '#fff',
+                            borderRadius: 8,
+                            padding: 10, // Increased padding
+                            border: '2px solid #e5e7eb',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            zIndex: 20,
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(5, 1fr)', // Changed to 5 columns for 10 colors
+                            gap: 6, // Increased gap
+                            width: 140 // Increased width to accommodate 5 columns
+                          }}
+                        >
+                          {capyColors.map((color, index) => {
+                            const avatar = CAPYBARA_AVATARS[index];
+                            return (
+                              <button
+                                key={index}
+                                onClick={() => handleColorChange(color, player.id)}
+                                style={{
+                                  width: 22, // Increased from 20 to 22
+                                  height: 22, // Increased from 20 to 22
+                                  borderRadius: '50%',
+                                  background: color,
+                                  border: playerColor === color ? '3px solid #000' : '2px solid #d1d5db',
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                                  transition: 'all 0.2s ease'
+                                }}
+                                title={`Change to ${avatar?.name || color}`}
+                              />
+                            );
+                          })}
+                        </div>
+                      )}
+                      {/* Avatar */}
+                      {player.avatar ? (
+                        <div style={{ 
+                          width: 40, 
+                          height: 40, 
+                          borderRadius: '50%', 
+                          overflow: 'hidden', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          background: `${playerColor}50`, // Increased opacity from 30 to 50
+                          border: `2px solid ${playerColor}90`, // Increased border opacity from 80 to 90
+                          boxShadow: `0 2px 4px ${playerColor}40` // Increased shadow opacity from 30 to 40
+                        }}>
+                          <img 
+                            src={`/images/${player.avatar}`} 
+                            alt="avatar" 
+                            style={{ 
+                              width: 36, 
+                              height: 36, 
+                              objectFit: 'cover', 
+                              borderRadius: '50%' 
+                            }} 
+                            onError={e => (e.currentTarget.style.opacity = '0.3')} 
+                          />
+                        </div>
+                      ) : (
+                        <div style={{ 
+                          width: 40, 
+                          height: 40, 
+                          background: `linear-gradient(135deg, ${playerColor} 0%, ${playerColor}80 100%)`, 
+                          borderRadius: '50%', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          color: '#fff', 
+                          fontWeight: 700, 
+                          fontSize: 14,
+                          border: `2px solid ${playerColor}`,
+                          boxShadow: `0 2px 4px ${playerColor}40`
+                        }}>
+                          {typeof player.nickname === "string" ? player.nickname.substring(0, 2).toUpperCase() : ""}
+                        </div>
+                      )}
+                      
+                      {/* Player name */}
+                      <span style={{ 
+                        fontWeight: 700, // Made bold
+                        color: '#374151', 
+                        fontSize: 11, 
+                        textAlign: 'center',
+                        lineHeight: '1.2',
+                        wordBreak: 'break-word',
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textShadow: '0 1px 2px rgba(255,255,255,0.8)' // Added text shadow for readability
+                      }}>
+                        {typeof player.nickname === 'string' ? player.nickname : ''}
                       </span>
-                    ) : (
-                      <div style={{ width: 28, height: 28, background: `linear-gradient(135deg, ${playerColor} 0%, #6366f1 100%)`, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13 }}>
-                        {typeof player.nickname === "string" ? player.nickname.substring(0, 2).toUpperCase() : ""}
-                      </div>
-                    )}
-                    <span style={{ fontWeight: 500, color: '#374151', fontSize: 13, textShadow: '0 1px 2px #fff8' }}>{typeof player.nickname === 'string' ? player.nickname : ''}</span>
-                  </div>
-                  {player.progress > 0 && (
-                    <div style={{ fontSize: 11, color: '#4f46e5', fontWeight: 500 }}>
-                      {Math.round(player.progress)}% complete
+                      
+                      {/* Progress indicator */}
+                      {player.progress > 0 && (
+                        <div style={{ 
+                          fontSize: 9, 
+                          color: '#fff', 
+                          fontWeight: 700,
+                          background: `${playerColor}90`, // Use player's color for progress
+                          padding: '2px 6px',
+                          borderRadius: 6,
+                          textAlign: 'center',
+                          boxShadow: `0 1px 3px ${playerColor}40`,
+                          border: `1px solid ${playerColor}`
+                        }}>
+                          {Math.round(player.progress)}%
+                        </div>
+                      )}
                     </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: 80,
+                color: '#9ca3af',
+                fontSize: 14,
+                fontStyle: 'italic'
+              }}>
+                Waiting for players to join...
+              </div>
+            )}
+          </div>
         </div>
         {isAdmin && (
           <div style={{ width: '100%', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 12 }}>
