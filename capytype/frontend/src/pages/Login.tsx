@@ -134,7 +134,7 @@ export default function Login() {
     }
   }, []); // Only run on mount
 
-  // Room code validation effect
+  // Room code validation effect - only validate if user is trying to join
   useEffect(() => {
     if (roomCode.length < 8) {
       setRoomName(null);
@@ -142,9 +142,12 @@ export default function Login() {
       setRoomCheckLoading(false);
       return;
     }
+    
+    // Don't validate room codes when user is just typing - only when they're clearly trying to join
     setRoomCheckLoading(true);
     setRoomName(null);
     setRoomValid(null);
+    
     // Debounce API call
     if (roomCodeCheckTimeout.current) clearTimeout(roomCodeCheckTimeout.current);
     roomCodeCheckTimeout.current = setTimeout(() => {
@@ -154,6 +157,7 @@ export default function Login() {
       const encryptedCode = encryptRoomId(normalizedCode);
       
       console.log('[Room Validation] Checking room code:', normalizedCode);
+      console.log('[Room Validation] Backend URL:', backendUrl);
       console.log('[Room Validation] Encrypted code:', encryptedCode);
       
       fetch(`${backendUrl}/api/room-info?code=${encodeURIComponent(encryptedCode)}`)
@@ -181,6 +185,7 @@ export default function Login() {
         })
         .finally(() => setRoomCheckLoading(false));
     }, 400);
+    
     // Cleanup
     return () => {
       if (roomCodeCheckTimeout.current) clearTimeout(roomCodeCheckTimeout.current);
@@ -189,6 +194,8 @@ export default function Login() {
 
   const handleCreateRoom = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[Create Room] Starting room creation process');
+    
     const trimmedNickname = nickname.trim();
     if (trimmedNickname.length === 0) {
       setError('Nickname cannot be empty!');
@@ -202,6 +209,9 @@ export default function Login() {
       setNickname('');
       return;
     }
+    
+    console.log('[Create Room] Validation passed, creating room for:', trimmedNickname);
+    
     sessionStorage.setItem('capy_nickname', nickname);
     sessionStorage.setItem('capy_avatar_color', selectedAvatarColor);
     // Always get the avatar file from sessionStorage to ensure it's up to date
@@ -210,6 +220,9 @@ export default function Login() {
     // Clear room code on create
     sessionStorage.removeItem('capy_roomId');
     setRoomCode('');
+    
+    console.log('[Create Room] Calling createRoom with:', { nickname, avatarFile, selectedAvatarColor });
+    
     // Pass both avatarFile and selectedAvatarColor
     createRoom(nickname, avatarFile, selectedAvatarColor);
   };
