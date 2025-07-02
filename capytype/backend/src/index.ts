@@ -271,24 +271,24 @@ io.on('connection', (socket) => {
   });
 
   // Change player color
-  socket.on('changePlayerColor', ({ playerId, color }) => {
-    logWithInfo(`changing color for player ${playerId} to ${color}`);
+  socket.on('changePlayerColor', ({ playerId, color, avatar }) => {
+    logWithInfo(`changing color for player ${playerId} to ${color} with avatar ${avatar}`);
     
     // Find the room this player is in
     for (const [roomId, room] of rooms.entries()) {
       if (room.players.has(playerId)) {
         const player = room.players.get(playerId);
         if (player) {
-          // Update the player's color
+          // Update the player's color and avatar
           player.color = color;
+          if (avatar) {
+            player.avatar = avatar;
+          }
           
           // Notify all players in the room about the color change
-          io.to(roomId).emit('playerColorChanged', { playerId, color });
+          io.to(roomId).emit('playerColorChanged', { playerId, color, avatar: player.avatar });
           
-          // Also update the player list
-          io.to(roomId).emit('playerJoined', Array.from(room.players.values()));
-          
-          logWithInfo(`color updated for player ${playerId} in room ${roomId}`);
+          logWithInfo(`color and avatar updated for player ${playerId} in room ${roomId}`);
         }
         break;
       }

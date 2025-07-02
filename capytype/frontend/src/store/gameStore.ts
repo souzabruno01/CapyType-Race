@@ -175,6 +175,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ gameState: 'playing', gameStarted: true });
     });
 
+    // Handle player color changes from server
+    socket.on('playerColorChanged', ({ playerId, color, avatar }: { playerId: string; color: string; avatar?: string }) => {
+      console.log('[Avatar] Player color changed:', { playerId, color, avatar });
+      
+      // Update the player in the store
+      set((state) => ({
+        players: state.players.map((player) =>
+          player.id === playerId 
+            ? { 
+                ...player, 
+                color, 
+                avatar: avatar || player.avatar 
+              } 
+            : player
+        ),
+      }));
+    });
+
     socket.on('progressUpdate', ({ playerId, progress }: { playerId: string; progress: number }) => {
       set((state) => ({
         players: state.players.map((player) =>

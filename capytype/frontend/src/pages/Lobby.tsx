@@ -64,17 +64,22 @@ export default function Lobby() {
   const handleColorChange = (newColor: string, playerId: string) => {
     const socket = useGameStore.getState().socket;
     if (socket) {
+      // Find the matching avatar file for this color
+      const matchingAvatar = CAPYBARA_AVATARS.find(avatar => avatar.color === newColor);
+      
       // If this is the current player, update session storage
       if (socket.id === playerId) {
         sessionStorage.setItem('capy_avatar_color', newColor);
-        // Find the matching avatar file for this color
-        const matchingAvatar = CAPYBARA_AVATARS.find(avatar => avatar.color === newColor);
         if (matchingAvatar) {
           sessionStorage.setItem('capy_avatar_file', matchingAvatar.file);
         }
       }
       
-      socket.emit('changePlayerColor', { playerId, color: newColor });
+      socket.emit('changePlayerColor', { 
+        playerId, 
+        color: newColor, 
+        avatar: matchingAvatar ? matchingAvatar.file : undefined 
+      });
       setShowColorPicker(null);
       setNotificationMessage('Color updated!');
       setShowNotification(true);
@@ -136,35 +141,7 @@ export default function Lobby() {
     }
   }, [showColorPicker]);
 
-  useEffect(() => {
-    // Listen for color change updates from server
-    const socket = useGameStore.getState().socket;
-    
-    const handlePlayerColorChanged = ({ playerId, color }: { playerId: string; color: string }) => {
-      // Find matching avatar for the color
-      const matchingAvatar = CAPYBARA_AVATARS.find(avatar => avatar.color === color);
-      
-      // Update players in store
-      useGameStore.setState((state) => ({
-        players: state.players.map((player) =>
-          player.id === playerId 
-            ? { 
-                ...player, 
-                color, 
-                avatar: matchingAvatar ? matchingAvatar.file : player.avatar 
-              } 
-            : player
-        ),
-      }));
-    };
 
-    if (socket) {
-      socket.on('playerColorChanged', handlePlayerColorChanged);
-      return () => {
-        socket.off('playerColorChanged', handlePlayerColorChanged);
-      };
-    }
-  }, []);
 
   const handleCopyRoomId = () => {
     if (roomId) {
@@ -301,8 +278,25 @@ export default function Lobby() {
             {Array.isArray(players) && players.length > 0 ? (
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', // Increased from 85px to 90px
-                gap: 12, // Increased from 8 to 12
+                gridTemplateColumns: (() => {
+                  const playerCount = players.length;
+                  // Adaptive sizing based on player count
+                  if (playerCount <= 4) return 'repeat(auto-fit, minmax(120px, 1fr))';
+                  if (playerCount <= 8) return 'repeat(auto-fit, minmax(100px, 1fr))';
+                  if (playerCount <= 12) return 'repeat(auto-fit, minmax(85px, 1fr))';
+                  if (playerCount <= 16) return 'repeat(auto-fit, minmax(75px, 1fr))';
+                  if (playerCount <= 20) return 'repeat(auto-fit, minmax(70px, 1fr))';
+                  if (playerCount <= 24) return 'repeat(auto-fit, minmax(65px, 1fr))';
+                  return 'repeat(auto-fit, minmax(60px, 1fr))'; // For 25+ players
+                })(),
+                gap: (() => {
+                  const playerCount = players.length;
+                  // Adaptive gap based on player count
+                  if (playerCount <= 8) return 12;
+                  if (playerCount <= 16) return 10;
+                  if (playerCount <= 24) return 8;
+                  return 6; // For 25+ players
+                })(),
                 justifyItems: 'center',
                 maxWidth: '100%'
               }}>
@@ -311,6 +305,20 @@ export default function Lobby() {
                   const avatar = getAvatarByFile(player.avatar || '');
                   const playerColor = player.color || avatar.color || '#b6a77a';
                   const currentPlayer = useGameStore.getState().socket?.id === player.id;
+                  const playerCount = players.length;
+                  
+                  // Adaptive sizing based on player count
+                  const getAdaptiveSize = () => {
+                    if (playerCount <= 4) return { minWidth: 120, maxWidth: 140, avatarSize: 50, fontSize: 13 };
+                    if (playerCount <= 8) return { minWidth: 100, maxWidth: 120, avatarSize: 45, fontSize: 12 };
+                    if (playerCount <= 12) return { minWidth: 85, maxWidth: 105, avatarSize: 40, fontSize: 11 };
+                    if (playerCount <= 16) return { minWidth: 75, maxWidth: 90, avatarSize: 36, fontSize: 10 };
+                    if (playerCount <= 20) return { minWidth: 70, maxWidth: 85, avatarSize: 32, fontSize: 9 };
+                    if (playerCount <= 24) return { minWidth: 65, maxWidth: 80, avatarSize: 28, fontSize: 8 };
+                    return { minWidth: 60, maxWidth: 75, avatarSize: 24, fontSize: 8 }; // For 25+ players
+                  };
+                  
+                  const sizes = getAdaptiveSize();
                   
                   return (
                     <div key={player.id || player.nickname} style={{
@@ -318,14 +326,14 @@ export default function Lobby() {
                       flexDirection: 'column',
                       alignItems: 'center',
                       gap: 4,
-                      padding: 8,
+                      padding: playerCount > 16 ? 6 : 8, // Reduce padding for many players
                       borderRadius: 10,
                       background: player.progress > 0 
                         ? `linear-gradient(135deg, ${playerColor}60, rgba(79, 70, 229, 0.2))` 
                         : `${playerColor}50`, // Increased opacity from 20 to 50 for better visibility
                       border: `2px solid ${playerColor}80`, // Increased border opacity from 60 to 80
-                      minWidth: 90, // Increased from 85 to 90
-                      maxWidth: 110, // Increased from 100 to 110
+                      minWidth: sizes.minWidth,
+                      maxWidth: sizes.maxWidth,
                       transition: 'all 0.2s ease',
                       boxShadow: `0 2px 6px ${playerColor}30`, // Increased shadow opacity from 20 to 30
                       position: 'relative'
@@ -404,8 +412,8 @@ export default function Lobby() {
                       {/* Avatar */}
                       {player.avatar ? (
                         <div style={{ 
-                          width: 40, 
-                          height: 40, 
+                          width: sizes.avatarSize, 
+                          height: sizes.avatarSize, 
                           borderRadius: '50%', 
                           overflow: 'hidden', 
                           display: 'flex', 
@@ -419,8 +427,8 @@ export default function Lobby() {
                             src={`/images/${player.avatar}`} 
                             alt="avatar" 
                             style={{ 
-                              width: 36, 
-                              height: 36, 
+                              width: sizes.avatarSize - 4, 
+                              height: sizes.avatarSize - 4, 
                               objectFit: 'cover', 
                               borderRadius: '50%' 
                             }} 
@@ -429,8 +437,8 @@ export default function Lobby() {
                         </div>
                       ) : (
                         <div style={{ 
-                          width: 40, 
-                          height: 40, 
+                          width: sizes.avatarSize, 
+                          height: sizes.avatarSize, 
                           background: `linear-gradient(135deg, ${playerColor} 0%, ${playerColor}80 100%)`, 
                           borderRadius: '50%', 
                           display: 'flex', 
@@ -438,7 +446,7 @@ export default function Lobby() {
                           justifyContent: 'center', 
                           color: '#fff', 
                           fontWeight: 700, 
-                          fontSize: 14,
+                          fontSize: Math.max(sizes.fontSize, 8), // Ensure minimum readable size
                           border: `2px solid ${playerColor}`,
                           boxShadow: `0 2px 4px ${playerColor}40`
                         }}>
@@ -450,7 +458,7 @@ export default function Lobby() {
                       <span style={{ 
                         fontWeight: 700, // Made bold
                         color: '#374151', 
-                        fontSize: 11, 
+                        fontSize: sizes.fontSize, 
                         textAlign: 'center',
                         lineHeight: '1.2',
                         wordBreak: 'break-word',
