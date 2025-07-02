@@ -4,6 +4,203 @@ import { useGameStore, Player } from '../store/gameStore';
 import ReactConfetti from 'react-confetti';
 import { useNavigate } from 'react-router-dom';
 
+// Sample texts for the typing game
+const SAMPLE_TEXTS = [
+  "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the alphabet and is perfect for typing practice.",
+  "In a hole in the ground there lived a hobbit. Not a nasty, dirty, wet hole filled with the ends of worms and an oozy smell, nor yet a dry, bare, sandy hole with nothing in it to sit down on or to eat.",
+  "To be or not to be, that is the question. Whether 'tis nobler in the mind to suffer the slings and arrows of outrageous fortune, or to take arms against a sea of troubles.",
+  "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity.",
+  "All happy families are alike; each unhappy family is unhappy in its own way. Everything was in confusion in the Oblonskys' house."
+];
+
+// Text Generation Modal Component
+const TextGenerationModal = ({ isOpen, onClose, onTextGenerated }: {
+  isOpen: boolean;
+  onClose: () => void;
+  onTextGenerated: (text: string) => void;
+}) => {
+  const [selectedText, setSelectedText] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && !selectedText) {
+      // Auto-generate text when modal opens
+      setIsGenerating(true);
+      setTimeout(() => {
+        const randomText = SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
+        setSelectedText(randomText);
+        setIsGenerating(false);
+      }, 1000);
+    }
+  }, [isOpen, selectedText]);
+
+  const handleConfirm = () => {
+    if (selectedText) {
+      onTextGenerated(selectedText);
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        backdropFilter: 'blur(4px)'
+      }}
+    >
+      <motion.div
+        initial={{ scale: 0.8, y: 50 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.8, y: 50, opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        style={{
+          width: '100%',
+          maxWidth: 600,
+          padding: 32,
+          background: 'rgba(235, 228, 200, 0.95)', // Matching lobby background
+          borderRadius: 16,
+          boxShadow: '0 4px 32px rgba(0,0,0,0.15)',
+          border: '1.5px solid #b6a77a', // Matching lobby border
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 24,
+          margin: '0 16px'
+        }}
+      >
+        <div style={{ textAlign: 'center', width: '100%' }}>
+          <h2 style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#232323',
+            marginBottom: 8,
+            letterSpacing: '1.2px',
+            textShadow: '0 1px 4px #fff8'
+          }}>
+            🏁 Race Text Generated
+          </h2>
+          <p style={{ color: '#4b5563', marginBottom: 24 }}>
+            Get ready to type the following text as fast and accurately as possible!
+          </p>
+        </div>
+
+        <div style={{
+          width: '100%',
+          background: 'rgba(255, 255, 255, 0.9)',
+          borderRadius: 12,
+          padding: 20,
+          border: '1.5px solid #b6a77a',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          minHeight: 120
+        }}>
+          {isGenerating ? (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: 80,
+              color: '#9ca3af',
+              fontSize: 16,
+              fontStyle: 'italic'
+            }}>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                style={{ marginRight: 12 }}
+              >
+                ⚡
+              </motion.div>
+              Generating race text...
+            </div>
+          ) : (
+            <p style={{
+              fontSize: 16,
+              lineHeight: 1.6,
+              color: '#374151',
+              fontFamily: 'inherit',
+              margin: 0
+            }}>
+              {selectedText}
+            </p>
+          )}
+        </div>
+
+        <div style={{
+          display: 'flex',
+          gap: 16,
+          justifyContent: 'center',
+          width: '100%'
+        }}>
+          <button
+            onClick={() => {
+              setSelectedText('');
+              setIsGenerating(true);
+              setTimeout(() => {
+                const randomText = SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
+                setSelectedText(randomText);
+                setIsGenerating(false);
+              }, 1000);
+            }}
+            disabled={isGenerating}
+            style={{
+              background: '#fff',
+              color: '#232323',
+              border: '1.5px solid #b6a77a',
+              borderRadius: 999,
+              padding: '12px 28px',
+              fontWeight: 700,
+              fontSize: 16,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              cursor: isGenerating ? 'not-allowed' : 'pointer',
+              transition: 'background 0.2s',
+              margin: '8px 0',
+              letterSpacing: '0.5px',
+              opacity: isGenerating ? 0.6 : 1
+            }}
+          >
+            🎲 Generate New Text
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={isGenerating || !selectedText}
+            style={{
+              background: '#232323',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 999,
+              padding: '12px 28px',
+              fontWeight: 700,
+              fontSize: 16,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              cursor: (isGenerating || !selectedText) ? 'not-allowed' : 'pointer',
+              transition: 'background 0.2s',
+              margin: '8px 0',
+              letterSpacing: '0.5px',
+              opacity: (isGenerating || !selectedText) ? 0.6 : 1
+            }}
+          >
+            ✅ Start Race
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 const CapybaraIcon = ({ avatar, color, size = 32 }: { avatar?: string; color?: string; size?: number }) => (
   <img
     src={avatar ? `/images/${avatar}` : "/images/Capy-progress-bar-icon.svg"}
@@ -211,7 +408,7 @@ const modernButtonStyle = {
 
 export default function Game() {
   const navigate = useNavigate();
-  const { text, updateProgress, players, gameState } = useGameStore();
+  const { text, updateProgress, players, gameState, setText } = useGameStore();
   const [input, setInput] = useState('');
   const [countdown, setCountdown] = useState<number | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
@@ -220,6 +417,7 @@ export default function Game() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [showTimeUp, setShowTimeUp] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [showTextModal, setShowTextModal] = useState(true); // Show modal initially
   const [playerStats, setPlayerStats] = useState<PlayerStats>({
     wpm: 0,
     errors: 0,
@@ -240,6 +438,14 @@ export default function Game() {
   // const playerName = currentPlayer?.nickname || 'Player';
   // const playerAvatar = currentPlayer?.avatar;
   // const playerColor = currentPlayer?.color;
+
+  // Handle text generation from modal
+  const handleTextGenerated = (generatedText: string) => {
+    setText(generatedText);
+    setShowTextModal(false);
+    // Start countdown after text is set
+    setTimeout(() => setCountdown(3), 500);
+  };
 
   // Calculate initial timer based on text length (2 seconds per word)
   useEffect(() => {
@@ -487,6 +693,13 @@ export default function Game() {
         }}
       >
         <AnimatePresence>
+          {showTextModal && (
+            <TextGenerationModal
+              isOpen={showTextModal}
+              onClose={() => setShowTextModal(false)}
+              onTextGenerated={handleTextGenerated}
+            />
+          )}
           {showTimeUp && (
             <TimeUpOverlay 
               onAnimationComplete={() => setShowTimeUp(false)} 
