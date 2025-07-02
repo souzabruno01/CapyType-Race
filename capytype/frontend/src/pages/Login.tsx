@@ -166,7 +166,9 @@ export default function Login() {
             console.log('[Room Validation] Error response:', errorText);
             throw new Error('Invalid');
           }
-          const data = await res.json();
+          return res.json();
+        })
+        .then((data) => {
           console.log('[Room Validation] Response data:', data);
           if (data && data.name) {
             setRoomName(data.name);
@@ -242,10 +244,13 @@ export default function Login() {
       setError('Please enter a room code to join!');
       return;
     }
-    if (!roomValid) {
+    
+    // Check if room is valid before proceeding
+    if (roomValid !== true) {
       setError('Please enter a valid room code!');
       return;
     }
+    
     const normalizedRoomCode = roomCode.trim().toLowerCase();
     sessionStorage.setItem('capy_nickname', nickname);
     sessionStorage.setItem('capy_roomId', normalizedRoomCode);
@@ -253,6 +258,7 @@ export default function Login() {
     // Always get the avatar file from sessionStorage to ensure it's up to date
     const avatarFile = sessionStorage.getItem('capy_avatar_file') || (CAPYBARA_AVATARS.find(a => a.color === selectedAvatarColor)?.file || 'Capy-face-blue.png');
     sessionStorage.setItem('capy_avatar_file', avatarFile);
+    
     // Pass both avatarFile and selectedAvatarColor
     joinRoom(normalizedRoomCode, nickname, avatarFile, selectedAvatarColor);
   };

@@ -428,11 +428,22 @@ export default function Lobby() {
 
   useEffect(() => {
     if (!roomId) {
+      console.log('[Lobby] No roomId, redirecting to login');
       navigate('/');
-    } else {
-      setRoomName(generateRoomName(roomId));
-      // Preload game assets while in lobby for performance optimization
-      preloadGameAssets();
+      return;
+    }
+    
+    // Set room name and preload assets
+    setRoomName(generateRoomName(roomId));
+    
+    // Preload game assets while in lobby for performance optimization
+    preloadGameAssets();
+    
+    // Validate the room exists on the server
+    const socket = useGameStore.getState().socket;
+    if (!socket || !socket.connected) {
+      console.log('[Lobby] Socket not connected, reconnecting...');
+      useGameStore.getState().connect();
     }
   }, [roomId, navigate]);
 

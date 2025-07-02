@@ -229,6 +229,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     socket.on('error', (message: string) => {
       console.error('Socket error:', message);
+      if (message === 'Room not found') {
+        alert('The room you tried to join does not exist or has been closed.');
+        set({ roomId: null });
+        
+        // Clear room from session storage
+        sessionStorage.removeItem('capy_roomId');
+        
+        // This will redirect back to login
+        if (window.location.pathname.includes('/lobby')) {
+          window.location.href = '/';
+        }
+      } else {
+        alert(`Error: ${message}`);
+      }
     });
 
     socket.on('disconnect', () => {
@@ -313,21 +327,37 @@ export const useGameStore = create<GameStore>((set, get) => ({
         set({ roomId });
       } else {
         console.error('Failed to connect to server');
+        alert('Failed to connect to the game server. Please try again.');
       }
     };
 
     if (!socket) {
+      console.log('[Join] No socket, connecting first...');
       get().connect();
       setTimeout(() => {
         const newSocket = get().socket;
-        if (newSocket) emitJoinRoom(newSocket);
+        if (newSocket) {
+          console.log('[Join] Connected, now joining room');
+          emitJoinRoom(newSocket);
+        } else {
+          console.error('[Join] Failed to connect after waiting');
+          alert('Could not connect to the game server. Please check your internet connection.');
+        }
       }, 1000);
     } else if (socket.connected) {
+      console.log('[Join] Socket already connected, joining directly');
       emitJoinRoom(socket);
     } else {
+      console.log('[Join] Socket exists but disconnected, reconnecting...');
       socket.connect();
       setTimeout(() => {
-        if (socket) emitJoinRoom(socket);
+        if (socket && socket.connected) {
+          console.log('[Join] Reconnected, now joining room');
+          emitJoinRoom(socket);
+        } else {
+          console.error('[Join] Failed to reconnect');
+          alert('Could not reconnect to the game server. Please refresh the page and try again.');
+        }
       }, 1000);
     }
   },
