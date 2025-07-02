@@ -8,8 +8,11 @@ A real-time multiplayer typing game with a capybara theme where players race aga
 - **Capybara-themed UI** - Cute and engaging interface with customizable avatar colors
 - **Room-based Gameplay** - Create or join private rooms with readable room names
 - **Avatar Customization** - Choose from 10 different capybara colors and personalities
-- **Enhanced Visibility** - Improved UI transparency and color contrast
-- **Live Progress Tracking** - See everyone's progress in real-time with vibrant player cards
+- **AI-powered Text Generation** - Host can generate race text using AI with topic prompts
+- **Character Limit Control** - Set precise character limits for race text (50-500 characters)
+- **Smart Text Truncation** - Ensures text always ends at logical boundaries (sentence/word)
+- **Individual Player Lanes** - Focus on your own performance during the race
+- **Real-time Color Feedback** - Instantly see typing correctness with color highlighting
 - **Performance Metrics** - Track WPM, errors, and accuracy
 - **Results Dashboard** - Compare your performance with others
 
@@ -20,7 +23,9 @@ A real-time multiplayer typing game with a capybara theme where players race aga
 - **State Management**: Zustand
 - **Styling**: Tailwind CSS
 - **Animations**: Framer Motion
-- **Hosting**: Firebase (Frontend) + Render/Railway (Backend)
+- **AI Text Generation**: Hugging Face Inference API
+- **Hosting**: Firebase (Frontend) + Railway (Backend)
+- **Version Control**: Git + GitHub
 
 ## 🏗️ Architecture
 
@@ -33,42 +38,53 @@ graph TB
         A --> E[Lobby Components]
         A --> F[Avatar System]
         F --> G[Color Picker]
+        E --> H[Text Generation Modal]
+        H --> I[AI Text Generation]
+        H --> J[Smart Text Truncation]
     end
     
-    subgraph "Backend (Railway/Render)"
-        H[Express Server] --> I[Socket.IO Server]
-        I --> J[Room Manager]
-        J --> K[Game Logic]
-        I --> L[Player Management]
-        L --> M[Avatar Color Sync]
+    subgraph "Backend (Railway)"
+        K[Express Server] --> L[Socket.IO Server]
+        L --> M[Room Manager]
+        M --> N[Game Logic]
+        L --> O[Player Management]
+        O --> P[Avatar Color Sync]
+        Q[Room Validation] --> R[UUID Processing]
+    end
+    
+    subgraph "External Services"
+        S[Hugging Face API] --> I
     end
     
     subgraph "Real-time Communication"
-        C <--> I
-        G <--> M
+        C <--> L
+        G <--> P
     end
     
     subgraph "Game Flow"
-        N[Login & Avatar Selection] --> O[Create/Join Room]
-        O --> P[Lobby with Player Cards]
-        P --> Q[Game Start]
-        Q --> R[Typing Race]
-        R --> S[Results]
-        S --> P
+        T[Login & Avatar Selection] --> U[Create/Join Room]
+        U --> V[Lobby with Player Cards]
+        V --> W[Text Generation]
+        W --> X[Game Start]
+        X --> Y[Typing Race]
+        Y --> Z[Results]
+        Z --> V
     end
     
-    subgraph "UI Improvements"
-        T[Enhanced Transparency]
-        U[Better Color Visibility]
-        V[Improved Player Cards]
+    subgraph "Performance Optimizations"
+        AA[Asset Preloading]
+        AB[Individual Player Lanes]
+        AC[Real-time Typing Feedback]
     end
     
     style A fill:#e1f5fe
-    style H fill:#f3e5f5
+    style K fill:#f3e5f5
     style C fill:#fff3e0
-    style I fill:#fff3e0
+    style L fill:#fff3e0
     style F fill:#e8f5e8
     style G fill:#e8f5e8
+    style I fill:#e0f7fa
+    style S fill:#bbdefb
 ```
 
 ## 🚀 Quick Start
@@ -146,9 +162,10 @@ firebase deploy
 3. **Create a room** or **join an existing room** with a room ID
 4. **Wait in the lobby** for other players to join (you'll see colorful player cards)
 5. **Customize your color** anytime in the lobby using the edit button on your player card
-6. **Start the game** when ready (room admin only)
-7. **Type the displayed text** as fast and accurately as possible
-8. **View results** and compare your performance with others
+6. **Generate race text** (host only) - Choose a topic and character limit or use random text
+7. **Start the game** when ready (room admin only)
+8. **Type the displayed text** as fast and accurately as possible (green for correct, red for errors)
+9. **View results** and compare your performance with others
 
 ## 📊 Game Metrics
 
@@ -190,18 +207,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Cause**: Frontend domain not allowed in backend CORS
 - **Solution**: Add your domain to `CORS_ORIGIN` in backend `.env` file
 
+### "Invalid room code" when trying to join
+- **Cause**: Room does not exist or has been closed
+- **Solution**: Double-check the room code or create a new room
+
 ## 🚀 Recent Updates
 
-- ✅ **Enhanced UI Visibility** - Improved transparency for login card and player cards in lobby
-- ✅ **Avatar Customization** - Added 10 capybara color options with real-time color picker
-- ✅ **Better Player Cards** - Increased color opacity for better visibility on the lobby board
-- ✅ **Railway Deployment** - Optimized backend deployment configuration
-- ✅ **Improved UX** - Better color contrast and visual feedback
-- ✅ **Real-time Color Sync** - Avatar colors update instantly across all connected players
-- ✅ **Fixed environment variable configuration**
-- ✅ **Updated CORS settings for production**
-- ✅ **Resolved TypeScript compilation errors**
-- ✅ **Improved error handling and connection stability**
+- ✅ **Performance Optimization** - Implemented asset preloading to eliminate game start latency
+- ✅ **Host-Driven Text Generation** - Moved text generation to lobby (host-only) with real AI integration
+- ✅ **Individual Player Lanes** - Updated to show only the current player's lane during the race
+- ✅ **Real-time Typing Feedback** - Added color-coded feedback (green, red, yellow) and error counting
+- ✅ **Adaptive Results Modal** - Redesigned to be responsive and visually separated
+- ✅ **Hugging Face AI Integration** - Using real AI text generation with topic and character limit options
+- ✅ **Smart Text Truncation** - Implemented boundary-aware text truncation (sentence/word) for all text sources
+- ✅ **Room Validation Fix** - Simplified room joining with plain UUIDs for better reliability
+- ✅ **Enhanced Error Handling** - Improved validation and error handling for room joining
+- ✅ **Backend Auto-deployment** - Updated Railway configuration for automatic deployment on git push
 
 ---
 

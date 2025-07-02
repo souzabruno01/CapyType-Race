@@ -17,15 +17,23 @@ graph TB
         D --> DB[Avatars Utility]
         D --> DC[Framer Motion]
         D --> DD[React Confetti]
+        E --> EA[Text Generation Modal]
+        EA --> EB[AI Integration]
+        EA --> EC[Topic Selection]
+        EA --> ED[Character Limit Control]
+        
         subgraph "Frontend Features"
             G[Real-time Typing]
             H[Progress Tracking]
             I[Error Detection]
             J[WPM Calculation]
+            GA[Asset Preloading]
+            GB[Color-coded Feedback]
+            GC[Smart Text Truncation]
         end
     end
     
-    subgraph "Server Side (Render/Railway)"
+    subgraph "Server Side (Railway)"
         K[Express.js Server] --> L[Socket.IO Server]
         L --> M[Room Manager]
         M --> N[Game Logic Engine]
@@ -36,7 +44,14 @@ graph TB
             Q[Real-time Sync]
             R[Game State Management]
             S[Results Processing]
+            PA[UUID Validation]
+            PB[Room Code Simplification]
         end
+    end
+    
+    subgraph "External Services"
+        XA[Hugging Face Inference API]
+        XA --> EB
     end
     
     subgraph "Real-time Communication Layer"
@@ -49,7 +64,8 @@ graph TB
     subgraph "Game Flow States"
         W[Login Screen] --> X[Room Selection]
         X --> Y[Lobby Waiting]
-        Y --> Z[Game Active]
+        Y --> YA[Text Generation]
+        YA --> Z[Game Active]
         Z --> AA[Results Display]
         AA --> X
     end
@@ -66,6 +82,8 @@ graph TB
     style DB fill:#fef9c3,stroke:#b6a77a
     style DC fill:#f3e8ff,stroke:#a78bfa
     style DD fill:#e0f2fe,stroke:#38bdf8
+    style EB fill:#dbeafe,stroke:#3b82f6
+    style XA fill:#ede9fe,stroke:#8b5cf6
     style A fill:#e3f2fd
     style K fill:#f3e5f5
     style C fill:#fff8e1
@@ -79,6 +97,7 @@ graph TB
 sequenceDiagram
     participant U as User
     participant F as Frontend
+    participant AI as Hugging Face API
     participant S as Socket.IO
     participant B as Backend
     participant R as Room Manager
@@ -95,8 +114,26 @@ sequenceDiagram
     B->>S: Broadcast room update
     S->>F: Update UI
     
+    alt Host generates text
+        U->>F: Select topic & character limit
+        F->>AI: Generate text with prompt
+        AI->>F: Return AI-generated text
+        F->>F: Apply smart truncation
+        U->>F: Start game with generated text
+    else Host uses random text
+        U->>F: Generate random text
+        F->>F: Apply smart truncation
+        U->>F: Start game with random text
+    end
+    
+    F->>S: Emit start game event
+    S->>B: Set game state to active
+    B->>S: Broadcast game start
+    S->>F: Start game for all players
+    
     U->>F: Start typing
-    F->>F: Calculate progress
+    F->>F: Calculate progress & validate
+    F->>F: Apply color feedback
     F->>S: Emit progress update
     S->>B: Process progress
     B->>S: Broadcast to room
@@ -123,26 +160,30 @@ graph LR
         G --> H[Reusable Button Component]
         H --> I[Avatars Utility]
         I --> J[React Confetti]
+        J --> K[Hugging Face Inference API]
+        K --> L[Smart Text Truncation]
+        L --> M[Asset Preloading]
     end
     
     subgraph "Backend Stack"
-        K[Node.js] --> L[Express.js]
-        L --> M[Socket.IO Server]
-        M --> N[TypeScript]
-        N --> O[CORS]
-        O --> P[dotenv]
+        N[Node.js] --> O[Express.js]
+        O --> P[Socket.IO Server]
+        P --> Q[TypeScript]
+        Q --> R[CORS]
+        R --> S[dotenv]
+        S --> T[UUID Validation]
     end
     
     subgraph "Development Tools"
-        Q[ESLint] --> R[Prettier]
-        R --> S[Git]
-        S --> T[npm/yarn]
+        U[ESLint] --> V[Prettier]
+        V --> W[Git]
+        W --> X[npm/yarn]
     end
     
     subgraph "Deployment"
-        U[Firebase Hosting] --> V[Render/Railway]
-        V --> W[Environment Variables]
-        W --> X[CI/CD Pipeline]
+        Y[Firebase Hosting] --> Z[Railway]
+        Z --> AA[Environment Variables]
+        AA --> AB[CI/CD Pipeline]
     end
 ```
 
@@ -224,7 +265,7 @@ graph TB
     end
     
     subgraph "Backend Deployment"
-        E[Git Integration] --> F[Render/Railway]
+        E[Git Integration] --> F[Railway]
         F --> G[Auto-deployment]
         G --> H[Health Monitoring]
     end
@@ -236,6 +277,12 @@ graph TB
         I[Development .env]
         J[Production .env]
         K[CI/CD Variables]
+    end
+    
+    subgraph "External API Integration"
+        L[Hugging Face Inference API] --> M[Text Generation]
+        M --> N[Topic Processing]
+        N --> O[Character Limit]
     end
 ```
 
