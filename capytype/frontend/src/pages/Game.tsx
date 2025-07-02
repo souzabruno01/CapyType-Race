@@ -4,7 +4,7 @@ import { useGameStore, Player } from '../store/gameStore';
 import ReactConfetti from 'react-confetti';
 import { useNavigate } from 'react-router-dom';
 
-// Sample texts for the typing game
+// Sample texts for the typing game - moved to lobby for host-controlled text generation
 const SAMPLE_TEXTS = [
   "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the alphabet and is perfect for typing practice.",
   "In a hole in the ground there lived a hobbit. Not a nasty, dirty, wet hole filled with the ends of worms and an oozy smell, nor yet a dry, bare, sandy hole with nothing in it to sit down on or to eat.",
@@ -12,194 +12,6 @@ const SAMPLE_TEXTS = [
   "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity.",
   "All happy families are alike; each unhappy family is unhappy in its own way. Everything was in confusion in the Oblonskys' house."
 ];
-
-// Text Generation Modal Component
-const TextGenerationModal = ({ isOpen, onClose, onTextGenerated }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onTextGenerated: (text: string) => void;
-}) => {
-  const [selectedText, setSelectedText] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-
-  useEffect(() => {
-    if (isOpen && !selectedText) {
-      // Auto-generate text when modal opens
-      setIsGenerating(true);
-      setTimeout(() => {
-        const randomText = SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
-        setSelectedText(randomText);
-        setIsGenerating(false);
-      }, 1000);
-    }
-  }, [isOpen, selectedText]);
-
-  const handleConfirm = () => {
-    if (selectedText) {
-      onTextGenerated(selectedText);
-      onClose();
-    }
-  };
-
-  if (!isOpen) return null;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        backdropFilter: 'blur(4px)'
-      }}
-    >
-      <motion.div
-        initial={{ scale: 0.8, y: 50 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.8, y: 50, opacity: 0 }}
-        transition={{ duration: 0.3 }}
-        style={{
-          width: '100%',
-          maxWidth: 600,
-          padding: 32,
-          background: 'rgba(235, 228, 200, 0.95)', // Matching lobby background
-          borderRadius: 16,
-          boxShadow: '0 4px 32px rgba(0,0,0,0.15)',
-          border: '1.5px solid #b6a77a', // Matching lobby border
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 24,
-          margin: '0 16px'
-        }}
-      >
-        <div style={{ textAlign: 'center', width: '100%' }}>
-          <h2 style={{
-            fontSize: '2rem',
-            fontWeight: 700,
-            color: '#232323',
-            marginBottom: 8,
-            letterSpacing: '1.2px',
-            textShadow: '0 1px 4px #fff8'
-          }}>
-            🏁 Race Text Generated
-          </h2>
-          <p style={{ color: '#4b5563', marginBottom: 24 }}>
-            Get ready to type the following text as fast and accurately as possible!
-          </p>
-        </div>
-
-        <div style={{
-          width: '100%',
-          background: 'rgba(255, 255, 255, 0.9)',
-          borderRadius: 12,
-          padding: 20,
-          border: '1.5px solid #b6a77a',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          minHeight: 120
-        }}>
-          {isGenerating ? (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: 80,
-              color: '#9ca3af',
-              fontSize: 16,
-              fontStyle: 'italic'
-            }}>
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                style={{ marginRight: 12 }}
-              >
-                ⚡
-              </motion.div>
-              Generating race text...
-            </div>
-          ) : (
-            <p style={{
-              fontSize: 16,
-              lineHeight: 1.6,
-              color: '#374151',
-              fontFamily: 'inherit',
-              margin: 0
-            }}>
-              {selectedText}
-            </p>
-          )}
-        </div>
-
-        <div style={{
-          display: 'flex',
-          gap: 16,
-          justifyContent: 'center',
-          width: '100%'
-        }}>
-          <button
-            onClick={() => {
-              setSelectedText('');
-              setIsGenerating(true);
-              setTimeout(() => {
-                const randomText = SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
-                setSelectedText(randomText);
-                setIsGenerating(false);
-              }, 1000);
-            }}
-            disabled={isGenerating}
-            style={{
-              background: '#fff',
-              color: '#232323',
-              border: '1.5px solid #b6a77a',
-              borderRadius: 999,
-              padding: '12px 28px',
-              fontWeight: 700,
-              fontSize: 16,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
-              cursor: isGenerating ? 'not-allowed' : 'pointer',
-              transition: 'background 0.2s',
-              margin: '8px 0',
-              letterSpacing: '0.5px',
-              opacity: isGenerating ? 0.6 : 1
-            }}
-          >
-            🎲 Generate New Text
-          </button>
-          <button
-            onClick={handleConfirm}
-            disabled={isGenerating || !selectedText}
-            style={{
-              background: '#232323',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 999,
-              padding: '12px 28px',
-              fontWeight: 700,
-              fontSize: 16,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
-              cursor: (isGenerating || !selectedText) ? 'not-allowed' : 'pointer',
-              transition: 'background 0.2s',
-              margin: '8px 0',
-              letterSpacing: '0.5px',
-              opacity: (isGenerating || !selectedText) ? 0.6 : 1
-            }}
-          >
-            ✅ Start Race
-          </button>
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-};
 
 const CapybaraIcon = ({ avatar, color, size = 32 }: { avatar?: string; color?: string; size?: number }) => (
   <img
@@ -273,17 +85,69 @@ const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: {
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm bg-black/30"
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 50,
+      backdropFilter: 'blur(4px)',
+      padding: 16
+    }}
   >
     <motion.div
       initial={{ scale: 0.8, y: 50 }}
       animate={{ scale: 1, y: 0 }}
       exit={{ scale: 0.8, y: 50, opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white/80 rounded-2xl p-8 max-w-4xl w-full mx-4 shadow-2xl border-2 border-[#b6a77a] flex flex-col items-center"
+      style={{
+        background: 'rgba(235, 228, 200, 0.95)',
+        borderRadius: 20,
+        padding: 32,
+        maxWidth: 1000,
+        width: '100%',
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+        border: '2px solid #b6a77a',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center'
+      }}
     >
-      <h2 className="text-4xl font-bold text-indigo-700 mb-8 text-center">Race Results 🏁</h2>
-      <div className="flex flex-wrap justify-center gap-6 mb-8 w-full">
+      <h2 style={{
+        fontSize: '2.5rem',
+        fontWeight: 700,
+        color: '#232323',
+        marginBottom: 32,
+        textAlign: 'center',
+        letterSpacing: '1.2px',
+        textShadow: '0 1px 4px #fff8'
+      }}>
+        🏁 Race Results
+      </h2>
+      
+      {/* Adaptive Grid Layout */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: (() => {
+          const playerCount = players.length;
+          if (playerCount <= 2) return 'repeat(2, 1fr)';
+          if (playerCount <= 4) return 'repeat(2, 1fr)';
+          if (playerCount <= 6) return 'repeat(3, 1fr)';
+          if (playerCount <= 9) return 'repeat(3, 1fr)';
+          return 'repeat(4, 1fr)';
+        })(),
+        gap: 20,
+        marginBottom: 32,
+        width: '100%',
+        justifyItems: 'center'
+      }}>
         {Array.isArray(players) && players
           .sort((a, b) => b.progress - a.progress)
           .map((player, index) => {
@@ -291,44 +155,176 @@ const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: {
             const avatar = player.avatar;
             const color = player.color;
             const isCurrentUser = player.id === useGameStore.getState().socket?.id;
+            
+            // Medal colors for podium positions
+            const getMedalColor = (position: number) => {
+              switch(position) {
+                case 0: return '#fbbf24'; // Gold
+                case 1: return '#9ca3af'; // Silver  
+                case 2: return '#f59e0b'; // Bronze
+                default: return '#6366f1'; // Default blue
+              }
+            };
+            
             return (
               <div
                 key={player.id || player.nickname}
-                className={`flex flex-col items-center p-5 rounded-xl shadow-lg transition-all duration-300 ${isCurrentUser ? 'bg-gradient-to-br from-purple-100 to-indigo-100 border-2 border-indigo-500 scale-105' : 'bg-white/70 border border-gray-200'}`}
-                style={{ minWidth: '200px', flexGrow: 1, maxWidth: '280px' }}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  padding: 20,
+                  borderRadius: 16,
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+                  transition: 'all 0.3s ease',
+                  minWidth: 180,
+                  width: '100%',
+                  maxWidth: 220,
+                  background: isCurrentUser 
+                    ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%)'
+                    : 'rgba(255, 255, 255, 0.9)',
+                  border: isCurrentUser 
+                    ? '2px solid #6366f1' 
+                    : '2px solid #e5e7eb',
+                  transform: isCurrentUser ? 'scale(1.05)' : 'scale(1)',
+                  position: 'relative'
+                }}
               >
-                <CapybaraIcon avatar={avatar} color={color} />
-                <h3 className="font-semibold text-gray-800 mt-3 text-xl text-center">{typeof player.nickname === 'string' ? player.nickname : 'Player'}</h3>
-                <p className="text-sm text-gray-600 mt-1 text-center">
-                  <span className="font-bold text-indigo-700 text-lg">{index + 1}º Place</span>
-                </p>
-                {player.wpm !== undefined && (
-                  <p className="text-sm text-gray-600 text-center">
-                    WPM: <span className="font-bold text-blue-600 text-lg">{Math.round(player.wpm)}</span>
-                  </p>
+                {/* Position Badge */}
+                <div style={{
+                  position: 'absolute',
+                  top: -10,
+                  right: -10,
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  background: getMedalColor(index),
+                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 700,
+                  fontSize: 14,
+                  boxShadow: '0 3px 10px rgba(0,0,0,0.2)',
+                  border: '2px solid #fff'
+                }}>
+                  {index + 1}
+                </div>
+                
+                {/* Current User Crown */}
+                {isCurrentUser && (
+                  <div style={{
+                    position: 'absolute',
+                    top: -8,
+                    left: -8,
+                    fontSize: 20
+                  }}>
+                    👑
+                  </div>
                 )}
-                {player.errors !== undefined && (
-                  <p className="text-sm text-gray-600 text-center">
-                    Errors: <span className="font-bold text-red-600 text-lg">{player.errors}</span>
-                  </p>
-                )}
-                <p className="text-sm text-gray-600 text-center">
-                  Progress: <span className="font-bold text-green-600 text-lg">{typeof player.progress === 'number' ? Math.round(player.progress) : 0}%</span>
-                </p>
+                
+                <CapybaraIcon avatar={avatar} color={color} size={56} />
+                
+                <h3 style={{
+                  fontWeight: 700,
+                  color: '#232323',
+                  marginTop: 12,
+                  fontSize: 18,
+                  textAlign: 'center',
+                  wordBreak: 'break-word',
+                  maxWidth: '100%'
+                }}>
+                  {typeof player.nickname === 'string' ? player.nickname : 'Player'}
+                </h3>
+                
+                {/* Stats Grid */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr',
+                  gap: 8,
+                  marginTop: 12,
+                  width: '100%'
+                }}>
+                  {player.wpm !== undefined && (
+                    <div style={{
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid rgba(16, 185, 129, 0.2)',
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>WPM</div>
+                      <div style={{ fontSize: 18, color: '#059669', fontWeight: 700 }}>
+                        {Math.round(player.wpm || 0)}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {player.errors !== undefined && (
+                    <div style={{
+                      background: player.errors > 0 ? 'rgba(220, 38, 38, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: `1px solid ${player.errors > 0 ? 'rgba(220, 38, 38, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>Errors</div>
+                      <div style={{ 
+                        fontSize: 18, 
+                        color: player.errors > 0 ? '#dc2626' : '#059669', 
+                        fontWeight: 700 
+                      }}>
+                        {player.errors}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div style={{
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid rgba(99, 102, 241, 0.2)',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>Progress</div>
+                    <div style={{ fontSize: 18, color: '#6366f1', fontWeight: 700 }}>
+                      {typeof player.progress === 'number' ? Math.round(player.progress) : 0}%
+                    </div>
+                  </div>
+                </div>
               </div>
             );
           })}
       </div>
-      <div className="flex flex-col sm:flex-row justify-center gap-4 w-full">
+      
+      <div style={{
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 16,
+        width: '100%',
+        flexWrap: 'wrap'
+      }}>
         <button
           onClick={onReturnToLobby}
-          className="px-8 py-4 text-xl font-medium text-indigo-600 bg-white rounded-xl border-2 border-indigo-600 hover:bg-indigo-50 transform hover:scale-105 transition-all shadow-lg"
+          style={{
+            ...modernButtonStyle,
+            background: '#fff',
+            color: '#232323',
+            border: '2px solid #b6a77a',
+            fontSize: 16,
+            padding: '12px 24px'
+          }}
         >
           ← Back to Lobby
         </button>
         <button
           onClick={onBackToLogin}
-          className="px-8 py-4 text-xl font-medium text-indigo-600 bg-white rounded-xl border-2 border-indigo-600 hover:bg-indigo-50 transform hover:scale-105 transition-all shadow-lg"
+          style={{
+            ...modernButtonStyle,
+            fontSize: 16,
+            padding: '12px 24px'
+          }}
         >
           ← Back to Login
         </button>
@@ -408,16 +404,15 @@ const modernButtonStyle = {
 
 export default function Game() {
   const navigate = useNavigate();
-  const { text, updateProgress, players, gameState, setText } = useGameStore();
+  const { text, updateProgress, players, gameState } = useGameStore();
   const [input, setInput] = useState('');
-  const [countdown, setCountdown] = useState<number | null>(null);
+  const [countdown, setCountdown] = useState<number | null>(3); // Start with countdown immediately
   const [gameStarted, setGameStarted] = useState(false);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [showTimeUp, setShowTimeUp] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [showTextModal, setShowTextModal] = useState(true); // Show modal initially
   const [playerStats, setPlayerStats] = useState<PlayerStats>({
     wpm: 0,
     errors: 0,
@@ -435,17 +430,6 @@ export default function Game() {
   
   // Get the current player's nickname from the store
   const currentPlayer = players.find(player => player.id === useGameStore.getState().socket?.id);
-  // const playerName = currentPlayer?.nickname || 'Player';
-  // const playerAvatar = currentPlayer?.avatar;
-  // const playerColor = currentPlayer?.color;
-
-  // Handle text generation from modal
-  const handleTextGenerated = (generatedText: string) => {
-    setText(generatedText);
-    setShowTextModal(false);
-    // Start countdown after text is set
-    setTimeout(() => setCountdown(3), 500);
-  };
 
   // Calculate initial timer based on text length (2 seconds per word)
   useEffect(() => {
@@ -693,13 +677,6 @@ export default function Game() {
         }}
       >
         <AnimatePresence>
-          {showTextModal && (
-            <TextGenerationModal
-              isOpen={showTextModal}
-              onClose={() => setShowTextModal(false)}
-              onTextGenerated={handleTextGenerated}
-            />
-          )}
           {showTimeUp && (
             <TimeUpOverlay 
               onAnimationComplete={() => setShowTimeUp(false)} 
@@ -765,26 +742,146 @@ export default function Game() {
             )}
           </div>
         )}
-        {/* Player Lanes */}
-        {gameStarted && !gameFinished && (
-          <div style={{ width: '100%', maxWidth: 700, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 18 }}>
-            {players.map((player) => {
-              const isCurrent = player.id === currentPlayer?.id;
-              const laneProgress = typeof player.progress === 'number' ? player.progress : 0;
-              return (
-                <div key={player.id || player.nickname} style={{ display: 'flex', alignItems: 'center', gap: 18, background: isCurrent ? 'rgba(99,102,241,0.10)' : 'rgba(0,0,0,0.03)', borderRadius: 10, padding: '8px 16px', border: isCurrent ? '2px solid #6366f1' : '1.5px solid #b6a77a', boxShadow: isCurrent ? '0 2px 8px #6366f122' : undefined }}>
-                  <CapybaraIcon avatar={player.avatar} color={player.color} size={40} />
-                  <span style={{ fontWeight: 600, color: isCurrent ? '#6366f1' : '#232323', fontSize: 17, minWidth: 90 }}>{player.nickname}</span>
-                  <div style={{ flex: 1, height: 16, background: '#e5e7eb', borderRadius: 8, margin: '0 12px', position: 'relative', overflow: 'hidden' }}>
-                    <div style={{ width: `${laneProgress}%`, height: '100%', background: isCurrent ? 'linear-gradient(90deg, #6366f1 0%, #818cf8 100%)' : 'linear-gradient(90deg, #b6a77a 0%, #fde68a 100%)', borderRadius: 8, transition: 'width 0.2s' }} />
-                    <span style={{ position: 'absolute', left: 8, top: 0, fontSize: 13, color: isCurrent ? '#fff' : '#232323', fontWeight: 500, lineHeight: '16px' }}>{Math.round(laneProgress)}%</span>
-                  </div>
-                  {isCurrent && (
-                    <span style={{ fontSize: 13, color: '#059669', fontWeight: 600, marginLeft: 8 }}>You</span>
+        {/* Individual Player Lane - Only Show Current Player */}
+        {gameStarted && !gameFinished && currentPlayer && (
+          <div style={{ width: '100%', maxWidth: 700, margin: '0 auto 24px auto' }}>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 20, 
+              background: 'rgba(99,102,241,0.15)', 
+              borderRadius: 16, 
+              padding: '16px 24px', 
+              border: '2px solid #6366f1', 
+              boxShadow: '0 6px 16px #6366f130',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              {/* Player Avatar */}
+              <CapybaraIcon avatar={currentPlayer.avatar} color={currentPlayer.color} size={52} />
+              
+              {/* Player Name */}
+              <span style={{ 
+                fontWeight: 700, 
+                color: '#6366f1', 
+                fontSize: 20, 
+                minWidth: 100,
+                textShadow: '0 1px 2px #6366f140'
+              }}>
+                {currentPlayer.nickname}
+              </span>
+              
+              {/* Enhanced Progress Bar with Avatar Integration */}
+              <div style={{ 
+                flex: 1, 
+                height: 32, 
+                background: 'linear-gradient(90deg, #f8fafc 0%, #e2e8f0 100%)', 
+                borderRadius: 16, 
+                margin: '0 16px', 
+                position: 'relative', 
+                overflow: 'hidden',
+                border: '2px solid #cbd5e1',
+                boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.08)'
+              }}>
+                {/* Progress Fill */}
+                <div style={{ 
+                  width: `${progress}%`, 
+                  height: '100%', 
+                  background: 'linear-gradient(90deg, #6366f1 0%, #818cf8 50%, #a855f7 100%)', 
+                  borderRadius: 16, 
+                  transition: 'width 0.4s ease-out',
+                  position: 'relative',
+                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.4)'
+                }}>
+                  {/* Moving Avatar on Progress Bar */}
+                  {progress > 0 && (
+                    <div style={{
+                      position: 'absolute',
+                      right: -16,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      background: '#fff',
+                      border: `3px solid ${currentPlayer.color || '#6366f1'}`,
+                      boxShadow: '0 3px 12px rgba(0,0,0,0.2)',
+                      transition: 'all 0.4s ease-out',
+                      zIndex: 10
+                    }}>
+                      <img 
+                        src={currentPlayer.avatar ? `/images/${currentPlayer.avatar}` : "/images/Capy-progress-bar-icon.svg"}
+                        alt="avatar" 
+                        style={{ 
+                          width: '100%', 
+                          height: '100%', 
+                          objectFit: 'cover' 
+                        }} 
+                      />
+                    </div>
                   )}
                 </div>
-              );
-            })}
+                
+                {/* Progress Percentage */}
+                <span style={{ 
+                  position: 'absolute', 
+                  left: 12, 
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  fontSize: 14, 
+                  color: progress > 20 ? '#fff' : '#374151', 
+                  fontWeight: 700, 
+                  textShadow: progress > 20 ? '0 1px 3px rgba(0,0,0,0.6)' : 'none'
+                }}>
+                  {Math.round(progress)}%
+                </span>
+                
+                {/* Finish Line */}
+                <div style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 0,
+                  bottom: 0,
+                  width: 6,
+                  background: 'repeating-linear-gradient(45deg, #000 0px, #000 4px, #fff 4px, #fff 8px)',
+                  borderRadius: '0 16px 16px 0',
+                  boxShadow: 'inset -2px 0 4px rgba(0,0,0,0.3)'
+                }} />
+              </div>
+              
+              {/* Live Stats */}
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+                gap: 4,
+                minWidth: 100
+              }}>
+                <span style={{ 
+                  fontSize: 13, 
+                  color: '#059669', 
+                  fontWeight: 700,
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  padding: '4px 8px',
+                  borderRadius: 6,
+                  border: '1px solid rgba(16, 185, 129, 0.3)'
+                }}>
+                  WPM: {playerStats.wpm}
+                </span>
+                <span style={{ 
+                  fontSize: 13, 
+                  color: playerStats.errors > 0 ? '#dc2626' : '#059669', 
+                  fontWeight: 700,
+                  background: playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                  padding: '4px 8px',
+                  borderRadius: 6,
+                  border: `1px solid ${playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`
+                }}>
+                  Errors: {playerStats.errors}
+                </span>
+              </div>
+            </div>
           </div>
         )}
         {/* Typing Area (only for current player) */}
