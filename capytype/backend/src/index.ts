@@ -95,16 +95,6 @@ app.get('/', (req, res) => {
   });
 });
 
-function decryptRoomId(cipher: string) {
-  // crypto-js AES uses OpenSSL format: Salted__ + 8 bytes salt + ciphertext
-  // We need to extract the salt and derive the key/iv as crypto-js does
-  const CryptoJS = require('crypto-js');
-  const SECRET = process.env.ROOM_ID_SECRET || 'capytype-shared-secret';
-  // Decrypt using crypto-js for perfect compatibility
-  const bytes = CryptoJS.AES.decrypt(cipher, SECRET);
-  return bytes.toString(CryptoJS.enc.Utf8);
-}
-
 // Room info endpoint for frontend validation
 app.get('/api/room-info', (req, res) => {
   const code = req.query.code;
@@ -113,29 +103,12 @@ app.get('/api/room-info', (req, res) => {
     return res.status(400).json({ error: 'Missing or invalid code' });
   }
 
-  let roomIdToLookup = '';
-  try {
-    // The frontend always sends an encrypted code for validation.
-    // We must decrypt it to get the raw room ID.
-    const decrypted = decryptRoomId(code);
-    if (decrypted) {
-      roomIdToLookup = decrypted.toLowerCase();
-    }
-    console.log('[room-info] Decryption successful. Raw decrypted:', decrypted);
-  } catch (e) {
-    // This catch block will handle any unexpected errors during decryption.
-    console.error('[room-info] Error during decryption:', e);
-    return res.status(400).json({ error: 'Invalid room code format' });
-  }
-  
-  if (!roomIdToLookup) {
-    console.log('[room-info] Decryption resulted in empty string');
-    return res.status(400).json({ error: 'Invalid room code' });
-  }
+  // Normalize the room ID to lowercase for lookup
+  const roomIdToLookup = code.trim().toLowerCase();
   
   console.log('\n================= ROOM INFO LOOKUP =================');
   console.log('Requested code:     ', code);
-  console.log('Decrypted code:     ', roomIdToLookup);
+  console.log('Normalized code:    ', roomIdToLookup);
   console.log('Current room keys:  ', Array.from(rooms.keys()));
   // Print a grid of room info
   if (rooms.size > 0) {
@@ -154,7 +127,7 @@ app.get('/api/room-info', (req, res) => {
 
   const room = rooms.get(roomIdToLookup);
   if (!room) {
-    console.log('[room-info] Room not found for decrypted code:', roomIdToLookup);
+    console.log('[room-info] Room not found for code:', roomIdToLookup);
     return res.status(404).json({ error: 'Room not found' });
   }
   const name = generateRoomName(roomIdToLookup);

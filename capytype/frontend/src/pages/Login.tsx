@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { Filter } from 'bad-words';
-import { encryptRoomId } from '../utils/crypto';
 
 const RESERVED_WORDS = [
   'admin', 'host', 'moderator', 'capybara', 'room', 'test', 'null', 'undefined', 'root', 'server'
@@ -154,13 +153,12 @@ export default function Login() {
       // Use VITE_BACKEND_URL from env
       const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
       const normalizedCode = roomCode.trim().toLowerCase();
-      const encryptedCode = encryptRoomId(normalizedCode);
       
       console.log('[Room Validation] Checking room code:', normalizedCode);
       console.log('[Room Validation] Backend URL:', backendUrl);
-      console.log('[Room Validation] Encrypted code:', encryptedCode);
       
-      fetch(`${backendUrl}/api/room-info?code=${encodeURIComponent(encryptedCode)}`)
+      // Don't encrypt the room code - send it directly as the room ID
+      fetch(`${backendUrl}/api/room-info?code=${encodeURIComponent(normalizedCode)}`)
         .then(async (res) => {
           console.log('[Room Validation] Response status:', res.status);
           if (!res.ok) {
