@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 // Removed unused Button import
 import { useGameStore } from '../store/gameStore';
 import { generateRoomName } from '../utils/roomUtils';
@@ -67,6 +68,319 @@ const capyTitleStyle = {
   textShadow: '0 1px 4px #fff8',
 };
 
+// Text Generation Modal Component for Host
+const TextGenerationModal = ({ 
+  isOpen, 
+  onClose, 
+  customText, 
+  setCustomText, 
+  characterLimit, 
+  setCharacterLimit, 
+  onGenerateRandom, 
+  onGenerateWithChatGPT, 
+  generatingText, 
+  onStartGame 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  customText: string;
+  setCustomText: (text: string) => void;
+  characterLimit: number;
+  setCharacterLimit: (limit: number) => void;
+  onGenerateRandom: () => void;
+  onGenerateWithChatGPT: () => void;
+  generatingText: boolean;
+  onStartGame: () => void;
+}) => {
+  if (!isOpen) return null;
+
+  const characterLimits = [50, 100, 150, 200, 300, 500];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1000,
+        backdropFilter: 'blur(4px)',
+        padding: 16
+      }}
+    >
+      <motion.div
+        initial={{ scale: 0.8, y: 50 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.8, y: 50, opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        style={{
+          width: '100%',
+          maxWidth: 650,
+          padding: 32,
+          background: 'rgba(235, 228, 200, 0.95)',
+          borderRadius: 20,
+          boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+          border: '2px solid #b6a77a',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 24,
+          maxHeight: '90vh',
+          overflowY: 'auto'
+        }}
+      >
+        <div style={{ textAlign: 'center', width: '100%', position: 'relative' }}>
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              top: -8,
+              right: -8,
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              background: '#dc2626',
+              color: '#fff',
+              border: 'none',
+              fontSize: 16,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              fontWeight: 700
+            }}
+          >
+            ×
+          </button>
+          
+          <h2 style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            color: '#232323',
+            marginBottom: 8,
+            letterSpacing: '1.2px',
+            textShadow: '0 1px 4px #fff8'
+          }}>
+            🏁 Generate Race Text
+          </h2>
+          <p style={{ color: '#4b5563', marginBottom: 16 }}>
+            Create custom text for your typing race
+          </p>
+        </div>
+
+        {/* Character Limit Selector */}
+        <div style={{ width: '100%' }}>
+          <label style={{ 
+            display: 'block', 
+            marginBottom: 8, 
+            fontWeight: 600, 
+            color: '#374151' 
+          }}>
+            Character Limit: {characterLimit}
+          </label>
+          <div style={{ 
+            display: 'flex', 
+            gap: 8, 
+            flexWrap: 'wrap', 
+            marginBottom: 16 
+          }}>
+            {characterLimits.map(limit => (
+              <button
+                key={limit}
+                onClick={() => setCharacterLimit(limit)}
+                style={{
+                  background: characterLimit === limit ? '#232323' : '#fff',
+                  color: characterLimit === limit ? '#fff' : '#232323',
+                  border: '1.5px solid #b6a77a',
+                  borderRadius: 8,
+                  padding: '6px 12px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                }}
+              >
+                {limit}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Text Area */}
+        <div style={{ width: '100%' }}>
+          <div style={{ 
+            background: 'rgba(99, 102, 241, 0.1)', 
+            border: '1px solid rgba(99, 102, 241, 0.2)', 
+            borderRadius: 8, 
+            padding: 12, 
+            marginBottom: 12,
+            fontSize: 13,
+            color: '#4f46e5'
+          }}>
+            💡 <strong>Tip:</strong> Type a topic or keywords (like "technology", "space", "nature"), then click "AI Expand Text" to generate a complete typing text, or write your full custom text manually.
+          </div>
+          <textarea
+            value={customText}
+            onChange={(e) => setCustomText(e.target.value.substring(0, characterLimit))}
+            placeholder="Enter a topic (e.g., 'artificial intelligence', 'ocean exploration', 'ancient history') or write your complete custom text here..."
+            style={{
+              width: '100%',
+              minHeight: 120,
+              padding: 16,
+              border: '2px solid #b6a77a',
+              borderRadius: 12,
+              fontSize: 14,
+              fontFamily: 'inherit',
+              resize: 'vertical',
+              background: 'rgba(255, 255, 255, 0.9)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              outline: 'none',
+              transition: 'border-color 0.2s'
+            }}
+            onFocus={(e) => e.target.style.borderColor = '#6366f1'}
+            onBlur={(e) => e.target.style.borderColor = '#b6a77a'}
+          />
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginTop: 8,
+            fontSize: 12,
+            color: '#6b7280'
+          }}>
+            <span>Characters: {customText.length}/{characterLimit}</span>
+            {customText.length >= characterLimit && (
+              <span style={{ color: '#dc2626', fontWeight: 600 }}>
+                Character limit reached
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Generation Buttons */}
+        <div style={{
+          display: 'flex',
+          gap: 12,
+          justifyContent: 'center',
+          width: '100%',
+          flexWrap: 'wrap'
+        }}>
+          <button
+            onClick={onGenerateRandom}
+            disabled={generatingText}
+            style={{
+              background: '#fff',
+              color: '#232323',
+              border: '2px solid #b6a77a',
+              borderRadius: 12,
+              padding: '12px 20px',
+              fontWeight: 700,
+              fontSize: 14,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              cursor: generatingText ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+              opacity: generatingText ? 0.6 : 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+          >
+            🎲 Random Text
+          </button>
+          
+          <button
+            onClick={onGenerateWithChatGPT}
+            disabled={generatingText}
+            style={{
+              background: generatingText ? '#9ca3af' : '#10b981',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '12px 20px',
+              fontWeight: 700,
+              fontSize: 14,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              cursor: generatingText ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8
+            }}
+          >
+            {generatingText ? (
+              <>
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                >
+                  ⚡
+                </motion.div>
+                Generating...
+              </>
+            ) : (
+              <>🤖 AI Expand Text</>
+            )}
+          </button>
+        </div>
+
+        {/* Action Buttons */}
+        <div style={{
+          display: 'flex',
+          gap: 16,
+          justifyContent: 'center',
+          width: '100%'
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              background: '#fff',
+              color: '#232323',
+              border: '2px solid #b6a77a',
+              borderRadius: 12,
+              padding: '12px 28px',
+              fontWeight: 700,
+              fontSize: 16,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onStartGame}
+            disabled={!customText.trim() || generatingText}
+            style={{
+              background: (!customText.trim() || generatingText) ? '#9ca3af' : '#232323',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 12,
+              padding: '12px 28px',
+              fontWeight: 700,
+              fontSize: 16,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+              cursor: (!customText.trim() || generatingText) ? 'not-allowed' : 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            ✅ Start Race
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
+
 export default function Lobby() {
   const navigate = useNavigate();
   const { roomId, players, isAdmin, gameState, startGame } = useGameStore();
@@ -78,6 +392,10 @@ export default function Lobby() {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [showColorPicker, setShowColorPicker] = useState<string | null>(null);
+  const [showTextModal, setShowTextModal] = useState(false);
+  const [customText, setCustomText] = useState('');
+  const [generatingText, setGeneratingText] = useState(false);
+  const [characterLimit, setCharacterLimit] = useState(150);
 
   // Get actual capybara colors from avatars
   const capyColors = CAPYBARA_AVATARS.map(avatar => avatar.color);
@@ -204,6 +522,218 @@ export default function Lobby() {
     }
     useGameStore.getState().resetGame();
     navigate('/login');
+  };
+
+  // Sample texts for random generation
+  const SAMPLE_TEXTS = [
+    "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the alphabet and is perfect for typing practice.",
+    "In a hole in the ground there lived a hobbit. Not a nasty, dirty, wet hole filled with the ends of worms and an oozy smell, nor yet a dry, bare, sandy hole with nothing in it to sit down on or to eat.",
+    "To be or not to be, that is the question. Whether 'tis nobler in the mind to suffer the slings and arrows of outrageous fortune, or to take arms against a sea of troubles.",
+    "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity.",
+    "All happy families are alike; each unhappy family is unhappy in its own way. Everything was in confusion in the Oblonskys' house.",
+    "Space: the final frontier. These are the voyages of the starship Enterprise. Its continuing mission: to explore strange new worlds, to seek out new life and new civilizations.",
+    "Technology is best when it brings people together. The art of communication is the language of leadership. Innovation distinguishes between a leader and a follower.",
+    "The only way to do great work is to love what you do. Stay hungry, stay foolish. Your time is limited, don't waste it living someone else's life."
+  ];
+
+  // Generate random text from samples
+  const generateRandomText = () => {
+    const randomText = SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
+    const truncatedText = randomText.substring(0, characterLimit);
+    setCustomText(truncatedText);
+  };
+
+  // Generate text using Hugging Face Inference API (free)
+  const generateWithChatGPT = async () => {
+    setGeneratingText(true);
+    
+    try {
+      const userPrompt = customText.trim();
+      
+      // Create a more effective prompt for text generation models
+      const prompt = userPrompt 
+        ? `Topic: ${userPrompt}. Write an educational paragraph about this topic in ${characterLimit} characters or less:`
+        : `Write an educational paragraph about an interesting topic in ${characterLimit} characters or less:`;
+
+      // Try different models for better text generation
+      const models = [
+        'gpt2',
+        'microsoft/DialoGPT-medium',
+        'distilgpt2'
+      ];
+
+      let generatedText = '';
+      let success = false;
+
+      for (const model of models) {
+        try {
+          // Add timeout to prevent hanging requests
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+          const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              inputs: prompt,
+              parameters: {
+                max_length: Math.min(Math.ceil(characterLimit / 2), 512),
+                temperature: 0.8,
+                do_sample: true,
+                top_p: 0.9,
+                repetition_penalty: 1.1,
+                return_full_text: false
+              }
+            }),
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            const data = await response.json();
+            
+            if (Array.isArray(data) && data.length > 0 && data[0].generated_text) {
+              generatedText = data[0].generated_text;
+            } else if (data.generated_text) {
+              generatedText = data.generated_text;
+            }
+
+            if (generatedText && generatedText.length > 10) {
+              success = true;
+              break;
+            }
+          } else if (response.status === 503) {
+            // Model is loading, wait a bit and try next model
+            console.log(`Model ${model} is loading, trying next...`);
+            continue;
+          }
+        } catch (modelError) {
+          const errorMessage = modelError instanceof Error ? modelError.message : 'Unknown error';
+          console.log(`Model ${model} failed:`, errorMessage);
+          continue;
+        }
+      }
+
+      if (!success) {
+        throw new Error('All AI models failed');
+      }
+
+      // Clean up the generated text
+      generatedText = generatedText
+        .replace(prompt, '') // Remove prompt if included
+        .replace(/^\s*[:.-]\s*/, '') // Remove leading punctuation
+        .trim()
+        .replace(/\n+/g, ' ') // Replace newlines with spaces
+        .replace(/\s+/g, ' '); // Normalize whitespace
+
+      // Ensure it fits character limit and ends properly
+      if (generatedText.length > characterLimit) {
+        generatedText = generatedText.substring(0, characterLimit);
+        // Try to end at a complete sentence or word
+        const lastPeriod = generatedText.lastIndexOf('.');
+        const lastSpace = generatedText.lastIndexOf(' ');
+        
+        if (lastPeriod > characterLimit * 0.7) {
+          generatedText = generatedText.substring(0, lastPeriod + 1);
+        } else if (lastSpace > characterLimit * 0.8) {
+          generatedText = generatedText.substring(0, lastSpace);
+        }
+      }
+
+      if (generatedText.length < 20) {
+        throw new Error('Generated text too short after processing');
+      }
+
+      setCustomText(generatedText);
+      
+    } catch (error) {
+      console.error('Error generating text with AI:', error);
+      
+      // Enhanced fallback with topic-aware generation
+      const userPrompt = customText.trim().toLowerCase();
+      let fallbackText = '';
+      
+      // Determine text complexity based on character limit
+      const isShort = characterLimit <= 100;
+      const isMedium = characterLimit > 100 && characterLimit <= 250;
+      
+      if (userPrompt) {
+        if (userPrompt.includes('capybara') || userPrompt.includes('rodent')) {
+          fallbackText = isShort 
+            ? `Capybaras are the world's largest rodents, native to South America. These gentle giants live near water and are excellent swimmers.`
+            : isMedium
+            ? `Capybaras are the world's largest rodents, native to South America. These gentle giants live in groups near water bodies like rivers and marshes. With their calm demeanor, they serve as peaceful mediators in the animal kingdom and are beloved by many other species.`
+            : `Capybaras are the world's largest rodents, native to South America. These gentle giants live in groups near water bodies like rivers, lakes, and marshes. With their calm demeanor and social nature, capybaras often serve as peaceful mediators in the animal kingdom. They can weigh up to 65 kilograms and are excellent swimmers, using their webbed feet to navigate through water with remarkable grace and efficiency.`;
+        } else if (userPrompt.includes('technology') || userPrompt.includes('ai') || userPrompt.includes('computer')) {
+          fallbackText = isShort
+            ? `Technology revolutionizes how we work and communicate. AI systems analyze data to make predictions and automate complex tasks.`
+            : isMedium
+            ? `Technology continues to revolutionize how we work, communicate, and solve problems. Machine learning algorithms analyze vast datasets to make predictions and automate complex tasks across industries. These innovations enhance human capabilities and drive progress.`
+            : `Technology continues to revolutionize how we work, communicate, and solve complex problems in our daily lives. Machine learning algorithms analyze vast datasets to make accurate predictions and automate intricate tasks across various industries. From healthcare diagnostics to autonomous vehicles, these technological innovations enhance human capabilities and drive unprecedented progress in our modern world.`;
+        } else if (userPrompt.includes('nature') || userPrompt.includes('environment')) {
+          fallbackText = isShort
+            ? `Nature maintains delicate ecosystems that support diverse life forms. Environmental conservation is crucial for future generations.`
+            : isMedium
+            ? `Nature maintains delicate ecosystems that support countless species across the planet. Environmental conservation efforts are crucial for preserving biodiversity and ensuring sustainable resources for future generations to enjoy.`
+            : `Nature maintains intricate ecosystems that support countless species across our planet. From rainforests to coral reefs, these environments provide essential services like oxygen production and climate regulation. Environmental conservation efforts are crucial for preserving biodiversity and ensuring sustainable resources for future generations.`;
+        } else if (userPrompt.includes('space') || userPrompt.includes('universe')) {
+          fallbackText = isShort
+            ? `The universe contains billions of galaxies with countless stars. Space exploration expands human knowledge beyond Earth.`
+            : isMedium
+            ? `The universe contains billions of galaxies, each with countless stars and planetary systems. Space exploration missions continue to expand human knowledge and reveal the mysteries that lie beyond our home planet Earth.`
+            : `The universe contains billions of galaxies, each hosting countless stars and diverse planetary systems. Space exploration missions continue to expand human knowledge, revealing fascinating mysteries about cosmic phenomena, distant worlds, and the fundamental nature of reality that lies far beyond our home planet Earth.`;
+        } else {
+          // Generic topic-based fallback
+          const topic = userPrompt.split(' ')[0];
+          const capitalizedTopic = topic.charAt(0).toUpperCase() + topic.slice(1);
+          fallbackText = isShort
+            ? `${capitalizedTopic} offers fascinating insights and learning opportunities. Understanding this subject enriches our knowledge and perspective.`
+            : isMedium
+            ? `${capitalizedTopic} represents a fascinating area of study that offers numerous insights and learning opportunities. Understanding this subject helps us appreciate complex relationships and patterns that shape our world.`
+            : `${capitalizedTopic} represents a fascinating area of study that offers countless insights and learning opportunities. Understanding this subject helps us appreciate the complex relationships and intricate patterns that shape our world. Through careful exploration and analysis, we can gain valuable knowledge and develop a deeper appreciation for this important topic.`;
+        }
+      } else {
+        // Default fallback when no topic is provided
+        fallbackText = isShort
+          ? `Learning and discovery drive human progress through curiosity and innovation. Education opens doors to new possibilities.`
+          : isMedium
+          ? `Learning and discovery drive human progress through curiosity, innovation, and the pursuit of knowledge. Education opens doors to new possibilities and helps us understand the world around us in meaningful ways.`
+          : `Learning and discovery drive human progress through curiosity, innovation, and the relentless pursuit of knowledge. Education opens doors to new possibilities and helps us understand the complex world around us in meaningful and transformative ways. Through continuous learning, we expand our horizons and contribute to the advancement of human understanding.`;
+      }
+      
+      // Ensure fallback text fits character limit perfectly
+      if (fallbackText.length > characterLimit) {
+        fallbackText = fallbackText.substring(0, characterLimit);
+        // Try to end at a complete sentence or word
+        const lastPeriod = fallbackText.lastIndexOf('.');
+        const lastSpace = fallbackText.lastIndexOf(' ');
+        
+        if (lastPeriod > characterLimit * 0.8) {
+          fallbackText = fallbackText.substring(0, lastPeriod + 1);
+        } else if (lastSpace > characterLimit * 0.9) {
+          fallbackText = fallbackText.substring(0, lastSpace);
+        }
+      }
+      
+      setCustomText(fallbackText);
+    }
+    
+    setGeneratingText(false);
+  };
+
+  // Handle starting game with custom text
+  const handleStartWithCustomText = () => {
+    if (customText.trim()) {
+      if (playAlone) {
+        startGame(customText, true);
+      } else {
+        startGame(customText);
+      }
+      setShowTextModal(false);
+    }
   };
 
   return (
@@ -547,17 +1077,9 @@ export default function Lobby() {
             <button 
               disabled={!playAlone && players.length < 2} 
               style={{ ...modernButtonStyle, width: '100%', marginBottom: 0 }}
-              onClick={() => {
-                if (playAlone) {
-                  // Practice mode: use a default text or prompt for one
-                  startGame('Practice mode text', true);
-                } else {
-                  // Multiplayer: use a default or server-provided text
-                  startGame('');
-                }
-              }}
+              onClick={() => setShowTextModal(true)}
             >
-              Start Game
+              🎮 Generate & Start Race
             </button>
             {!playAlone && players.length < 2 && (
               <p style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', margin: 0 }}>
@@ -572,6 +1094,24 @@ export default function Lobby() {
           </div>
         )}
       </div>
+      
+      {/* Text Generation Modal */}
+      <AnimatePresence>
+        {showTextModal && (
+          <TextGenerationModal
+            isOpen={showTextModal}
+            onClose={() => setShowTextModal(false)}
+            customText={customText}
+            setCustomText={setCustomText}
+            characterLimit={characterLimit}
+            setCharacterLimit={setCharacterLimit}
+            onGenerateRandom={generateRandomText}
+            onGenerateWithChatGPT={generateWithChatGPT}
+            generatingText={generatingText}
+            onStartGame={handleStartWithCustomText}
+          />
+        )}
+      </AnimatePresence>
       
       {/* Leave Confirmation Dialog */}
       {showLeaveConfirmation && (
