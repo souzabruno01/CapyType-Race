@@ -536,10 +536,62 @@ export default function Lobby() {
     "The only way to do great work is to love what you do. Stay hungry, stay foolish. Your time is limited, don't waste it living someone else's life."
   ];
 
+  // Smart truncation function to avoid cutting mid-word or mid-sentence
+  const smartTruncate = (text: string, maxLength: number): string => {
+    if (text.length <= maxLength) {
+      return text;
+    }
+    
+    // First, try to cut at sentence boundaries
+    const sentences = text.split(/[.!?]+/);
+    let result = '';
+    
+    for (let i = 0; i < sentences.length; i++) {
+      const sentence = sentences[i].trim();
+      if (!sentence) continue;
+      
+      const potentialResult = result + (result ? '. ' : '') + sentence + '.';
+      
+      if (potentialResult.length <= maxLength) {
+        result = potentialResult;
+      } else {
+        break;
+      }
+    }
+    
+    // If we have a good sentence-based result, use it
+    if (result.length >= maxLength * 0.7) { // At least 70% of desired length
+      return result;
+    }
+    
+    // Otherwise, cut at word boundaries
+    const words = text.split(' ');
+    result = '';
+    
+    for (let i = 0; i < words.length; i++) {
+      const potentialResult = result + (result ? ' ' : '') + words[i];
+      
+      if (potentialResult.length <= maxLength) {
+        result = potentialResult;
+      } else {
+        break;
+      }
+    }
+    
+    // Add proper ending punctuation if missing
+    if (result && !result.match(/[.!?]$/)) {
+      if (result.length < maxLength - 1) {
+        result += '.';
+      }
+    }
+    
+    return result || text.substring(0, maxLength); // Fallback to hard cut if all else fails
+  };
+
   // Generate random text from samples
   const generateRandomText = () => {
     const randomText = SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
-    const truncatedText = randomText.substring(0, characterLimit);
+    const truncatedText = smartTruncate(randomText, characterLimit);
     setCustomText(truncatedText);
   };
 
@@ -629,19 +681,8 @@ export default function Lobby() {
         .replace(/\n+/g, ' ') // Replace newlines with spaces
         .replace(/\s+/g, ' '); // Normalize whitespace
 
-      // Ensure it fits character limit and ends properly
-      if (generatedText.length > characterLimit) {
-        generatedText = generatedText.substring(0, characterLimit);
-        // Try to end at a complete sentence or word
-        const lastPeriod = generatedText.lastIndexOf('.');
-        const lastSpace = generatedText.lastIndexOf(' ');
-        
-        if (lastPeriod > characterLimit * 0.7) {
-          generatedText = generatedText.substring(0, lastPeriod + 1);
-        } else if (lastSpace > characterLimit * 0.8) {
-          generatedText = generatedText.substring(0, lastSpace);
-        }
-      }
+      // Apply smart truncation
+      generatedText = smartTruncate(generatedText, characterLimit);
 
       if (generatedText.length < 20) {
         throw new Error('Generated text too short after processing');
@@ -704,19 +745,8 @@ export default function Lobby() {
           : `Learning and discovery drive human progress through curiosity, innovation, and the relentless pursuit of knowledge. Education opens doors to new possibilities and helps us understand the complex world around us in meaningful and transformative ways. Through continuous learning, we expand our horizons and contribute to the advancement of human understanding.`;
       }
       
-      // Ensure fallback text fits character limit perfectly
-      if (fallbackText.length > characterLimit) {
-        fallbackText = fallbackText.substring(0, characterLimit);
-        // Try to end at a complete sentence or word
-        const lastPeriod = fallbackText.lastIndexOf('.');
-        const lastSpace = fallbackText.lastIndexOf(' ');
-        
-        if (lastPeriod > characterLimit * 0.8) {
-          fallbackText = fallbackText.substring(0, lastPeriod + 1);
-        } else if (lastSpace > characterLimit * 0.9) {
-          fallbackText = fallbackText.substring(0, lastSpace);
-        }
-      }
+      // Apply smart truncation to fallback text
+      fallbackText = smartTruncate(fallbackText, characterLimit);
       
       setCustomText(fallbackText);
     }

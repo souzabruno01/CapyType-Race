@@ -115,6 +115,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ socket });
     });
 
+    socket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      console.error('Backend URL:', backendUrl);
+      alert(`Cannot connect to server at ${backendUrl}. Please check if the backend is running.`);
+    });
+
+    socket.on('disconnect', (reason) => {
+      console.log('Disconnected from server:', reason);
+    });
+
     socket.on('roomCreated', (roomId: string) => {
       console.log('Room created:', roomId);
       set({ roomId, isAdmin: true });
@@ -252,7 +262,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
     } else {
       console.error('Socket not connected');
+      console.log('Attempting to reconnect...');
       get().connect();
+      
+      // Try again after a short delay
+      setTimeout(() => {
+        const { socket: newSocket } = get();
+        if (newSocket?.connected) {
+          console.log('Reconnected, trying createRoom again');
+          newSocket.emit('createRoom', { 
+            nickname, 
+            avatar: finalAvatar, 
+            color: finalColor 
+          });
+        } else {
+          console.error('Failed to reconnect to server');
+          alert('Cannot connect to server. Please check your internet connection and try again.');
+        }
+      }, 2000);
     }
   },
 
