@@ -121,13 +121,21 @@ app.get('/api/room-info', (req, res) => {
     if (decrypted) {
       roomIdToLookup = decrypted.toLowerCase();
     }
+    console.log('[room-info] Decryption successful. Raw decrypted:', decrypted);
   } catch (e) {
     // This catch block will handle any unexpected errors during decryption.
     console.error('[room-info] Error during decryption:', e);
+    return res.status(400).json({ error: 'Invalid room code format' });
   }
+  
+  if (!roomIdToLookup) {
+    console.log('[room-info] Decryption resulted in empty string');
+    return res.status(400).json({ error: 'Invalid room code' });
+  }
+  
   console.log('\n================= ROOM INFO LOOKUP =================');
   console.log('Requested code:     ', code);
-  console.log('Decrypted code:     ', roomIdToLookup || '(decryption failed or empty)');
+  console.log('Decrypted code:     ', roomIdToLookup);
   console.log('Current room keys:  ', Array.from(rooms.keys()));
   // Print a grid of room info
   if (rooms.size > 0) {
@@ -144,7 +152,7 @@ app.get('/api/room-info', (req, res) => {
     console.log('No rooms currently exist.');
   }
 
-  const room = roomIdToLookup ? rooms.get(roomIdToLookup) : undefined;
+  const room = rooms.get(roomIdToLookup);
   if (!room) {
     console.log('[room-info] Room not found for decrypted code:', roomIdToLookup);
     return res.status(404).json({ error: 'Room not found' });

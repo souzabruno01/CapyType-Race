@@ -150,11 +150,22 @@ export default function Login() {
     roomCodeCheckTimeout.current = setTimeout(() => {
       // Use VITE_BACKEND_URL from env
       const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
-      const encryptedCode = encryptRoomId(roomCode.toLowerCase());
+      const normalizedCode = roomCode.trim().toLowerCase();
+      const encryptedCode = encryptRoomId(normalizedCode);
+      
+      console.log('[Room Validation] Checking room code:', normalizedCode);
+      console.log('[Room Validation] Encrypted code:', encryptedCode);
+      
       fetch(`${backendUrl}/api/room-info?code=${encodeURIComponent(encryptedCode)}`)
         .then(async (res) => {
-          if (!res.ok) throw new Error('Invalid');
+          console.log('[Room Validation] Response status:', res.status);
+          if (!res.ok) {
+            const errorText = await res.text();
+            console.log('[Room Validation] Error response:', errorText);
+            throw new Error('Invalid');
+          }
           const data = await res.json();
+          console.log('[Room Validation] Response data:', data);
           if (data && data.name) {
             setRoomName(data.name);
             setRoomValid(true);
@@ -163,7 +174,8 @@ export default function Login() {
             setRoomValid(false);
           }
         })
-        .catch(() => {
+        .catch((error) => {
+          console.log('[Room Validation] Error:', error);
           setRoomName(null);
           setRoomValid(false);
         })
