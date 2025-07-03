@@ -20,12 +20,15 @@ A real-time multiplayer typing game with a capybara theme where players race aga
 
 - **Frontend**: React + TypeScript + Vite
 - **Backend**: Node.js + Express + Socket.IO
-- **State Management**: Zustand
+- **State Management**: Zustand with persistent session storage
 - **Styling**: Tailwind CSS
 - **Animations**: Framer Motion
+- **UI Components**: Custom reusable components with TypeScript
 - **AI Text Generation**: Hugging Face Inference API
+- **Real-time Communication**: WebSocket with Socket.IO
+- **Asset Management**: Vite with optimized bundling and preloading
 - **Hosting**: Firebase (Frontend) + Railway (Backend)
-- **Version Control**: Git + GitHub
+- **Version Control**: Git + GitHub with automated CI/CD
 
 ## 🏗️ Architecture
 
@@ -38,53 +41,64 @@ graph TB
         A --> E[Lobby Components]
         A --> F[Avatar System]
         F --> G[Color Picker]
+        F --> SS[Session Storage]
         E --> H[Text Generation Modal]
         H --> I[AI Text Generation]
         H --> J[Smart Text Truncation]
+        D --> K[Real-time Feedback]
+        D --> L[Individual Lanes]
+        D --> M[Asset Preloading]
     end
     
     subgraph "Backend (Railway)"
-        K[Express Server] --> L[Socket.IO Server]
-        L --> M[Room Manager]
-        M --> N[Game Logic]
-        L --> O[Player Management]
-        O --> P[Avatar Color Sync]
-        Q[Room Validation] --> R[UUID Processing]
+        N[Express Server] --> O[Socket.IO Server]
+        O --> P[Room Manager]
+        P --> Q[Game Logic]
+        O --> R[Player Management]
+        R --> S[Avatar Color Sync]
+        T[Room Validation] --> U[UUID Processing]
+        V[Connection Handler] --> W[Auto Reconnection]
     end
     
     subgraph "External Services"
-        S[Hugging Face API] --> I
+        X[Hugging Face API] --> I
     end
     
     subgraph "Real-time Communication"
-        C <--> L
-        G <--> P
+        C <--> O
+        G <--> S
+        SS <--> G
+        V <--> C
     end
     
     subgraph "Game Flow"
-        T[Login & Avatar Selection] --> U[Create/Join Room]
-        U --> V[Lobby with Player Cards]
-        V --> W[Text Generation]
-        W --> X[Game Start]
-        X --> Y[Typing Race]
-        Y --> Z[Results]
-        Z --> V
+        Y[Login & Avatar Selection] --> Z[Create/Join Room]
+        Z --> AA[Lobby with Player Cards]
+        AA --> BB[Text Generation]
+        BB --> CC[Game Start]
+        CC --> DD[Typing Race]
+        DD --> EE[Results]
+        EE --> AA
     end
     
-    subgraph "Performance Optimizations"
-        AA[Asset Preloading]
-        AB[Individual Player Lanes]
-        AC[Real-time Typing Feedback]
+    subgraph "Performance Features"
+        M[Asset Preloading]
+        L[Individual Player Lanes]
+        K[Real-time Typing Feedback]
+        FF[Smart Text Boundaries]
+        GG[Session Persistence]
     end
     
     style A fill:#e1f5fe
-    style K fill:#f3e5f5
+    style N fill:#f3e5f5
     style C fill:#fff3e0
-    style L fill:#fff3e0
+    style O fill:#fff3e0
     style F fill:#e8f5e8
     style G fill:#e8f5e8
     style I fill:#e0f7fa
-    style S fill:#bbdefb
+    style X fill:#bbdefb
+    style SS fill:#f0f9ff
+    style V fill:#ecfdf5
 ```
 
 ## 🚀 Quick Start
@@ -200,18 +214,30 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🐛 Known Issues & Solutions
 
 ### "Failed to connect to server"
-- **Cause**: Backend URL misconfiguration
-- **Solution**: Update `VITE_BACKEND_URL` in frontend `.env` file
+- **Cause**: Backend URL misconfiguration or server unavailable
+- **Solution**: Update `VITE_BACKEND_URL` in frontend `.env` file, check server status
 
 ### CORS Errors
 - **Cause**: Frontend domain not allowed in backend CORS
 - **Solution**: Add your domain to `CORS_ORIGIN` in backend `.env` file
 
 ### "Invalid room code" when trying to join
-- **Cause**: Room does not exist or has been closed
+- **Cause**: Room does not exist, has been closed, or expired
 - **Solution**: Double-check the room code or create a new room
 
-## 🚀 Recent Updates
+### Avatar/Color not persisting
+- **Cause**: Session storage cleared or browser restrictions
+- **Solution**: Re-select avatar/color; settings will persist for future sessions
+
+### Socket connection drops during game
+- **Cause**: Network instability or server restart
+- **Solution**: App will attempt auto-reconnection; refresh page if issues persist
+
+### Text generation fails
+- **Cause**: Hugging Face API rate limits or connectivity issues
+- **Solution**: Try again after a moment or use random text generation as fallback
+
+## 🚀 Recent Updates (July 2025)
 
 - ✅ **Performance Optimization** - Implemented asset preloading to eliminate game start latency
 - ✅ **Host-Driven Text Generation** - Moved text generation to lobby (host-only) with real AI integration
@@ -223,6 +249,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ **Room Validation Fix** - Simplified room joining with plain UUIDs for better reliability
 - ✅ **Enhanced Error Handling** - Improved validation and error handling for room joining
 - ✅ **Backend Auto-deployment** - Updated Railway configuration for automatic deployment on git push
+- ✅ **Avatar System Enhancement** - Improved avatar/color persistence and synchronization across sessions
+- ✅ **Connection Reliability** - Enhanced socket connection handling with automatic reconnection
+- ✅ **Session Storage Integration** - Persistent avatar selection across page refreshes
 
 ---
 

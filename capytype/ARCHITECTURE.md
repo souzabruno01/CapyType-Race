@@ -30,6 +30,17 @@ graph TB
             GA[Asset Preloading]
             GB[Color-coded Feedback]
             GC[Smart Text Truncation]
+            GD[Session Storage]
+            GE[Auto Reconnection]
+            GF[Individual Player Lanes]
+        end
+        
+        subgraph "State Management"
+            SM[Zustand Store]
+            SS[Session Storage]
+            SC[Socket Connection]
+            SM --> SS
+            SM --> SC
         end
     end
     
@@ -46,6 +57,8 @@ graph TB
             S[Results Processing]
             PA[UUID Validation]
             PB[Room Code Simplification]
+            PC[Connection Handling]
+            PD[Avatar Synchronization]
         end
     end
     
@@ -59,23 +72,26 @@ graph TB
         T[WebSocket Connection]
         U[Event Broadcasting]
         V[State Synchronization]
+        W[Auto Reconnection Logic]
+        T --> W
     end
     
     subgraph "Game Flow States"
-        W[Login Screen] --> X[Room Selection]
-        X --> Y[Lobby Waiting]
-        Y --> YA[Text Generation]
-        YA --> Z[Game Active]
-        Z --> AA[Results Display]
-        AA --> X
+        X[Login Screen] --> Y[Room Selection]
+        Y --> Z[Lobby Waiting]
+        Z --> ZA[Text Generation]
+        ZA --> AA[Game Active]
+        AA --> BB[Results Display]
+        BB --> Y
     end
     
     subgraph "Data Flow"
-        BB[User Input] --> CC[Validation]
-        CC --> DD[Progress Calculation]
-        DD --> EE[State Update]
-        EE --> FF[Broadcast to All]
-        FF --> GG[UI Update]
+        CC[User Input] --> DD[Validation]
+        DD --> EE[Progress Calculation]
+        EE --> FF[State Update]
+        FF --> GG[Broadcast to All]
+        GG --> HH[UI Update]
+        HH --> II[Session Persistence]
     end
     
     style DA fill:#e0e7ff,stroke:#6366f1
@@ -89,6 +105,9 @@ graph TB
     style C fill:#fff8e1
     style L fill:#fff8e1
     style T fill:#e8f5e8
+    style SS fill:#f0f9ff
+    style GD fill:#f0f9ff
+    style W fill:#ecfdf5
 ```
 
 ## Component Interaction Flow
@@ -119,31 +138,38 @@ sequenceDiagram
         F->>AI: Generate text with prompt
         AI->>F: Return AI-generated text
         F->>F: Apply smart truncation
+        F->>F: Store in session if needed
         U->>F: Start game with generated text
     else Host uses random text
         U->>F: Generate random text
         F->>F: Apply smart truncation
+        F->>F: Store in session if needed
         U->>F: Start game with random text
     end
     
     F->>S: Emit start game event
     S->>B: Set game state to active
+    B->>R: Update room state
     B->>S: Broadcast game start
     S->>F: Start game for all players
+    F->>F: Preload game assets
     
     U->>F: Start typing
     F->>F: Calculate progress & validate
-    F->>F: Apply color feedback
+    F->>F: Apply color feedback (green/red/yellow)
+    F->>F: Update session storage
     F->>S: Emit progress update
     S->>B: Process progress
+    B->>R: Update player state
     B->>S: Broadcast to room
-    S->>F: Update all players
+    S->>F: Update all players (individual lanes)
     
     F->>F: Check completion
     F->>S: Emit game finished
     S->>B: Process results
+    B->>R: Calculate final standings
     B->>S: Broadcast final results
-    S->>F: Show results screen
+    S->>F: Show adaptive results screen
 ```
 
 ## Technology Stack Details
@@ -163,27 +189,38 @@ graph LR
         J --> K[Hugging Face Inference API]
         K --> L[Smart Text Truncation]
         L --> M[Asset Preloading]
+        M --> N[Session Storage]
+        N --> O[Auto Reconnection]
+        O --> P[Individual Player Lanes]
+        P --> Q[Color-coded Feedback]
     end
     
     subgraph "Backend Stack"
-        N[Node.js] --> O[Express.js]
-        O --> P[Socket.IO Server]
-        P --> Q[TypeScript]
-        Q --> R[CORS]
-        R --> S[dotenv]
-        S --> T[UUID Validation]
+        R[Node.js] --> S[Express.js]
+        S --> T[Socket.IO Server]
+        T --> U[TypeScript]
+        U --> V[CORS]
+        V --> W[dotenv]
+        W --> X[UUID Validation]
+        X --> Y[Room Management]
+        Y --> Z[Connection Handling]
+        Z --> AA[Player Synchronization]
     end
     
     subgraph "Development Tools"
-        U[ESLint] --> V[Prettier]
-        V --> W[Git]
-        W --> X[npm/yarn]
+        BB[ESLint] --> CC[Prettier]
+        CC --> DD[Git]
+        DD --> EE[npm/yarn]
+        EE --> FF[Hot Module Replacement]
+        FF --> GG[TypeScript Compiler]
     end
     
-    subgraph "Deployment"
-        Y[Firebase Hosting] --> Z[Railway]
-        Z --> AA[Environment Variables]
-        AA --> AB[CI/CD Pipeline]
+    subgraph "Deployment & CI/CD"
+        HH[Firebase Hosting] --> II[Railway]
+        II --> JJ[Environment Variables]
+        JJ --> KK[Automated Deployment]
+        KK --> LL[Health Monitoring]
+        LL --> MM[Auto-scaling]
     end
 ```
 
@@ -245,11 +282,16 @@ graph LR
 
 ## Performance Optimizations
 
-- Efficient state updates
-- Debounced progress reporting
-- Optimized re-renders
-- Memory management for rooms
-- Connection pooling
+- **Asset Preloading**: Eliminates game start latency by preloading images and components
+- **Individual Player Lanes**: Reduces visual clutter and improves focus during gameplay
+- **Efficient State Updates**: Optimized Zustand store with minimal re-renders
+- **Debounced Progress Reporting**: Reduces unnecessary network traffic
+- **Session Storage**: Persists user preferences across page refreshes
+- **Smart Text Truncation**: Ensures text boundaries at sentence/word level
+- **Color-coded Real-time Feedback**: Instant visual feedback without performance impact
+- **Memory Management**: Automatic cleanup of rooms and connections
+- **Connection Pooling**: Efficient WebSocket connection handling
+- **Auto Reconnection**: Seamless recovery from network interruptions
 
 ## Deployment Architecture
 
@@ -285,6 +327,33 @@ graph TB
         N --> O[Character Limit]
     end
 ```
+
+## Recent Architectural Improvements (July 2025)
+
+### Session Management
+- **Persistent Avatar Selection**: User avatar/color choices are stored in session storage
+- **Cross-session Continuity**: Avatar preferences persist across browser refreshes
+- **Fallback Handling**: Graceful defaults when session data is unavailable
+
+### Connection Reliability
+- **Auto Reconnection Logic**: Automatic retry mechanism for dropped connections
+- **Connection State Management**: Comprehensive tracking of socket connection states
+- **Error Recovery**: Robust error handling with user-friendly feedback
+
+### Game Performance
+- **Asset Preloading Strategy**: Preloads game assets during lobby phase
+- **Individual Lane Rendering**: Shows only current player's progress for better focus
+- **Real-time Feedback System**: Color-coded typing feedback without performance impact
+
+### State Architecture
+- **Enhanced Zustand Store**: Improved state management with session persistence
+- **Optimized Re-renders**: Minimal component updates through efficient state design
+- **Memory Leak Prevention**: Proper cleanup of event listeners and connections
+
+### Text Generation Pipeline
+- **AI Integration**: Seamless integration with Hugging Face Inference API
+- **Smart Truncation**: Boundary-aware text cutting at sentence/word boundaries
+- **Fallback Mechanisms**: Multiple text sources with intelligent switching
 
 This architecture ensures scalability, maintainability, and real-time performance for the multiplayer typing game experience.
 
