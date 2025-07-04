@@ -348,9 +348,9 @@ const TextGenerationModal = ({
               color: '#232323',
               border: '2px solid #b6a77a',
               borderRadius: 12,
-              padding: '10px 16px', // Smaller padding
+              padding: '12px 20px',
               fontWeight: 700,
-              fontSize: 13, // Smaller font size
+              fontSize: 14,
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: generatingText ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
@@ -371,9 +371,9 @@ const TextGenerationModal = ({
               color: '#fff',
               border: 'none',
               borderRadius: 12,
-              padding: '10px 16px', // Smaller padding
+              padding: '12px 20px',
               fontWeight: 700,
-              fontSize: 13, // Smaller font size
+              fontSize: 14,
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: generatingText ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
@@ -416,13 +416,13 @@ const TextGenerationModal = ({
               color: '#232323',
               border: '2px solid #b6a77a',
               borderRadius: 12,
-              padding: '16px 36px', // Larger padding
+              padding: '14px 32px',
               fontWeight: 700,
-              fontSize: 16, // Larger font size
+              fontSize: 15,
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
-              minWidth: '140px', // Larger min width
+              minWidth: '120px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -446,13 +446,13 @@ const TextGenerationModal = ({
               color: '#fff',
               border: 'none',
               borderRadius: 12,
-              padding: '16px 36px', // Larger padding
+              padding: '14px 32px',
               fontWeight: 700,
-              fontSize: 16, // Larger font size
+              fontSize: 15,
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: (!customText.trim() || generatingText) ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s ease',
-              minWidth: '160px', // Larger min width
+              minWidth: '140px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

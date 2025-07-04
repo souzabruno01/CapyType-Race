@@ -332,54 +332,44 @@ interface PlayerStats {
 }
 
 // Component to display text with highlighting
-const HighlightedText = ({ text, input, errorPositions }: { 
+const HighlightedText = ({ text, input, errorPositions, correctedPositions }: { 
   text: string; 
   input: string; 
   errorPositions: Set<number>;
+  correctedPositions: Set<number>;
 }) => {
   return (
-    <div style={{
-      fontFamily: 'monospace',
-      fontSize: '1.2rem',
-      lineHeight: 1.7,
-      whiteSpace: 'pre-wrap',
-      position: 'relative',
-      wordBreak: 'break-word'
-    }}>
+    <div className="font-mono text-lg leading-relaxed whitespace-pre-wrap relative">
       {text.split('').map((char, index) => {
         const isTyped = index < input.length;
         const isError = errorPositions.has(index);
+        const isCorrected = correctedPositions.has(index);
+        const currentChar = input[index];
         const isCurrent = index === input.length;
 
-        const style: React.CSSProperties = {
-          transition: 'all 0.15s ease',
-          padding: '2px 1px',
-          borderRadius: 3,
-          position: 'relative'
-        };
-
+        let className = 'relative transition-all duration-150';
+        
         if (isTyped) {
           if (isError) {
-            style.color = '#dc2626'; // Red for errors
-            style.background = 'rgba(220, 38, 38, 0.15)';
-            style.textDecoration = 'underline';
-            style.textDecorationColor = '#ef4444';
-          } else {
-            style.color = '#10b981'; // Green for correct
-            style.background = 'rgba(16, 185, 129, 0.1)';
+            className += ' text-red-600 bg-red-50 border-b-2 border-red-300';
+          } else if (isCorrected) {
+            className += ' text-yellow-600 bg-yellow-50 border-b-2 border-yellow-300';
+          } else if (char === currentChar) {
+            className += ' text-emerald-600 bg-emerald-50 border-b-2 border-emerald-300';
           }
         } else {
-          style.color = '#4b5563'; // Dark gray for untyped
+          className += ' text-gray-600';
         }
 
         if (isCurrent) {
-          style.boxShadow = '0 0 0 2px #6366f1'; // Caret/cursor
-          style.animation = 'pulse 1.2s infinite';
+          className += ' after:content-[""] after:absolute after:left-0 after:top-0 after:h-full after:w-0.5 after:bg-indigo-500 after:animate-pulse';
         }
 
+        className += ' px-0.5';
+
         return (
-          <span key={index} style={style}>
-            {char === ' ' ? <span>&nbsp;</span> : char}
+          <span key={index} className={className}>
+            {char}
           </span>
         );
       })}
@@ -422,6 +412,7 @@ export default function Game() {
   });
   const [progress, setProgress] = useState(0);
   const [errorPositions, setErrorPositions] = useState(new Set<number>());
+  const [correctedPositions, setCorrectedPositions] = useState(new Set<number>());
   const [totalErrors, setTotalErrors] = useState(0);
   const [gameFinished, setGameFinished] = useState(false);
   const [timeUpTimer, setTimeUpTimer] = useState<number | null>(null);
@@ -534,6 +525,7 @@ export default function Game() {
     setGameStarted(false);
     setCountdown(3);
     setErrorPositions(new Set());
+    setCorrectedPositions(new Set());
     setTotalErrors(0);
     setProgress(0);
     setShowConfetti(false);
@@ -565,10 +557,6 @@ export default function Game() {
     if (!gameStarted || gameFinished || timeLeft === 0) return;
     
     const value = e.target.value;
-    
-    // Do not allow input to exceed text length
-    if (value.length > text.length) return;
-
     setInput(value);
 
     // Set hasStartedTyping to true when the player starts typing
@@ -578,30 +566,37 @@ export default function Game() {
 
     // Check for errors and update progress
     const newErrorPositions = new Set<number>();
-    let currentTotalErrors = totalErrors;
+    const newCorrectedPositions = new Set<number>();
     
     // Check each character for errors
     for (let i = 0; i < value.length; i++) {
       if (value[i] !== text[i]) {
-        if (!errorPositions.has(i)) {
-          currentTotalErrors++;
-        }
         newErrorPositions.add(i);
+        // If this position was previously corrected, remove it from corrected positions
+        if (correctedPositions.has(i)) {
+          correctedPositions.delete(i);
+        }
+        // Count every error, regardless of position or history
+        setTotalErrors(prev => prev + 1);
+      } else if (errorPositions.has(i)) {
+        // If this position was previously an error and is now correct, mark it as corrected
+        newCorrectedPositions.add(i);
       }
     }
 
     // Update error and corrected positions
     setErrorPositions(newErrorPositions);
-    setTotalErrors(currentTotalErrors);
+    setCorrectedPositions(newCorrectedPositions);
     
     // Update error stats with total errors (including corrected ones)
     setPlayerStats(prev => ({ 
       ...prev, 
-      errors: currentTotalErrors,
+      errors: totalErrors,
+      correctedErrors: newCorrectedPositions.size
     }));
 
     // Calculate progress based on correct characters typed
-    const correctChars = value.length - newErrorPositions.size;
+    const correctChars = value.split('').filter((char, i) => char === text[i]).length;
     const newProgress = (correctChars / text.length) * 100;
     
     // Update progress state
@@ -615,6 +610,7 @@ export default function Game() {
   useEffect(() => {
     if (gameStarted) {
       setErrorPositions(new Set());
+      setCorrectedPositions(new Set());
       setTotalErrors(0);
       setHasStartedTyping(false);
     }
@@ -722,34 +718,16 @@ export default function Game() {
         </div>
         {/* Typing Text */}
         {((!gameStarted && countdown === null && !gameFinished) || (gameStarted && !gameFinished)) && (
-          <div style={{ 
-            width: '100%', 
-            maxWidth: 700, 
-            margin: '0 auto 18px auto', 
-            background: 'rgba(235, 228, 200, 0.95)', // Enhanced brown background matching lobby
-            borderRadius: 12, 
-            padding: '20px 28px', 
-            boxShadow: '0 4px 12px rgba(182, 167, 122, 0.2)', 
-            border: '2px solid #b6a77a',
-            minHeight: 120,
-            display: 'flex',
-            alignItems: 'center'
-          }}>
+          <div style={{ width: '100%', maxWidth: 700, margin: '0 auto 18px auto', background: '#fff', borderRadius: 12, padding: '18px 24px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1.5px solid #b6a77a' }}>
             {gameStarted && !gameFinished ? (
               <HighlightedText 
                 text={text} 
                 input={input} 
                 errorPositions={errorPositions}
+                correctedPositions={correctedPositions}
               />
             ) : (
-              <div style={{ 
-                fontFamily: 'monospace',
-                fontSize: '1.2rem',
-                lineHeight: 1.7,
-                whiteSpace: 'pre-wrap',
-                color: '#6b7280',
-                userSelect: 'none'
-              }}>
+              <div className="font-mono text-lg leading-relaxed whitespace-pre-wrap text-gray-400 select-none" style={{ minHeight: 48 }}>
                 {text || 'Waiting for text...'}
               </div>
             )}
@@ -868,36 +846,28 @@ export default function Game() {
                 display: 'flex', 
                 flexDirection: 'column',
                 alignItems: 'flex-end',
-                gap: 6,
+                gap: 4,
                 minWidth: 100
               }}>
                 <span style={{ 
-                  fontSize: 16, 
-                  color: '#047857', 
-                  fontWeight: 800,
-                  background: 'rgba(16, 185, 129, 0.25)',
-                  padding: '8px 16px',
-                  borderRadius: 10,
-                  border: '2px solid rgba(16, 185, 129, 0.5)',
-                  minWidth: '90px',
-                  textAlign: 'center',
-                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                  fontSize: 13, 
+                  color: '#059669', 
+                  fontWeight: 700,
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  padding: '4px 8px',
+                  borderRadius: 6,
+                  border: '1px solid rgba(16, 185, 129, 0.3)'
                 }}>
                   WPM: {playerStats.wpm}
                 </span>
                 <span style={{ 
-                  fontSize: 16, 
-                  color: playerStats.errors > 0 ? '#b91c1c' : '#047857', 
-                  fontWeight: 800,
-                  background: playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.25)' : 'rgba(16, 185, 129, 0.25)',
-                  padding: '8px 16px',
-                  borderRadius: 10,
-                  border: `2px solid ${playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.5)' : 'rgba(16, 185, 129, 0.5)'}`,
-                  minWidth: '90px',
-                  textAlign: 'center',
-                  boxShadow: `0 2px 8px ${playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
-                  textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                  fontSize: 13, 
+                  color: playerStats.errors > 0 ? '#dc2626' : '#059669', 
+                  fontWeight: 700,
+                  background: playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                  padding: '4px 8px',
+                  borderRadius: 6,
+                  border: `1px solid ${playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`
                 }}>
                   Errors: {playerStats.errors}
                 </span>
@@ -915,17 +885,7 @@ export default function Game() {
               placeholder={isPaused ? 'Game Paused' : 'Start typing...'}
               autoFocus
               disabled={gameFinished || timeLeft === 0 || isPaused}
-              style={{ 
-                width: '100%', 
-                maxWidth: 700, 
-                minHeight: 80, 
-                borderRadius: 10, 
-                fontSize: 18, 
-                marginBottom: 0, 
-                background: 'rgba(235, 228, 200, 0.95)', // Brown background matching lobby
-                border: '2px solid #b6a77a',
-                color: '#374151'
-              }}
+              style={{ width: '100%', maxWidth: 700, minHeight: 80, borderRadius: 10, fontSize: 18, marginBottom: 0, background: '#fff' }}
             />
           </div>
         )}

@@ -422,6 +422,7 @@ export default function Game() {
   });
   const [progress, setProgress] = useState(0);
   const [errorPositions, setErrorPositions] = useState(new Set<number>());
+  const [correctedPositions, setCorrectedPositions] = useState(new Set<number>());
   const [totalErrors, setTotalErrors] = useState(0);
   const [gameFinished, setGameFinished] = useState(false);
   const [timeUpTimer, setTimeUpTimer] = useState<number | null>(null);
@@ -534,6 +535,7 @@ export default function Game() {
     setGameStarted(false);
     setCountdown(3);
     setErrorPositions(new Set());
+    setCorrectedPositions(new Set());
     setTotalErrors(0);
     setProgress(0);
     setShowConfetti(false);
@@ -615,6 +617,7 @@ export default function Game() {
   useEffect(() => {
     if (gameStarted) {
       setErrorPositions(new Set());
+      setCorrectedPositions(new Set());
       setTotalErrors(0);
       setHasStartedTyping(false);
     }
@@ -726,10 +729,10 @@ export default function Game() {
             width: '100%', 
             maxWidth: 700, 
             margin: '0 auto 18px auto', 
-            background: 'rgba(235, 228, 200, 0.95)', // Enhanced brown background matching lobby
+            background: 'rgba(235, 228, 200, 0.85)', // Light brown background
             borderRadius: 12, 
             padding: '20px 28px', 
-            boxShadow: '0 4px 12px rgba(182, 167, 122, 0.2)', 
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)', 
             border: '2px solid #b6a77a',
             minHeight: 120,
             display: 'flex',
@@ -868,36 +871,32 @@ export default function Game() {
                 display: 'flex', 
                 flexDirection: 'column',
                 alignItems: 'flex-end',
-                gap: 6,
+                gap: 4,
                 minWidth: 100
               }}>
                 <span style={{ 
-                  fontSize: 16, 
+                  fontSize: 15, 
                   color: '#047857', 
-                  fontWeight: 800,
-                  background: 'rgba(16, 185, 129, 0.25)',
-                  padding: '8px 16px',
-                  borderRadius: 10,
-                  border: '2px solid rgba(16, 185, 129, 0.5)',
-                  minWidth: '90px',
-                  textAlign: 'center',
-                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                  fontWeight: 700,
+                  background: 'rgba(16, 185, 129, 0.2)',
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  border: '1.5px solid rgba(16, 185, 129, 0.4)',
+                  minWidth: '80px',
+                  textAlign: 'center'
                 }}>
                   WPM: {playerStats.wpm}
                 </span>
                 <span style={{ 
-                  fontSize: 16, 
+                  fontSize: 15, 
                   color: playerStats.errors > 0 ? '#b91c1c' : '#047857', 
-                  fontWeight: 800,
-                  background: playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.25)' : 'rgba(16, 185, 129, 0.25)',
-                  padding: '8px 16px',
-                  borderRadius: 10,
-                  border: `2px solid ${playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.5)' : 'rgba(16, 185, 129, 0.5)'}`,
-                  minWidth: '90px',
-                  textAlign: 'center',
-                  boxShadow: `0 2px 8px ${playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
-                  textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+                  fontWeight: 700,
+                  background: playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+                  padding: '6px 12px',
+                  borderRadius: 8,
+                  border: `1.5px solid ${playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
+                  minWidth: '80px',
+                  textAlign: 'center'
                 }}>
                   Errors: {playerStats.errors}
                 </span>
@@ -915,17 +914,7 @@ export default function Game() {
               placeholder={isPaused ? 'Game Paused' : 'Start typing...'}
               autoFocus
               disabled={gameFinished || timeLeft === 0 || isPaused}
-              style={{ 
-                width: '100%', 
-                maxWidth: 700, 
-                minHeight: 80, 
-                borderRadius: 10, 
-                fontSize: 18, 
-                marginBottom: 0, 
-                background: 'rgba(235, 228, 200, 0.95)', // Brown background matching lobby
-                border: '2px solid #b6a77a',
-                color: '#374151'
-              }}
+              style={{ width: '100%', maxWidth: 700, minHeight: 80, borderRadius: 10, fontSize: 18, marginBottom: 0, background: '#fff' }}
             />
           </div>
         )}
