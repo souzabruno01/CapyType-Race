@@ -78,8 +78,8 @@ const TextGenerationModal = ({
   setCustomText, 
   characterLimit, 
   setCharacterLimit, 
-  onGenerateRandom,
-  onGenerateWithChatGPT,
+  onGenerateRandom, 
+  onGenerateWithChatGPT, 
   generatingText, 
   onStartGame 
 }: {
@@ -96,7 +96,7 @@ const TextGenerationModal = ({
 }) => {
   if (!isOpen) return null;
 
-  const characterLimits = [50, 100, 150, 200, 300, 500, 750, 1000, 1250, 1500, 2000];
+  const characterLimits = [50, 100, 150, 200, 300, 500];
 
   return (
     <motion.div
@@ -135,8 +135,8 @@ const TextGenerationModal = ({
           flexDirection: 'column',
           alignItems: 'center',
           gap: 24,
-          maxHeight: '85vh',
-          overflow: 'hidden' // Prevent outer scroll
+          maxHeight: '90vh',
+          overflowY: 'auto'
         }}
       >
         <div style={{ textAlign: 'center', width: '100%', position: 'relative' }}>
@@ -183,148 +183,89 @@ const TextGenerationModal = ({
         <div style={{ width: '100%' }}>
           <label style={{ 
             display: 'block', 
-            marginBottom: 12, 
+            marginBottom: 8, 
             fontWeight: 600, 
-            color: '#374151',
-            fontSize: 14
+            color: '#374151' 
           }}>
-            Character Limit
+            Character Limit: {characterLimit}
           </label>
-          <select
-            value={characterLimit}
-            onChange={(e) => setCharacterLimit(Number(e.target.value))}
-            style={{
-              width: '100%',
-              padding: '12px 16px',
-              border: '2px solid #b6a77a',
-              borderRadius: 12,
-              fontSize: 14,
-              fontWeight: 600,
-              background: 'rgba(255, 255, 255, 0.95)',
-              color: '#374151',
-              cursor: 'pointer',
-              outline: 'none',
-              boxShadow: '0 2px 8px rgba(182, 167, 122, 0.1)',
-              transition: 'all 0.2s ease',
-              marginBottom: 20,
-              appearance: 'none',
-              backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6,9 12,15 18,9\'%3e%3c/polyline%3e%3c/svg%3e")',
-              backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 12px center',
-              backgroundSize: '16px',
-              paddingRight: '40px'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = '#8b7560';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(182, 167, 122, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = '#b6a77a';
-              e.currentTarget.style.boxShadow = '0 2px 8px rgba(182, 167, 122, 0.1)';
-            }}
-          >
+          <div style={{ 
+            display: 'flex', 
+            gap: 8, 
+            flexWrap: 'wrap', 
+            marginBottom: 16 
+          }}>
             {characterLimits.map(limit => (
-              <option key={limit} value={limit}>
-                {limit} characters
-              </option>
+              <button
+                key={limit}
+                onClick={() => setCharacterLimit(limit)}
+                style={{
+                  background: characterLimit === limit ? '#232323' : '#fff',
+                  color: characterLimit === limit ? '#fff' : '#232323',
+                  border: '1.5px solid #b6a77a',
+                  borderRadius: 8,
+                  padding: '6px 12px',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                }}
+              >
+                {limit}
+              </button>
             ))}
-          </select>
+          </div>
         </div>
 
         {/* Text Area */}
-        <div style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div style={{ width: '100%' }}>
           <div style={{ 
             background: 'rgba(99, 102, 241, 0.1)', 
             border: '1px solid rgba(99, 102, 241, 0.2)', 
-            borderRadius: 10, 
-            padding: 14, 
-            marginBottom: 16,
+            borderRadius: 8, 
+            padding: 12, 
+            marginBottom: 12,
             fontSize: 13,
-            color: '#4f46e5',
-            lineHeight: 1.4,
-            flexShrink: 0
+            color: '#4f46e5'
           }}>
             💡 <strong>Tip:</strong> Type a topic or keywords (like "technology", "space", "nature"), then click "AI Expand Text" to generate a complete typing text, or write your full custom text manually.
           </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            <textarea
-              value={customText}
-              onChange={(e) => setCustomText(e.target.value.substring(0, characterLimit))}
-              placeholder="Enter a topic (e.g., 'artificial intelligence', 'ocean exploration', 'ancient history') or write your complete custom text here..."
-              style={{
-                width: '100%',
-                flex: 1,
-                minHeight: 140,
-                maxHeight: 280,
-                padding: 16,
-                border: '2px solid #b6a77a',
-                borderRadius: 12,
-                fontSize: 14,
-                fontFamily: 'inherit',
-                resize: 'none',
-                background: 'rgba(255, 255, 255, 0.95)',
-                boxShadow: '0 2px 8px rgba(182, 167, 122, 0.1)',
-                outline: 'none',
-                transition: 'border-color 0.2s, box-shadow 0.2s',
-                lineHeight: 1.5,
-                boxSizing: 'border-box',
-                overflow: 'auto',
-                wordWrap: 'break-word'
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#6366f1'}
-              onBlur={(e) => e.target.style.borderColor = '#b6a77a'}
-            />
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              marginTop: 8,
-              fontSize: 12,
-              color: '#6b7280',
-              flexShrink: 0
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span>Characters: {customText.length}/{characterLimit}</span>
-                {customText.length >= characterLimit && (
-                  <span style={{ color: '#dc2626', fontWeight: 600 }}>
-                    Character limit reached
-                  </span>
-                )}
-              </div>
-              {customText.trim() && (
-                <button
-                  onClick={() => setCustomText('')}
-                  style={{
-                    background: '#ef4444',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 6,
-                    padding: '4px 8px',
-                    fontSize: 11,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 1px 3px rgba(239, 68, 68, 0.3)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#dc2626';
-                    e.currentTarget.style.transform = 'translateY(-1px)';
-                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(239, 68, 68, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#ef4444';
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(239, 68, 68, 0.3)';
-                  }}
-                  title="Clear text"
-                >
-                  🗑️ Clear
-                </button>
-              )}
-            </div>
+          <textarea
+            value={customText}
+            onChange={(e) => setCustomText(e.target.value.substring(0, characterLimit))}
+            placeholder="Enter a topic (e.g., 'artificial intelligence', 'ocean exploration', 'ancient history') or write your complete custom text here..."
+            style={{
+              width: '100%',
+              minHeight: 120,
+              padding: 16,
+              border: '2px solid #b6a77a',
+              borderRadius: 12,
+              fontSize: 14,
+              fontFamily: 'inherit',
+              resize: 'vertical',
+              background: 'rgba(255, 255, 255, 0.9)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              outline: 'none',
+              transition: 'border-color 0.2s'
+            }}
+            onFocus={(e) => e.target.style.borderColor = '#6366f1'}
+            onBlur={(e) => e.target.style.borderColor = '#b6a77a'}
+          />
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginTop: 8,
+            fontSize: 12,
+            color: '#6b7280'
+          }}>
+            <span>Characters: {customText.length}/{characterLimit}</span>
+            {customText.length >= characterLimit && (
+              <span style={{ color: '#dc2626', fontWeight: 600 }}>
+                Character limit reached
+              </span>
+            )}
           </div>
         </div>
 
@@ -334,8 +275,7 @@ const TextGenerationModal = ({
           gap: 12,
           justifyContent: 'center',
           width: '100%',
-          flexWrap: 'wrap',
-          flexShrink: 0
+          flexWrap: 'wrap'
         }}>
           <button
             onClick={onGenerateRandom}
@@ -400,8 +340,7 @@ const TextGenerationModal = ({
           display: 'flex',
           gap: 16,
           justifyContent: 'center',
-          width: '100%',
-          flexShrink: 0
+          width: '100%'
         }}>
           <button
             onClick={onClose}
@@ -598,6 +537,18 @@ export default function Lobby() {
     navigate('/login');
   };
 
+  // Sample texts for random generation
+  const SAMPLE_TEXTS = [
+    "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the alphabet and is perfect for typing practice.",
+    "In a hole in the ground there lived a hobbit. Not a nasty, dirty, wet hole filled with the ends of worms and an oozy smell, nor yet a dry, bare, sandy hole with nothing in it to sit down on or to eat.",
+    "To be or not to be, that is the question. Whether 'tis nobler in the mind to suffer the slings and arrows of outrageous fortune, or to take arms against a sea of troubles.",
+    "It was the best of times, it was the worst of times, it was the age of wisdom, it was the age of foolishness, it was the epoch of belief, it was the epoch of incredulity.",
+    "All happy families are alike; each unhappy family is unhappy in its own way. Everything was in confusion in the Oblonskys' house.",
+    "Space: the final frontier. These are the voyages of the starship Enterprise. Its continuing mission: to explore strange new worlds, to seek out new life and new civilizations.",
+    "Technology is best when it brings people together. The art of communication is the language of leadership. Innovation distinguishes between a leader and a follower.",
+    "The only way to do great work is to love what you do. Stay hungry, stay foolish. Your time is limited, don't waste it living someone else's life."
+  ];
+
   // Smart truncation function to avoid cutting mid-word or mid-sentence
   const smartTruncate = (text: string, maxLength: number): string => {
     if (text.length <= maxLength) {
@@ -650,161 +601,54 @@ export default function Lobby() {
     return result || text.substring(0, maxLength); // Fallback to hard cut if all else fails
   };
 
-  // Generate random text using AI (not stored texts)
-  const generateRandomText = async () => {
-    setGeneratingText(true);
-    try {
-      // Generate random topics for AI to write about
-      const randomTopics = [
-        'ocean life', 'space exploration', 'renewable energy', 'ancient civilizations', 
-        'wildlife conservation', 'quantum physics', 'sustainable agriculture', 'marine biology',
-        'artificial intelligence', 'climate change', 'biodiversity', 'archaeological discoveries',
-        'neuroscience', 'genetic engineering', 'solar technology', 'volcanic activity',
-        'coral reefs', 'migration patterns', 'ecosystem restoration', 'meteorology'
-      ];
-      
-      const randomTopic = randomTopics[Math.floor(Math.random() * randomTopics.length)];
-      
-      // Try to generate with AI directly using the topic
-      let aiSuccess = false;
-      try {
-        // Temporarily set the topic and generate
-        const originalText = customText;
-        setCustomText(randomTopic);
-        
-        // Use a separate AI generation function that doesn't depend on state
-        const generatedText = await generateAIText(randomTopic);
-        if (generatedText && generatedText.length > 20) {
-          setCustomText(generatedText);
-          aiSuccess = true;
-        } else {
-          setCustomText(originalText); // Restore if failed
-        }
-      } catch (aiError) {
-        console.log('AI generation failed for random text:', aiError);
-      }
-      
-      // If AI failed, use enhanced fallback
-      if (!aiSuccess) {
-        const fallbackText = generateTopicSpecificFallback(randomTopic, characterLimit);
-        setCustomText(fallbackText);
-      }
-      
-    } catch (error) {
-      console.error('Error generating random text:', error);
-      // Use enhanced fallback system instead of stored texts
-      const randomTopics = [
-        'technology', 'nature', 'space', 'ocean', 'science', 'history',
-        'music', 'art', 'literature', 'philosophy'
-      ];
-      const randomTopic = randomTopics[Math.floor(Math.random() * randomTopics.length)];
-      const fallbackText = generateTopicSpecificFallback(randomTopic, characterLimit);
-      setCustomText(fallbackText);
-    }
-    setGeneratingText(false);
+  // Generate random text from samples
+  const generateRandomText = () => {
+    const randomText = SAMPLE_TEXTS[Math.floor(Math.random() * SAMPLE_TEXTS.length)];
+    const truncatedText = smartTruncate(randomText, characterLimit);
+    setCustomText(truncatedText);
   };
 
-  // Dedicated AI text generation function that doesn't depend on component state
-  const generateAIText = async (topic: string): Promise<string> => {
-    if (!topic || topic.length < 2) {
-      throw new Error('Please provide a topic for text generation');
-    }
-
-    let generatedText = '';
-    let success = false;
-
-    // Try multiple AI APIs for better results
-    const aiProviders = [
-      {
-        name: 'Groq',
-        endpoint: 'https://api.groq.com/openai/v1/chat/completions',
-        model: 'llama3-8b-8192'
-      },
-      {
-        name: 'Together',
-        endpoint: 'https://api.together.xyz/v1/chat/completions', 
-        model: 'meta-llama/Llama-2-7b-chat-hf'
-      }
-    ];
-
-    // Create a proper prompt for the topic
-    const prompt = `Write an informative and engaging paragraph about "${topic}". The text should be educational, factual, and interesting to read. Focus specifically on "${topic}" and provide relevant details, facts, or insights about this topic. Keep it concise and within ${characterLimit} characters. Do not include any introductory phrases like "Here's a paragraph about" or similar.`;
-
-    // Try newer AI APIs first
-    for (const provider of aiProviders) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-        const response = await fetch(provider.endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_AI_API_KEY || 'demo-key'}`,
-          },
-          body: JSON.stringify({
-            model: provider.model,
-            messages: [
-              {
-                role: 'system',
-                content: 'You are an expert writer who creates informative, engaging paragraphs on any topic. Always focus specifically on the requested topic and provide relevant, accurate information.'
-              },
-              {
-                role: 'user',
-                content: prompt
-              }
-            ],
-            max_tokens: Math.min(Math.ceil(characterLimit / 3), 500),
-            temperature: 0.7,
-            top_p: 0.9
-          }),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          const data = await response.json();
-          
-          if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
-            generatedText = data.choices[0].message.content.trim();
-            
-            if (generatedText && generatedText.length > 20) {
-              success = true;
-              break;
-            }
-          }
-        }
-      } catch (providerError) {
-        console.log(`${provider.name} failed:`, providerError);
-        continue;
-      }
-    }
-
-    // Fallback to Hugging Face if modern APIs fail
-    if (!success) {
-      const models = ['microsoft/DialoGPT-medium', 'gpt2', 'distilgpt2'];
+  // Generate text using Hugging Face Inference API (free)
+  const generateWithChatGPT = async () => {
+    setGeneratingText(true);
+    
+    try {
+      const userPrompt = customText.trim();
       
+      // Create a more effective prompt for text generation models
+      const prompt = userPrompt 
+        ? `Topic: ${userPrompt}. Write an educational paragraph about this topic in ${characterLimit} characters or less:`
+        : `Write an educational paragraph about an interesting topic in ${characterLimit} characters or less:`;
+
+      // Try different models for better text generation
+      const models = [
+        'gpt2',
+        'microsoft/DialoGPT-medium',
+        'distilgpt2'
+      ];
+
+      let generatedText = '';
+      let success = false;
+
       for (const model of models) {
         try {
+          // Add timeout to prevent hanging requests
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 12000);
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-          const hfPrompt = `Write about ${topic}: `;
-          
           const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              inputs: hfPrompt,
+              inputs: prompt,
               parameters: {
-                max_length: Math.min(Math.ceil(characterLimit / 2), 400),
+                max_length: Math.min(Math.ceil(characterLimit / 2), 512),
                 temperature: 0.8,
                 do_sample: true,
                 top_p: 0.9,
-                repetition_penalty: 1.2,
+                repetition_penalty: 1.1,
                 return_full_text: false
               }
             }),
@@ -822,108 +666,105 @@ export default function Lobby() {
               generatedText = data.generated_text;
             }
 
-            if (generatedText && generatedText.length > 15) {
+            if (generatedText && generatedText.length > 10) {
               success = true;
               break;
             }
+          } else if (response.status === 503) {
+            // Model is loading, wait a bit and try next model
+            console.log(`Model ${model} is loading, trying next...`);
+            continue;
           }
         } catch (modelError) {
-          console.log(`Hugging Face model ${model} failed:`, modelError);
+          const errorMessage = modelError instanceof Error ? modelError.message : 'Unknown error';
+          console.log(`Model ${model} failed:`, errorMessage);
           continue;
         }
       }
-    }
 
-    if (!success) {
-      throw new Error('All AI providers failed');
-    }
+      if (!success) {
+        throw new Error('All AI models failed');
+      }
 
-    // Clean and process the generated text
-    generatedText = generatedText
-      .replace(/^Write about.*?:\s*/i, '')
-      .replace(/^Here's.*?about.*?:\s*/i, '')
-      .replace(/^.*?paragraph.*?:\s*/i, '')
-      .trim()
-      .replace(/\n+/g, ' ')
-      .replace(/\s+/g, ' ');
+      // Clean up the generated text
+      generatedText = generatedText
+        .replace(prompt, '') // Remove prompt if included
+        .replace(/^\s*[:.-]\s*/, '') // Remove leading punctuation
+        .trim()
+        .replace(/\n+/g, ' ') // Replace newlines with spaces
+        .replace(/\s+/g, ' '); // Normalize whitespace
 
-    // Apply smart truncation
-    generatedText = smartTruncate(generatedText, characterLimit);
+      // Apply smart truncation
+      generatedText = smartTruncate(generatedText, characterLimit);
 
-    if (generatedText.length < 20) {
-      throw new Error('Generated text too short after processing');
-    }
+      if (generatedText.length < 20) {
+        throw new Error('Generated text too short after processing');
+      }
 
-    return generatedText;
-  };
-
-  // Enhanced AI text generation with better APIs and topic handling
-  const generateWithChatGPT = async () => {
-    setGeneratingText(true);
-    
-    try {
-      const userTopic = customText.trim();
-      const generatedText = await generateAIText(userTopic);
       setCustomText(generatedText);
       
     } catch (error) {
       console.error('Error generating text with AI:', error);
       
-      // Enhanced topic-specific fallback
-      const userTopic = customText.trim().toLowerCase();
-      let fallbackText = generateTopicSpecificFallback(userTopic, characterLimit);
+      // Enhanced fallback with topic-aware generation
+      const userPrompt = customText.trim().toLowerCase();
+      let fallbackText = '';
+      
+      // Determine text complexity based on character limit
+      const isShort = characterLimit <= 100;
+      const isMedium = characterLimit > 100 && characterLimit <= 250;
+      
+      if (userPrompt) {
+        if (userPrompt.includes('capybara') || userPrompt.includes('rodent')) {
+          fallbackText = isShort 
+            ? `Capybaras are the world's largest rodents, native to South America. These gentle giants live near water and are excellent swimmers.`
+            : isMedium
+            ? `Capybaras are the world's largest rodents, native to South America. These gentle giants live in groups near water bodies like rivers and marshes. With their calm demeanor, they serve as peaceful mediators in the animal kingdom and are beloved by many other species.`
+            : `Capybaras are the world's largest rodents, native to South America. These gentle giants live in groups near water bodies like rivers, lakes, and marshes. With their calm demeanor and social nature, capybaras often serve as peaceful mediators in the animal kingdom. They can weigh up to 65 kilograms and are excellent swimmers, using their webbed feet to navigate through water with remarkable grace and efficiency.`;
+        } else if (userPrompt.includes('technology') || userPrompt.includes('ai') || userPrompt.includes('computer')) {
+          fallbackText = isShort
+            ? `Technology revolutionizes how we work and communicate. AI systems analyze data to make predictions and automate complex tasks.`
+            : isMedium
+            ? `Technology continues to revolutionize how we work, communicate, and solve problems. Machine learning algorithms analyze vast datasets to make predictions and automate complex tasks across industries. These innovations enhance human capabilities and drive progress.`
+            : `Technology continues to revolutionize how we work, communicate, and solve complex problems in our daily lives. Machine learning algorithms analyze vast datasets to make accurate predictions and automate intricate tasks across various industries. From healthcare diagnostics to autonomous vehicles, these technological innovations enhance human capabilities and drive unprecedented progress in our modern world.`;
+        } else if (userPrompt.includes('nature') || userPrompt.includes('environment')) {
+          fallbackText = isShort
+            ? `Nature maintains delicate ecosystems that support diverse life forms. Environmental conservation is crucial for future generations.`
+            : isMedium
+            ? `Nature maintains delicate ecosystems that support countless species across the planet. Environmental conservation efforts are crucial for preserving biodiversity and ensuring sustainable resources for future generations to enjoy.`
+            : `Nature maintains intricate ecosystems that support countless species across our planet. From rainforests to coral reefs, these environments provide essential services like oxygen production and climate regulation. Environmental conservation efforts are crucial for preserving biodiversity and ensuring sustainable resources for future generations.`;
+        } else if (userPrompt.includes('space') || userPrompt.includes('universe')) {
+          fallbackText = isShort
+            ? `The universe contains billions of galaxies with countless stars. Space exploration expands human knowledge beyond Earth.`
+            : isMedium
+            ? `The universe contains billions of galaxies, each with countless stars and planetary systems. Space exploration missions continue to expand human knowledge and reveal the mysteries that lie beyond our home planet Earth.`
+            : `The universe contains billions of galaxies, each hosting countless stars and diverse planetary systems. Space exploration missions continue to expand human knowledge, revealing fascinating mysteries about cosmic phenomena, distant worlds, and the fundamental nature of reality that lies far beyond our home planet Earth.`;
+        } else {
+          // Generic topic-based fallback
+          const topic = userPrompt.split(' ')[0];
+          const capitalizedTopic = topic.charAt(0).toUpperCase() + topic.slice(1);
+          fallbackText = isShort
+            ? `${capitalizedTopic} offers fascinating insights and learning opportunities. Understanding this subject enriches our knowledge and perspective.`
+            : isMedium
+            ? `${capitalizedTopic} represents a fascinating area of study that offers numerous insights and learning opportunities. Understanding this subject helps us appreciate complex relationships and patterns that shape our world.`
+            : `${capitalizedTopic} represents a fascinating area of study that offers countless insights and learning opportunities. Understanding this subject helps us appreciate the complex relationships and intricate patterns that shape our world. Through careful exploration and analysis, we can gain valuable knowledge and develop a deeper appreciation for this important topic.`;
+        }
+      } else {
+        // Default fallback when no topic is provided
+        fallbackText = isShort
+          ? `Learning and discovery drive human progress through curiosity and innovation. Education opens doors to new possibilities.`
+          : isMedium
+          ? `Learning and discovery drive human progress through curiosity, innovation, and the pursuit of knowledge. Education opens doors to new possibilities and helps us understand the world around us in meaningful ways.`
+          : `Learning and discovery drive human progress through curiosity, innovation, and the relentless pursuit of knowledge. Education opens doors to new possibilities and helps us understand the complex world around us in meaningful and transformative ways. Through continuous learning, we expand our horizons and contribute to the advancement of human understanding.`;
+      }
+      
+      // Apply smart truncation to fallback text
+      fallbackText = smartTruncate(fallbackText, characterLimit);
       
       setCustomText(fallbackText);
     }
     
     setGeneratingText(false);
-  };
-
-  // Generate topic-specific fallback text
-  const generateTopicSpecificFallback = (topic: string, limit: number) => {
-    const isShort = limit <= 150;
-    const isMedium = limit > 150 && limit <= 500;
-
-    // Topic-specific responses
-    if (topic.includes('headphone') || topic.includes('audio') || topic.includes('sound')) {
-      if (isShort) {
-        return smartTruncate("Headphones are audio devices worn over or in the ears to listen to music, podcasts, or other audio content privately. They use speakers to convert electrical signals into sound waves.", limit);
-      } else if (isMedium) {
-        return smartTruncate("Headphones are personal audio devices designed to deliver sound directly to the user's ears. They consist of small speakers housed in cushioned ear cups or earbuds, connected by a headband or cable. Modern headphones feature advanced technologies like noise cancellation, wireless connectivity, and high-fidelity drivers for superior sound quality.", limit);
-      } else {
-        return smartTruncate("Headphones are sophisticated personal audio devices engineered to deliver high-quality sound directly to the listener's ears. They consist of miniaturized speakers, called drivers, housed within cushioned ear cups or compact earbuds. The headband design distributes weight evenly for comfort during extended use. Modern headphones incorporate advanced technologies such as active noise cancellation, which uses microphones and signal processing to reduce ambient noise, wireless Bluetooth connectivity for freedom of movement, and high-fidelity drivers that reproduce audio with exceptional clarity and detail across the entire frequency spectrum.", limit);
-      }
-    }
-
-    if (topic.includes('chair') || topic.includes('furniture') || topic.includes('seating')) {
-      if (isShort) {
-        return smartTruncate("Chairs are furniture pieces designed for seating, featuring a seat, backrest, and often armrests. They come in various materials and styles to suit different needs and preferences.", limit);
-      } else if (isMedium) {
-        return smartTruncate("Chairs are essential furniture pieces designed to provide comfortable seating for individuals. They typically consist of a horizontal seat surface supported by legs, with a vertical backrest for support. Modern chairs are crafted from diverse materials including wood, metal, plastic, and fabric, each offering unique aesthetic and functional properties.", limit);
-      } else {
-        return smartTruncate("Chairs are fundamental furniture pieces that have evolved significantly throughout human history to provide comfortable and functional seating solutions. The basic design consists of a horizontal seat surface supported by sturdy legs, complemented by a vertical backrest that supports the spine and promotes good posture. Modern chairs are manufactured using a wide variety of materials including solid wood, engineered lumber, steel, aluminum, molded plastics, and advanced composites. Ergonomic considerations play a crucial role in contemporary chair design, with features like adjustable height, lumbar support, and cushioned surfaces to enhance comfort during extended periods of use.", limit);
-      }
-    }
-
-    if (topic.includes('technology') || topic.includes('tech') || topic.includes('computer') || topic.includes('ai')) {
-      if (isShort) {
-        return smartTruncate("Technology encompasses the application of scientific knowledge to create tools, systems, and solutions that improve human life and solve complex problems efficiently.", limit);
-      } else if (isMedium) {
-        return smartTruncate("Technology represents the practical application of scientific knowledge to develop innovative tools, systems, and methodologies that enhance human capabilities. From artificial intelligence to renewable energy systems, technological advancement drives progress in healthcare, communication, transportation, and countless other fields that shape modern society.", limit);
-      } else {
-        return smartTruncate("Technology represents the systematic application of scientific knowledge, engineering principles, and creative innovation to develop sophisticated tools, systems, and methodologies that fundamentally enhance human capabilities and quality of life. Modern technological advancement encompasses diverse fields including artificial intelligence, machine learning, biotechnology, renewable energy systems, quantum computing, and nanotechnology. These innovations drive unprecedented progress in healthcare through precision medicine and diagnostic tools, revolutionize communication through global connectivity platforms, transform transportation with autonomous vehicles and electric mobility, and create sustainable solutions for environmental challenges facing our planet.", limit);
-      }
-    }
-
-    // Generic fallback based on the topic
-    const capitalizedTopic = topic.charAt(0).toUpperCase() + topic.slice(1);
-    if (isShort) {
-      return smartTruncate(`${capitalizedTopic} is an important subject that offers valuable insights and learning opportunities for those who study it carefully.`, limit);
-    } else if (isMedium) {
-      return smartTruncate(`${capitalizedTopic} represents a fascinating field of study that provides numerous insights and practical applications. Understanding this subject helps develop critical thinking skills and broadens our perspective on related concepts and their real-world implications.`, limit);
-    } else {
-      return smartTruncate(`${capitalizedTopic} represents a complex and multifaceted field of study that offers countless opportunities for learning, research, and practical application. This subject encompasses various interconnected concepts, theories, and methodologies that contribute to our understanding of the world around us. Through careful examination and analysis, we can gain valuable insights that not only enhance our knowledge but also provide practical solutions to real-world challenges and problems.`, limit);
-    }
   };
 
   // Handle starting game with custom text
