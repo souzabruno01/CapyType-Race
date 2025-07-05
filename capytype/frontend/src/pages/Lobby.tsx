@@ -687,31 +687,25 @@ export default function Lobby() {
   const generateRandomText = async () => {
     setGeneratingText(true);
     try {
-      // Generate random topics for AI to write about
-      const randomTopics = [
-        'ocean life', 'space exploration', 'renewable energy', 'ancient civilizations', 
-        'wildlife conservation', 'quantum physics', 'sustainable agriculture', 'marine biology',
-        'artificial intelligence', 'climate change', 'biodiversity', 'archaeological discoveries',
-        'neuroscience', 'genetic engineering', 'solar technology', 'volcanic activity',
-        'coral reefs', 'migration patterns', 'ecosystem restoration', 'meteorology'
+      // Generate single random topic words (not phrases) for better AI focus
+      const randomTopicWords = [
+        'ocean', 'space', 'energy', 'civilization', 'wildlife', 'physics', 'agriculture', 'biology',
+        'intelligence', 'climate', 'biodiversity', 'archaeology', 'neuroscience', 'genetics', 
+        'technology', 'volcanoes', 'coral', 'migration', 'environment', 'weather', 'history',
+        'music', 'art', 'literature', 'philosophy', 'chemistry', 'mathematics', 'engineering',
+        'medicine', 'psychology', 'sociology', 'economics', 'geography', 'astronomy', 'geology'
       ];
       
-      const randomTopic = randomTopics[Math.floor(Math.random() * randomTopics.length)];
+      const randomTopic = randomTopicWords[Math.floor(Math.random() * randomTopicWords.length)];
       
-      // Try to generate with AI directly using the topic
+      // Try to generate with AI using the focused prompt approach
       let aiSuccess = false;
       try {
-        // Temporarily set the topic and generate
-        const originalText = customText;
-        setCustomText(randomTopic);
-        
-        // Use a separate AI generation function that doesn't depend on state
-        const generatedText = await generateAIText(randomTopic);
+        // Generate text with the improved prompt that includes character limit and clear instructions
+        const generatedText = await generateRandomAIText(randomTopic, characterLimit);
         if (generatedText && generatedText.length > 20) {
           setCustomText(generatedText);
           aiSuccess = true;
-        } else {
-          setCustomText(originalText); // Restore if failed
         }
       } catch (aiError) {
         console.log('AI generation failed for random text:', aiError);
@@ -735,6 +729,156 @@ export default function Lobby() {
       setCustomText(fallbackText);
     }
     setGeneratingText(false);
+  };
+
+  // Dedicated random AI text generation function with focused prompting
+  const generateRandomAIText = async (topicWord: string, charLimit: number): Promise<string> => {
+    if (!topicWord || topicWord.length < 2) {
+      throw new Error('Please provide a topic word for text generation');
+    }
+
+    let generatedText = '';
+    let success = false;
+
+    // Try multiple AI APIs for better results
+    const aiProviders = [
+      {
+        name: 'Groq',
+        endpoint: 'https://api.groq.com/openai/v1/chat/completions',
+        model: 'llama3-8b-8192'
+      },
+      {
+        name: 'Together',
+        endpoint: 'https://api.together.xyz/v1/chat/completions', 
+        model: 'meta-llama/Llama-2-7b-chat-hf'
+      }
+    ];
+
+    // Create a focused prompt that generates random text around the topic word
+    const prompt = `Generate a random text around the topic "${topicWord}" with exactly ${charLimit} characters. The text should be informative, engaging, and educational. Focus specifically on "${topicWord}" and provide interesting facts, details, or insights. Write it as a complete, well-formed paragraph without any introductory phrases. Make sure the content is directly related to "${topicWord}" and fits within the ${charLimit} character limit.`;
+
+    // Try newer AI APIs first
+    for (const provider of aiProviders) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const response = await fetch(provider.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_AI_API_KEY || 'demo-key'}`,
+          },
+          body: JSON.stringify({
+            model: provider.model,
+            messages: [
+              {
+                role: 'system',
+                content: `You are an expert content writer who creates focused, informative text about specific topics. Your task is to generate exactly ${charLimit} characters of engaging content about the given topic word. Always stay on topic and provide valuable information.`
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            max_tokens: Math.min(Math.ceil(charLimit / 3), 600),
+            temperature: 0.8,
+            top_p: 0.9
+          }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+            generatedText = data.choices[0].message.content.trim();
+            
+            // Clean up the generated text
+            generatedText = generatedText.replace(/^["']|["']$/g, ''); // Remove quotes
+            generatedText = generatedText.replace(/^(Here's|This is|Let me tell you).*?[:.]?\s*/i, ''); // Remove intro phrases
+            
+            if (generatedText && generatedText.length > 20) {
+              // Trim to character limit if necessary
+              if (generatedText.length > charLimit) {
+                generatedText = smartTruncate(generatedText, charLimit);
+              }
+              success = true;
+              break;
+            }
+          }
+        }
+      } catch (providerError) {
+        console.log(`${provider.name} failed:`, providerError);
+        continue;
+      }
+    }
+
+    // Fallback to Hugging Face if modern APIs fail
+    if (!success) {
+      const models = ['microsoft/DialoGPT-medium', 'gpt2', 'distilgpt2'];
+      
+      for (const model of models) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+          const hfPrompt = `Generate informative text about ${topicWord}: `;
+          
+          const response = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              inputs: hfPrompt,
+              parameters: {
+                max_length: Math.min(Math.ceil(charLimit / 2), 400),
+                temperature: 0.8,
+                do_sample: true,
+                top_p: 0.9,
+                repetition_penalty: 1.2,
+                return_full_text: false
+              }
+            }),
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            const data = await response.json();
+            
+            if (Array.isArray(data) && data[0] && data[0].generated_text) {
+              generatedText = data[0].generated_text.trim();
+              
+              // Clean up the generated text
+              generatedText = generatedText.replace(/^["']|["']$/g, '');
+              generatedText = generatedText.replace(/^(Here's|This is|Let me tell you).*?[:.]?\s*/i, '');
+              
+              if (generatedText && generatedText.length > 20) {
+                if (generatedText.length > charLimit) {
+                  generatedText = smartTruncate(generatedText, charLimit);
+                }
+                success = true;
+                break;
+              }
+            }
+          }
+        } catch (hfError) {
+          console.log(`Hugging Face ${model} failed:`, hfError);
+          continue;
+        }
+      }
+    }
+
+    if (!success || !generatedText) {
+      throw new Error(`Failed to generate text about "${topicWord}"`);
+    }
+
+    return generatedText;
   };
 
   // Dedicated AI text generation function that doesn't depend on component state
