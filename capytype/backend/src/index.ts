@@ -6,9 +6,23 @@ import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 import { generateRoomName } from './roomUtils';
 import crypto from 'crypto';
+import CryptoJS from 'crypto-js';
 
 // Load environment variables
 dotenv.config();
+
+const SECRET = 'capytype-shared-secret'; // Must match frontend secret
+
+// Utility functions for room ID encryption/decryption
+function decryptRoomId(cipher: string): string {
+  try {
+    const bytes = CryptoJS.AES.decrypt(cipher, SECRET);
+    return bytes.toString(CryptoJS.enc.Utf8);
+  } catch (error) {
+    console.log('[DECRYPT ERROR] Failed to decrypt room ID:', cipher);
+    return '';
+  }
+}
 
 const app = express();
 const httpServer = createServer(app);
@@ -103,12 +117,21 @@ app.get('/api/room-info', (req, res) => {
     return res.status(400).json({ error: 'Missing or invalid code' });
   }
 
-  // Normalize the room ID to lowercase for lookup
-  const roomIdToLookup = code.trim().toLowerCase();
-  
   console.log('\n================= ROOM INFO LOOKUP =================');
-  console.log('Requested code:     ', code);
-  console.log('Normalized code:    ', roomIdToLookup);
+  console.log('Received encrypted code:', code);
+  
+  // Decrypt the room ID
+  const decryptedRoomId = decryptRoomId(code);
+  if (!decryptedRoomId) {
+    console.log('[room-info] Failed to decrypt room ID');
+    return res.status(400).json({ error: 'Invalid room code format' });
+  }
+  
+  // Normalize the room ID to lowercase for lookup
+  const roomIdToLookup = decryptedRoomId.trim().toLowerCase();
+  
+  console.log('Decrypted room ID:  ', decryptedRoomId);
+  console.log('Normalized room ID: ', roomIdToLookup);
   console.log('Current room keys:  ', Array.from(rooms.keys()));
   // Print a grid of room info
   if (rooms.size > 0) {
