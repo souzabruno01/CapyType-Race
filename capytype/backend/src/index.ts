@@ -155,8 +155,14 @@ io.on('connection', (socket) => {
 
   // Store nickname, avatar, and color when user creates or joins a room
   socket.on('createRoom', ({ nickname, avatar, color }) => {
-    console.log(`User connected: ${socket.id} with nickname: ${nickname}, avatar: ${avatar}, color: ${color}`);
+    console.log(`\n[CREATE ROOM] User ${socket.id} creating room`);
+    console.log(`  - Nickname: ${nickname}`);
+    console.log(`  - Avatar: ${avatar}`);
+    console.log(`  - Color: ${color}`);
+    
     const roomId = uuidv4().toLowerCase();
+    console.log(`  - Generated Room ID: ${roomId}`);
+    
     const player = {
       id: socket.id,
       nickname,
@@ -176,6 +182,9 @@ io.on('connection', (socket) => {
       startTime: null
     };
     rooms.set(roomId, room);
+    console.log(`  - Room stored in map, total rooms: ${rooms.size}`);
+    console.log(`  - Room keys: [${Array.from(rooms.keys()).join(', ')}]`);
+    
     socket.join(roomId);
     socket.emit('roomCreated', roomId);
     socket.emit('roomJoined', { roomId, isAdmin: true, nickname });
@@ -185,13 +194,24 @@ io.on('connection', (socket) => {
   });
 
   socket.on('joinRoom', ({ roomId, nickname, avatar, color }) => {
-    console.log(`User connected: ${socket.id} with nickname: ${nickname}, avatar: ${avatar}, color: ${color}`);
+    console.log(`\n[JOIN ROOM ATTEMPT] User ${socket.id} trying to join room: ${roomId}`);
+    console.log(`  - Nickname: ${nickname}`);
+    console.log(`  - Avatar: ${avatar}`);
+    console.log(`  - Color: ${color}`);
+    
     const normalizedRoomId = roomId.toLowerCase();
+    console.log(`  - Normalized Room ID: ${normalizedRoomId}`);
+    console.log(`  - Available rooms: [${Array.from(rooms.keys()).join(', ')}]`);
+    
     const room = rooms.get(normalizedRoomId);
     if (!room) {
+      console.log(`  - ERROR: Room ${normalizedRoomId} not found!`);
+      console.log(`  - Rooms map size: ${rooms.size}`);
       socket.emit('roomError', { message: 'Room not found' });
       return;
     }
+    console.log(`  - SUCCESS: Room ${normalizedRoomId} found with ${room.players.size} players`);
+    console.log(`  - Room state: ${room.gameState}`);
 
     if (room.gameState !== 'waiting') {
       socket.emit('roomError', { message: 'Game has already started' });
