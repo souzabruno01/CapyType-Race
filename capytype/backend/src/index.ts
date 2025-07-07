@@ -61,11 +61,49 @@ function handlePlayerLeaving(socketId: string, isExplicitLeave: boolean = false)
       const leavingPlayer = room.players.get(socketId);
       const isAdmin = room.admin === socketId;
       
+      // For admin disconnections (not explicit leaves), don't immediately delete the room
+      // Instead, mark the admin as disconnected and give them time to reconnect
+      if (isAdmin && !isExplicitLeave && room.players.size > 1) {
+        console.log(`[ADMIN DISCONNECT] Admin ${socketId} disconnected from room ${roomId}, keeping room alive for reconnection`);
+        // Mark the admin player as disconnected but keep them in the room
+        const adminPlayer = room.players.get(socketId);
+        if (adminPlayer) {
+          adminPlayer.disconnected = true;
+          adminPlayer.disconnectTime = Date.now();
+        }
+        
+        // Set a timeout to clean up if admin doesn't reconnect within 30 seconds
+        setTimeout(() => {
+          // Check if the admin has reconnected (different socket ID but same nickname)
+          let adminReconnected = false;
+          for (const [pid, player] of room.players.entries()) {
+            if (player.nickname === leavingPlayer.nickname && !player.disconnected) {
+              adminReconnected = true;
+              break;
+            }
+          }
+          
+          if (!adminReconnected && room.players.has(socketId) && room.players.get(socketId)?.disconnected) {
+            console.log(`[ROOM TIMEOUT] Admin ${socketId} did not reconnect within 30s, closing room ${roomId}`);
+            // Now actually close the room
+            io.to(roomId).emit('roomClosed', { 
+              reason: 'host_left',
+              message: 'The host has left the room. You will be redirected to the login screen.'
+            });
+            room.players.clear();
+            rooms.delete(roomId);
+          }
+        }, 30000); // 30 second grace period
+        
+        return; // Don't delete the player yet, give them time to reconnect
+      }
+      
+      // Remove the player normally
       room.players.delete(socketId);
       
-      // If the leaving player is the admin and there are other players
+      // If the leaving player is the admin and there are other players (explicit leave)
       if (isAdmin && room.players.size > 0) {
-        console.log(`[ROOM CLOSED] Admin ${socketId} left room ${roomId}, closing room for ${room.players.size} remaining players`);
+        console.log(`[ROOM CLOSED] Admin ${socketId} explicitly left room ${roomId}, closing room for ${room.players.size} remaining players`);
         // Notify all remaining players that the room is being closed
         io.to(roomId).emit('roomClosed', { 
           reason: 'host_left',
@@ -194,7 +232,8 @@ io.on('connection', (socket) => {
       errors: 0,
       position: 1,
       avatar,
-      color
+      color,
+      disconnected: false
     };
     const room = {
       id: roomId,
@@ -211,7 +250,7 @@ io.on('connection', (socket) => {
     socket.join(roomId);
     socket.emit('roomCreated', roomId);
     socket.emit('roomJoined', { roomId, isAdmin: true, nickname });
-    io.to(roomId).emit('playerJoined', Array.from(room.players.values()));
+    io.to(roomId).emit('playerJoined', Array.from(room.players.values()).filter((p: any) => !p.disconnected));
     console.log(`[ROOM CREATED] Room ID: ${roomId} | Admin: ${socket.id} | Nickname: ${nickname}`);
     logWithInfo(`connected and created room with nickname: ${nickname}`);
   });
@@ -244,11 +283,16 @@ io.on('connection', (socket) => {
     // Check if a player with the same nickname already exists (potential reconnection)
     let existingPlayerSocketId = null;
     let wasAdmin = false;
+    let wasDisconnected = false;
     for (const [socketId, player] of room.players.entries()) {
       if (player.nickname === nickname) {
         existingPlayerSocketId = socketId;
         wasAdmin = room.admin === socketId;
+        wasDisconnected = player.disconnected || false;
         console.log(`[RECONNECTION] Found existing player ${nickname} with old socket ID ${socketId}, replacing with new ID ${socket.id}`);
+        if (wasDisconnected) {
+          console.log(`[ADMIN RECONNECTION] Admin ${nickname} is reconnecting after disconnect`);
+        }
         break;
       }
     }
@@ -278,7 +322,8 @@ io.on('connection', (socket) => {
       errors: 0,
       position: room.players.size + 1,
       avatar,
-      color
+      color,
+      disconnected: false  // Ensure reconnected players are marked as connected
     };
     room.players.set(socket.id, player);
     socket.join(normalizedRoomId);
@@ -292,7 +337,8 @@ io.on('connection', (socket) => {
     console.log(`  - Emitted roomJoined to ${socket.id} (isAdmin: ${isAdmin})`);
     
     // Emit playerJoined to all players in the room (including the complete player list)
-    const currentPlayers = Array.from(room.players.values());
+    // Filter out disconnected players from the list
+    const currentPlayers = Array.from(room.players.values()).filter((p: any) => !p.disconnected);
     io.to(normalizedRoomId).emit('playerJoined', currentPlayers);
     console.log(`  - Emitted playerJoined to all players with ${currentPlayers.length} players: [${currentPlayers.map((p: any) => p.nickname).join(', ')}]`);
     
@@ -300,7 +346,7 @@ io.on('connection', (socket) => {
     // This ensures all clients have the most up-to-date player list
     if (existingPlayerSocketId) {
       setTimeout(() => {
-        const updatedPlayers = Array.from(room.players.values());
+        const updatedPlayers = Array.from(room.players.values()).filter((p: any) => !p.disconnected);
         io.to(normalizedRoomId).emit('playerJoined', updatedPlayers);
         console.log(`  - [RECONNECTION SYNC] Sent additional player list update with ${updatedPlayers.length} players`);
       }, 100);
