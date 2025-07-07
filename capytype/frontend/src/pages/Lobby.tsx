@@ -6,6 +6,7 @@ import { useGameStore } from '../store/gameStore';
 import { generateRoomName } from '../utils/roomUtils';
 // Removed unused Player import
 import { getAvatarByFile, CAPYBARA_AVATARS } from '../utils/avatars';
+import { getTextByDifficulty, getRandomText, TextOptions } from '../utils/textGeneration';
 
 // Asset preloading for performance optimization (Step 1.2)
 const preloadGameAssets = () => {
@@ -81,7 +82,11 @@ const TextGenerationModal = ({
   onGenerateRandom,
   onGenerateWithChatGPT,
   generatingText, 
-  onStartGame 
+  onStartGame,
+  selectedDifficulty,
+  setSelectedDifficulty,
+  selectedCategory,
+  setSelectedCategory
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -93,6 +98,10 @@ const TextGenerationModal = ({
   onGenerateWithChatGPT: () => void;
   generatingText: boolean;
   onStartGame: () => void;
+  selectedDifficulty: 'easy' | 'medium' | 'hard';
+  setSelectedDifficulty: (difficulty: 'easy' | 'medium' | 'hard') => void;
+  selectedCategory: 'general' | 'programming' | 'quotes';
+  setSelectedCategory: (category: 'general' | 'programming' | 'quotes') => void;
 }) => {
   if (!isOpen) return null;
 
@@ -178,6 +187,133 @@ const TextGenerationModal = ({
             Create custom text for your typing race
           </p>
         </div>
+
+        {/* Difficulty and Category Selectors */}
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 15, marginBottom: 20 }}>
+          {/* Help Text */}
+          <div style={{ 
+            background: 'rgba(99, 102, 241, 0.1)', 
+            border: '1px solid rgba(99, 102, 241, 0.2)', 
+            borderRadius: 8, 
+            padding: 12,
+            textAlign: 'center'
+          }}>
+            <p style={{ 
+              fontSize: 13, 
+              color: '#4f46e5', 
+              margin: 0, 
+              fontWeight: 500 
+            }}>
+              <strong>Easy:</strong> Simple words, minimal punctuation | <strong>Medium:</strong> Complex vocabulary, standard punctuation | <strong>Hard:</strong> Technical terms, special characters
+            </p>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'row', gap: 20, justifyContent: 'center' }}>
+            {/* Difficulty Selector */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: 10, 
+              fontWeight: 600, 
+              color: '#374151',
+              fontSize: 14,
+              textAlign: 'center'
+            }}>
+              Difficulty
+            </label>
+            <select
+              value={selectedDifficulty}
+              onChange={(e) => setSelectedDifficulty(e.target.value as 'easy' | 'medium' | 'hard')}
+              style={{
+                width: '100%',
+                minWidth: '120px',
+                maxWidth: '150px',
+                padding: '11px 16px',
+                border: '2px solid #b6a77a',
+                borderRadius: 12,
+                fontSize: 14,
+                fontWeight: 600,
+                background: 'rgba(255, 255, 255, 0.95)',
+                color: '#374151',
+                cursor: 'pointer',
+                outline: 'none',
+                boxShadow: '0 2px 8px rgba(182, 167, 122, 0.1)',
+                transition: 'all 0.2s ease',
+                appearance: 'none',
+                backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6,9 12,15 18,9\'%3e%3c/polyline%3e%3c/svg%3e")',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 14px center',
+                backgroundSize: '16px',
+                paddingRight: '40px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#8b7560';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(182, 167, 122, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#b6a77a';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(182, 167, 122, 0.1)';
+              }}
+            >
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+
+          {/* Category Selector */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+            <label style={{ 
+              display: 'block', 
+              marginBottom: 10, 
+              fontWeight: 600, 
+              color: '#374151',
+              fontSize: 14,
+              textAlign: 'center'
+            }}>
+              Category
+            </label>
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value as 'general' | 'programming' | 'quotes')}
+              style={{
+                width: '100%',
+                minWidth: '120px',
+                maxWidth: '150px',
+                padding: '11px 16px',
+                border: '2px solid #b6a77a',
+                borderRadius: 12,
+                fontSize: 14,
+                fontWeight: 600,
+                background: 'rgba(255, 255, 255, 0.95)',
+                color: '#374151',
+                cursor: 'pointer',
+                outline: 'none',
+                boxShadow: '0 2px 8px rgba(182, 167, 122, 0.1)',
+                transition: 'all 0.2s ease',
+                appearance: 'none',
+                backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6,9 12,15 18,9\'%3e%3c/polyline%3e%3c/svg%3e")',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 14px center',
+                backgroundSize: '16px',
+                paddingRight: '40px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#8b7560';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(182, 167, 122, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#b6a77a';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(182, 167, 122, 0.1)';
+              }}
+            >
+              <option value="general">General</option>
+              <option value="programming">Programming</option>
+              <option value="quotes">Quotes</option>
+            </select>
+          </div>
+        </div>
+      </div>
 
         {/* Character Limit Selector */}
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -363,7 +499,7 @@ const TextGenerationModal = ({
               minWidth: '160px'
             }}
           >
-            🎲 Random Text
+            🎲 Generate by Difficulty
           </button>
           
           <button
@@ -500,6 +636,10 @@ export default function Lobby() {
   const [customText, setCustomText] = useState('');
   const [generatingText, setGeneratingText] = useState(false);
   const [characterLimit, setCharacterLimit] = useState(150);
+  
+  // Difficulty selection states
+  const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
+  const [selectedCategory, setSelectedCategory] = useState<'general' | 'programming' | 'quotes'>('general');
 
   // Get actual capybara colors from avatars
   const capyColors = CAPYBARA_AVATARS.map(avatar => avatar.color);
@@ -830,58 +970,35 @@ export default function Lobby() {
     return result || text.substring(0, maxLength); // Fallback to hard cut if all else fails
   };
 
-  // Generate random text using AI (not stored texts)
+  // Generate random text based on difficulty and category selection
   const generateRandomText = async () => {
     setGeneratingText(true);
     try {
-      // Generate random topics for AI to write about
-      const randomTopics = [
-        'ocean life', 'space exploration', 'renewable energy', 'ancient civilizations', 
-        'wildlife conservation', 'quantum physics', 'sustainable agriculture', 'marine biology',
-        'artificial intelligence', 'climate change', 'biodiversity', 'archaeological discoveries',
-        'neuroscience', 'genetic engineering', 'solar technology', 'volcanic activity',
-        'coral reefs', 'migration patterns', 'ecosystem restoration', 'meteorology'
-      ];
+      // Use our curated text generation with selected difficulty and category
+      const generatedText = getTextByDifficulty({
+        difficulty: selectedDifficulty,
+        category: selectedCategory
+      });
       
-      const randomTopic = randomTopics[Math.floor(Math.random() * randomTopics.length)];
-      
-      // Try to generate with AI directly using the topic
-      let aiSuccess = false;
-      try {
-        // Temporarily set the topic and generate
-        const originalText = customText;
-        setCustomText(randomTopic);
-        
-        // Use a separate AI generation function that doesn't depend on state
-        const generatedText = await generateAIText(randomTopic);
-        if (generatedText && generatedText.length > 20) {
-          setCustomText(generatedText);
-          aiSuccess = true;
-        } else {
-          setCustomText(originalText); // Restore if failed
-        }
-      } catch (aiError) {
-        console.log('AI generation failed for random text:', aiError);
+      if (generatedText && generatedText.length > 20) {
+        setCustomText(generatedText);
+        setNotificationMessage('✅ Random text generated successfully!');
+        setShowNotification(true);
+        setTimeout(() => setShowNotification(false), 2000);
+      } else {
+        throw new Error('Generated text is too short');
       }
-      
-      // If AI failed, use enhanced fallback
-      if (!aiSuccess) {
-        const fallbackText = generateTopicSpecificFallback(randomTopic, characterLimit);
-        setCustomText(fallbackText);
-      }
-      
     } catch (error) {
-      console.error('Error generating random text:', error);
-      // Use enhanced fallback system instead of stored texts
-      const randomTopics = [
-        'technology', 'nature', 'space', 'ocean', 'science', 'history',
-        'music', 'art', 'literature', 'philosophy'
-      ];
-      const randomTopic = randomTopics[Math.floor(Math.random() * randomTopics.length)];
-      const fallbackText = generateTopicSpecificFallback(randomTopic, characterLimit);
+      console.error('Random text generation failed:', error);
+      // Fallback to a simple random text
+      const fallbackText = getRandomText();
       setCustomText(fallbackText);
+      setNotificationMessage('⚠️ Using fallback text due to generation error');
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 2000);
+    } finally {
+      setGeneratingText(false);
     }
-    setGeneratingText(false);
   };
 
   // Dedicated AI text generation function that doesn't depend on component state
@@ -1645,6 +1762,10 @@ export default function Lobby() {
             onGenerateWithChatGPT={generateWithChatGPT}
             generatingText={generatingText}
             onStartGame={handleStartWithCustomText}
+            selectedDifficulty={selectedDifficulty}
+            setSelectedDifficulty={setSelectedDifficulty}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
           />
         )}
       </AnimatePresence>
