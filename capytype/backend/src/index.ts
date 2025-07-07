@@ -256,6 +256,7 @@ io.on('connection', (socket) => {
     // Remove the old player entry if this is a reconnection
     if (existingPlayerSocketId) {
       room.players.delete(existingPlayerSocketId);
+      console.log(`  - Removed old player entry for ${nickname}`);
       // If the reconnecting player was the admin, transfer admin privileges
       if (wasAdmin) {
         room.admin = socket.id;
@@ -282,12 +283,28 @@ io.on('connection', (socket) => {
     room.players.set(socket.id, player);
     socket.join(normalizedRoomId);
     
+    console.log(`  - Added player to room, total players: ${room.players.size}`);
+    console.log(`  - Current players: [${Array.from(room.players.values()).map((p: any) => p.nickname).join(', ')}]`);
+    
     // Emit roomJoined to the joining player with their admin status
     const isAdmin = room.admin === socket.id;
     socket.emit('roomJoined', { roomId: normalizedRoomId, isAdmin, nickname });
+    console.log(`  - Emitted roomJoined to ${socket.id} (isAdmin: ${isAdmin})`);
     
-    // Emit playerJoined to all players in the room
-    io.to(normalizedRoomId).emit('playerJoined', Array.from(room.players.values()));
+    // Emit playerJoined to all players in the room (including the complete player list)
+    const currentPlayers = Array.from(room.players.values());
+    io.to(normalizedRoomId).emit('playerJoined', currentPlayers);
+    console.log(`  - Emitted playerJoined to all players with ${currentPlayers.length} players: [${currentPlayers.map((p: any) => p.nickname).join(', ')}]`);
+    
+    // For reconnections (especially admin), send an additional player list update after a brief delay
+    // This ensures all clients have the most up-to-date player list
+    if (existingPlayerSocketId) {
+      setTimeout(() => {
+        const updatedPlayers = Array.from(room.players.values());
+        io.to(normalizedRoomId).emit('playerJoined', updatedPlayers);
+        console.log(`  - [RECONNECTION SYNC] Sent additional player list update with ${updatedPlayers.length} players`);
+      }, 100);
+    }
     
     const actionType = existingPlayerSocketId ? 'reconnected to' : 'joined';
     logWithInfo(`${actionType} room ${normalizedRoomId} with nickname: ${nickname}${isAdmin ? ' (admin)' : ''}`);

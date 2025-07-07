@@ -125,15 +125,41 @@ export const useGameStore = create<GameStore>((set, get) => ({
     socket.on('roomCreated', (roomId: string) => {
       console.log('Room created:', roomId);
       set({ roomId, isAdmin: true });
+      
+      // Store session data for persistence on refresh
+      sessionStorage.setItem('capy_room_id', roomId);
+      sessionStorage.setItem('capy_is_admin', 'true');
     });
 
-    socket.on('roomJoined', ({ roomId: joinedRoomId, isAdmin: joinedIsAdmin }: { roomId: string; isAdmin: boolean }) => {
-      console.log('Room joined:', { roomId: joinedRoomId, isAdmin: joinedIsAdmin });
+    socket.on('roomJoined', ({ roomId: joinedRoomId, isAdmin: joinedIsAdmin, nickname }: { roomId: string; isAdmin: boolean; nickname?: string }) => {
+      console.log('Room joined:', { roomId: joinedRoomId, isAdmin: joinedIsAdmin, nickname });
       set({ roomId: joinedRoomId, isAdmin: joinedIsAdmin });
+      
+      // Store session data for persistence on refresh
+      sessionStorage.setItem('capy_room_id', joinedRoomId);
+      if (joinedIsAdmin) {
+        sessionStorage.setItem('capy_is_admin', 'true');
+      } else {
+        sessionStorage.removeItem('capy_is_admin');
+      }
+      
+      // Store nickname if provided by backend (for reconnection scenarios)
+      if (nickname) {
+        sessionStorage.setItem('capy_nickname', nickname);
+      }
+      
+      console.log('[Session] Stored room data for persistence:', {
+        roomId: joinedRoomId,
+        isAdmin: joinedIsAdmin,
+        nickname: nickname
+      });
     });
 
     socket.on('playerJoined', (players: Player[]) => {
-      console.log('[Avatar] Players updated:', players);
+      console.log('[Player List] Players updated from server:', players);
+      console.log('[Player List] Number of players received:', players.length);
+      console.log('[Player List] Player nicknames:', players.map(p => p.nickname));
+      
       // Ensure all player objects have avatar and color
       const validatedPlayers = players.map(player => {
         // For the current player, use the values from sessionStorage if available
@@ -153,7 +179,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           color: player.color || '#60a5fa'
         };
       });
-      console.log('[Avatar] Validated players:', validatedPlayers);
+      console.log('[Player List] Validated players stored in state:', validatedPlayers);
       set({ players: validatedPlayers });
     });
 
