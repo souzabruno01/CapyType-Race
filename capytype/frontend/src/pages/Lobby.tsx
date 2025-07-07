@@ -542,6 +542,9 @@ export default function Lobby() {
         useGameStore.getState().setAdmin(true);
       }
       
+      // Set the room ID immediately to prevent redirect
+      useGameStore.getState().setRoomId(storedRoomId);
+      
       // Rejoin the room with stored credentials
       useGameStore.getState().joinRoom(
         storedRoomId, 

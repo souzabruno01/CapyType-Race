@@ -215,6 +215,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
       console.error('Socket error:', message);
     });
 
+    socket.on('roomError', ({ message }: { message: string }) => {
+      console.error('Room error:', message);
+      // Let the Lobby component handle room-specific errors
+    });
+
     socket.on('disconnect', () => {
       console.log('Disconnected from server');
       set({ socket: null });

@@ -178,6 +178,7 @@ io.on('connection', (socket) => {
     rooms.set(roomId, room);
     socket.join(roomId);
     socket.emit('roomCreated', roomId);
+    socket.emit('roomJoined', { roomId, isAdmin: true, nickname });
     io.to(roomId).emit('playerJoined', Array.from(room.players.values()));
     console.log(`[ROOM CREATED] Room ID: ${roomId} | Admin: ${socket.id} | Nickname: ${nickname}`);
     logWithInfo(`connected and created room with nickname: ${nickname}`);
@@ -188,18 +189,41 @@ io.on('connection', (socket) => {
     const normalizedRoomId = roomId.toLowerCase();
     const room = rooms.get(normalizedRoomId);
     if (!room) {
-      socket.emit('error', 'Room not found');
+      socket.emit('roomError', { message: 'Room not found' });
       return;
     }
 
     if (room.gameState !== 'waiting') {
-      socket.emit('error', 'Game has already started');
+      socket.emit('roomError', { message: 'Game has already started' });
       return;
     }
 
-    if (room.players.size >= 32) {
-      socket.emit('error', 'Room is full (32 players max)');
-      return;
+    // Check if a player with the same nickname already exists (potential reconnection)
+    let existingPlayerSocketId = null;
+    let wasAdmin = false;
+    for (const [socketId, player] of room.players.entries()) {
+      if (player.nickname === nickname) {
+        existingPlayerSocketId = socketId;
+        wasAdmin = room.admin === socketId;
+        console.log(`[RECONNECTION] Found existing player ${nickname} with old socket ID ${socketId}, replacing with new ID ${socket.id}`);
+        break;
+      }
+    }
+
+    // Remove the old player entry if this is a reconnection
+    if (existingPlayerSocketId) {
+      room.players.delete(existingPlayerSocketId);
+      // If the reconnecting player was the admin, transfer admin privileges
+      if (wasAdmin) {
+        room.admin = socket.id;
+        console.log(`[ADMIN TRANSFER] Transferred admin privileges from ${existingPlayerSocketId} to ${socket.id} for player ${nickname}`);
+      }
+    } else {
+      // Check room capacity only for truly new players
+      if (room.players.size >= 32) {
+        socket.emit('roomError', { message: 'Room is full (32 players max)' });
+        return;
+      }
     }
 
     const player = {
@@ -214,8 +238,16 @@ io.on('connection', (socket) => {
     };
     room.players.set(socket.id, player);
     socket.join(normalizedRoomId);
+    
+    // Emit roomJoined to the joining player with their admin status
+    const isAdmin = room.admin === socket.id;
+    socket.emit('roomJoined', { roomId: normalizedRoomId, isAdmin, nickname });
+    
+    // Emit playerJoined to all players in the room
     io.to(normalizedRoomId).emit('playerJoined', Array.from(room.players.values()));
-    logWithInfo(`joined room ${normalizedRoomId} with nickname: ${nickname}`);
+    
+    const actionType = existingPlayerSocketId ? 'reconnected to' : 'joined';
+    logWithInfo(`${actionType} room ${normalizedRoomId} with nickname: ${nickname}${isAdmin ? ' (admin)' : ''}`);
   });
 
   // Start the game
