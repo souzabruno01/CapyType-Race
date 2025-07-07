@@ -337,7 +337,7 @@ const TextGenerationModal = ({
           gap: 12,
           justifyContent: 'center',
           width: '100%',
-          maxWidth: '400px',
+          flexWrap: 'wrap',
           flexShrink: 0
         }}>
           <button
@@ -348,19 +348,16 @@ const TextGenerationModal = ({
               color: '#232323',
               border: '2px solid #b6a77a',
               borderRadius: 12,
-              padding: '10px 16px',
+              padding: '10px 16px', // Smaller padding
               fontWeight: 700,
-              fontSize: 13,
+              fontSize: 13, // Smaller font size
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: generatingText ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
               opacity: generatingText ? 0.6 : 1,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              flex: '1',
-              minWidth: '160px'
+              gap: 8
             }}
           >
             🎲 Random Text
@@ -374,18 +371,15 @@ const TextGenerationModal = ({
               color: '#fff',
               border: 'none',
               borderRadius: 12,
-              padding: '10px 16px',
+              padding: '10px 16px', // Smaller padding
               fontWeight: 700,
-              fontSize: 13,
+              fontSize: 13, // Smaller font size
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: generatingText ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              flex: '1',
-              minWidth: '160px'
+              gap: 8
             }}
           >
             {generatingText ? (
@@ -407,13 +401,13 @@ const TextGenerationModal = ({
         {/* Action Buttons */}
         <div style={{
           display: 'flex',
-          gap: 12,
+          gap: 18,
           justifyContent: 'center',
           alignItems: 'center',
           width: '100%',
           maxWidth: '400px',
           flexShrink: 0,
-          paddingTop: 16
+          paddingTop: 8
         }}>
           <button
             onClick={onClose}
@@ -422,17 +416,16 @@ const TextGenerationModal = ({
               color: '#232323',
               border: '2px solid #b6a77a',
               borderRadius: 12,
-              padding: '14px 24px',
+              padding: '16px 36px', // Larger padding
               fontWeight: 700,
-              fontSize: 14,
+              fontSize: 16, // Larger font size
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
+              minWidth: '140px', // Larger min width
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              flex: '1',
-              minWidth: '160px'
+              justifyContent: 'center'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-1px)';
@@ -453,18 +446,17 @@ const TextGenerationModal = ({
               color: '#fff',
               border: 'none',
               borderRadius: 12,
-              padding: '14px 24px',
+              padding: '16px 36px', // Larger padding
               fontWeight: 700,
-              fontSize: 14,
+              fontSize: 16, // Larger font size
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: (!customText.trim() || generatingText) ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s ease',
+              minWidth: '160px', // Larger min width
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 6,
-              flex: '1',
-              minWidth: '160px'
+              gap: 6
             }}
             onMouseEnter={(e) => {
               if (!(!customText.trim() || generatingText)) {

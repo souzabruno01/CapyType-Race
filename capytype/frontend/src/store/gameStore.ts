@@ -51,6 +51,8 @@ interface GameStore extends GameState {
   setAdmin: (isAdmin: boolean) => void;
 }
 
+const VITE_APP_BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL || 'http://localhost:3001';
+
 export const useGameStore = create<GameStore>((set, get) => ({
   socket: null,
   roomId: null,
@@ -80,259 +82,86 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   setGameResults: (results) => set({ gameResults: results, gameState: 'finished' }),
   setAdmin: (isAdmin) => set({ isAdmin }),
-  resetGame: () => {
-    // Clear session data when resetting game
-    sessionStorage.removeItem('capy_room_id');
-    sessionStorage.removeItem('capy_nickname');
-    sessionStorage.removeItem('capy_is_admin');
-    
-    set({ 
-      socket: null,
-      roomId: null,
-      players: [],
-      text: '',
-      progress: 0,
-      gameState: 'waiting',
-      gameResults: [],
-      isAdmin: false,
-      isPractice: false,
-      gameStarted: false
-    });
-  },
-
+  resetGame: () => set({ 
+    socket: null,
+    roomId: null,
+    players: [],
+    text: '',
+    progress: 0,
+    gameState: 'waiting',
+    gameResults: [],
+    isAdmin: false,
+    isPractice: false,
+    gameStarted: false
+  }),
   connect: () => {
-    const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
-    console.log('Connecting to backend:', backendUrl);
-    
-    const socket = io(backendUrl, {
-      withCredentials: true,
-      transports: ['websocket', 'polling']
+    if (get().socket) return; // Already connected
+
+    const newSocket = io(VITE_APP_BACKEND_URL, {
+      transports: ['websocket'],
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
     });
 
-    socket.on('connect', () => {
-      console.log('[Avatar] Connected to server');
-      // When connecting, ensure we have avatar/color in sessionStorage
-      const storedColor = sessionStorage.getItem('capy_avatar_color');
-      const storedFile = sessionStorage.getItem('capy_avatar_file');
-      if (!storedColor || !storedFile) {
-        // Set defaults if missing
-        sessionStorage.setItem('capy_avatar_color', '#6ee7b7');
-        sessionStorage.setItem('capy_avatar_file', 'Capy-face-green.png');
-      }
-      set({ socket });
+    newSocket.on('connect', () => {
+      console.log('Socket connected:', newSocket.id);
+      set({ socket: newSocket });
     });
 
-    socket.on('roomCreated', (roomId: string) => {
-      console.log('Room created:', roomId);
-      set({ roomId, isAdmin: true });
-      
-      // Store session data for persistence on refresh
-      sessionStorage.setItem('capy_room_id', roomId);
-      sessionStorage.setItem('capy_is_admin', 'true');
-    });
-
-    socket.on('roomJoined', ({ roomId: joinedRoomId, isAdmin: joinedIsAdmin, nickname }: { roomId: string; isAdmin: boolean; nickname?: string }) => {
-      console.log('Room joined:', { roomId: joinedRoomId, isAdmin: joinedIsAdmin, nickname });
-      set({ roomId: joinedRoomId, isAdmin: joinedIsAdmin });
-      
-      // Store session data for persistence on refresh
-      sessionStorage.setItem('capy_room_id', joinedRoomId);
-      if (joinedIsAdmin) {
-        sessionStorage.setItem('capy_is_admin', 'true');
-      } else {
-        sessionStorage.removeItem('capy_is_admin');
-      }
-      
-      // Store nickname if provided by backend (for reconnection scenarios)
-      if (nickname) {
-        sessionStorage.setItem('capy_nickname', nickname);
-      }
-      
-      console.log('[Session] Stored room data for persistence:', {
-        roomId: joinedRoomId,
-        isAdmin: joinedIsAdmin,
-        nickname: nickname
-      });
-    });
-
-    socket.on('playerJoined', (players: Player[]) => {
-      console.log('[Player List] Players updated from server:', players);
-      console.log('[Player List] Number of players received:', players.length);
-      console.log('[Player List] Player nicknames:', players.map(p => p.nickname));
-      
-      // Ensure all player objects have avatar and color
-      const validatedPlayers = players.map(player => {
-        // For the current player, use the values from sessionStorage if available
-        if (player.id === socket.id) {
-          const storedColor = sessionStorage.getItem('capy_avatar_color');
-          const storedFile = sessionStorage.getItem('capy_avatar_file');
-          return {
-            ...player,
-            avatar: storedFile || player.avatar || 'Capy-face-blue.png',
-            color: storedColor || player.color || '#60a5fa'
-          };
-        }
-        // For other players, use their provided values or defaults
-        return {
-          ...player,
-          avatar: player.avatar || 'Capy-face-blue.png',
-          color: player.color || '#60a5fa'
-        };
-      });
-      console.log('[Player List] Validated players stored in state:', validatedPlayers);
-      set({ players: validatedPlayers });
-    });
-
-    socket.on('playerLeft', (players: Player[]) => {
-      console.log('Player left, new players:', players);
-      // Ensure all player objects have avatar and color
-      const validatedPlayers = players.map(player => ({
-        ...player,
-        avatar: player.avatar || 'Capy-face-blue.png',
-        color: player.color || '#60a5fa'
-      }));
-      set({ players: validatedPlayers });
-    });
-
-    socket.on('roomClosed', ({ reason, message }: { reason: string; message: string }) => {
-      console.log('Room closed:', reason, message);
-      // Store the closure reason for display
-      sessionStorage.setItem('roomClosureReason', message);
-      // Reset game state and disconnect
-      get().resetGame();
-      // The redirect will be handled by the component that detects the closure reason
-    });
-
-    socket.on('gameStarting', ({ text }: { text: string }) => {
-      console.log('Game starting with text:', text);
-      set({ text });
-    });
-
-    socket.on('gameStarted', () => {
-      console.log('Game started');
-      set({ gameState: 'playing', gameStarted: true });
-    });
-
-    socket.on('progressUpdate', ({ playerId, progress }: { playerId: string; progress: number }) => {
-      set((state) => ({
-        players: state.players.map((player) =>
-          player.id === playerId ? { ...player, progress } : player
-        ),
-      }));
-    });
-
-    socket.on('playerFinished', (result: PlayerResult) => {
-      // Ensure avatar and color are included in the result
-      const player = get().players.find(p => p.id === result.id);
-      set((state) => ({
-        gameResults: [
-          ...state.gameResults,
-          {
-            ...result,
-            position: state.gameResults.length + 1,
-            avatar: player?.avatar || 'Capy-face-blue.png',
-            color: player?.color || '#60a5fa'
-          },
-        ],
-      }));
-    });
-
-    socket.on('error', (message: string) => {
-      console.error('Socket error:', message);
-    });
-
-    socket.on('roomError', ({ message }: { message: string }) => {
-      console.error('Room error:', message);
-      // Let the Lobby component handle room-specific errors
-    });
-
-    socket.on('disconnect', () => {
-      console.log('Disconnected from server');
+    newSocket.on('disconnect', () => {
+      console.log('Socket disconnected');
       set({ socket: null });
     });
 
-    set({ socket });
-  },
-
-  createRoom: (nickname, avatar, color) => {
-    const { socket } = get();
-    console.log('[Avatar] createRoom called with:', { nickname, avatar, color });
-    
-    // Store nickname for session persistence
-    sessionStorage.setItem('capy_nickname', nickname);
-    
-    // Ensure we're using the correct avatar/color from session storage
-    const storedColor = sessionStorage.getItem('capy_avatar_color');
-    const storedFile = sessionStorage.getItem('capy_avatar_file');
-    
-    // Use stored values if available, otherwise use provided values
-    const finalAvatar = storedFile || avatar;
-    const finalColor = storedColor || color;
-    
-    console.log('[Avatar] Using values:', { finalAvatar, finalColor });
-    
-    if (socket?.connected) {
-      console.log('[Avatar] Socket is connected, emitting createRoom');
-      socket.emit('createRoom', { 
-        nickname, 
-        avatar: finalAvatar, 
-        color: finalColor 
-      });
-    } else {
-      console.error('Socket not connected');
-      get().connect();
-    }
-  },
-
-  joinRoom: (roomId, nickname, avatar, color) => {
-    const { socket } = get();
-    
-    // Store nickname for session persistence
-    sessionStorage.setItem('capy_nickname', nickname);
-    
-    // Ensure we're using the correct avatar/color from session storage
-    const storedColor = sessionStorage.getItem('capy_avatar_color');
-    const storedFile = sessionStorage.getItem('capy_avatar_file');
-    
-    // Use stored values if available, otherwise use provided values
-    const finalAvatar = storedFile || avatar;
-    const finalColor = storedColor || color;
-    
-    console.log('[Avatar] joinRoom with values:', { 
-      roomId, 
-      nickname, 
-      avatar: finalAvatar, 
-      color: finalColor 
+    // Centralized event listeners
+    newSocket.on('roomCreated', (roomId) => {
+      set({ roomId });
     });
 
-    const emitJoinRoom = (socket: Socket) => {
-      if (socket.connected) {
-        console.log('[Avatar] Emitting joinRoom');
-        socket.emit('joinRoom', { 
-          roomId, 
-          nickname, 
-          avatar: finalAvatar, 
-          color: finalColor 
-        });
-        set({ roomId });
-      } else {
-        console.error('Failed to connect to server');
-      }
-    };
+    newSocket.on('roomJoined', ({ roomId, isAdmin }) => {
+      set({ roomId, isAdmin });
+    });
 
-    if (!socket) {
-      get().connect();
-      setTimeout(() => {
-        const newSocket = get().socket;
-        if (newSocket) emitJoinRoom(newSocket);
-      }, 1000);
-    } else if (socket.connected) {
-      emitJoinRoom(socket);
-    } else {
-      socket.connect();
-      setTimeout(() => {
-        if (socket) emitJoinRoom(socket);
-      }, 1000);
-    }
+    newSocket.on('playerJoined', (players) => {
+      set({ players });
+    });
+
+    newSocket.on('playerLeft', (players) => {
+      set({ players });
+    });
+
+    newSocket.on('gameStarting', ({ text }) => {
+      set({ text, gameState: 'playing', gameStarted: true });
+    });
+
+    newSocket.on('gameStarted', () => {
+      set({ gameState: 'playing' });
+    });
+
+    newSocket.on('progressUpdate', ({ playerId, progress }) => {
+      set((state) => ({
+        players: state.players.map((p) => (p.id === playerId ? { ...p, progress } : p)),
+      }));
+    });
+
+    newSocket.on('playerFinished', ({ playerId, time }) => {
+      // Handle player finish logic if needed
+    });
+
+    newSocket.on('roomClosed', () => {
+      get().resetGame();
+      // Optionally, redirect to home or show a message
+    });
+
+    newSocket.on('roomError', (error) => {
+      console.error('Room Error:', error.message);
+      // Handle error display to the user
+    });
+  },
+  createRoom: (nickname, avatar, color) => {
+    get().socket?.emit('createRoom', { nickname, avatar, color });
+  },
+  joinRoom: (roomId, nickname, avatar, color) => {
+    get().socket?.emit('joinRoom', { roomId, nickname, avatar, color });
   },
 }));
