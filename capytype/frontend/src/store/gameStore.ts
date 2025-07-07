@@ -80,18 +80,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   setGameResults: (results) => set({ gameResults: results, gameState: 'finished' }),
   setAdmin: (isAdmin) => set({ isAdmin }),
-  resetGame: () => set({ 
-    socket: null,
-    roomId: null,
-    players: [],
-    text: '',
-    progress: 0,
-    gameState: 'waiting',
-    gameResults: [],
-    isAdmin: false,
-    isPractice: false,
-    gameStarted: false
-  }),
+  resetGame: () => {
+    // Clear session data when resetting game
+    sessionStorage.removeItem('capy_room_id');
+    sessionStorage.removeItem('capy_nickname');
+    sessionStorage.removeItem('capy_is_admin');
+    
+    set({ 
+      socket: null,
+      roomId: null,
+      players: [],
+      text: '',
+      progress: 0,
+      gameState: 'waiting',
+      gameResults: [],
+      isAdmin: false,
+      isPractice: false,
+      gameStarted: false
+    });
+  },
 
   connect: () => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
@@ -115,19 +122,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ socket });
     });
 
-    socket.on('connect_error', (error) => {
-      console.error('Connection error:', error);
-      console.error('Backend URL:', backendUrl);
-      alert(`Cannot connect to server at ${backendUrl}. Please check if the backend is running.`);
-    });
-
-    socket.on('disconnect', (reason) => {
-      console.log('Disconnected from server:', reason);
-    });
-
     socket.on('roomCreated', (roomId: string) => {
       console.log('Room created:', roomId);
       set({ roomId, isAdmin: true });
+    });
+
+    socket.on('roomJoined', ({ roomId: joinedRoomId, isAdmin: joinedIsAdmin }: { roomId: string; isAdmin: boolean }) => {
+      console.log('Room joined:', { roomId: joinedRoomId, isAdmin: joinedIsAdmin });
+      set({ roomId: joinedRoomId, isAdmin: joinedIsAdmin });
     });
 
     socket.on('playerJoined', (players: Player[]) => {
@@ -185,24 +187,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ gameState: 'playing', gameStarted: true });
     });
 
-    // Handle player color changes from server
-    socket.on('playerColorChanged', ({ playerId, color, avatar }: { playerId: string; color: string; avatar?: string }) => {
-      console.log('[Avatar] Player color changed:', { playerId, color, avatar });
-      
-      // Update the player in the store
-      set((state) => ({
-        players: state.players.map((player) =>
-          player.id === playerId 
-            ? { 
-                ...player, 
-                color, 
-                avatar: avatar || player.avatar 
-              } 
-            : player
-        ),
-      }));
-    });
-
     socket.on('progressUpdate', ({ playerId, progress }: { playerId: string; progress: number }) => {
       set((state) => ({
         players: state.players.map((player) =>
@@ -229,20 +213,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     socket.on('error', (message: string) => {
       console.error('Socket error:', message);
-      if (message === 'Room not found') {
-        alert('The room you tried to join does not exist or has been closed.');
-        set({ roomId: null });
-        
-        // Clear room from session storage
-        sessionStorage.removeItem('capy_roomId');
-        
-        // This will redirect back to login
-        if (window.location.pathname.includes('/lobby')) {
-          window.location.href = '/';
-        }
-      } else {
-        alert(`Error: ${message}`);
-      }
     });
 
     socket.on('disconnect', () => {
@@ -256,6 +226,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
   createRoom: (nickname, avatar, color) => {
     const { socket } = get();
     console.log('[Avatar] createRoom called with:', { nickname, avatar, color });
+    
+    // Store nickname for session persistence
+    sessionStorage.setItem('capy_nickname', nickname);
     
     // Ensure we're using the correct avatar/color from session storage
     const storedColor = sessionStorage.getItem('capy_avatar_color');
@@ -276,29 +249,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
     } else {
       console.error('Socket not connected');
-      console.log('Attempting to reconnect...');
       get().connect();
-      
-      // Try again after a short delay
-      setTimeout(() => {
-        const { socket: newSocket } = get();
-        if (newSocket?.connected) {
-          console.log('Reconnected, trying createRoom again');
-          newSocket.emit('createRoom', { 
-            nickname, 
-            avatar: finalAvatar, 
-            color: finalColor 
-          });
-        } else {
-          console.error('Failed to reconnect to server');
-          alert('Cannot connect to server. Please check your internet connection and try again.');
-        }
-      }, 2000);
     }
   },
 
   joinRoom: (roomId, nickname, avatar, color) => {
     const { socket } = get();
+    
+    // Store nickname for session persistence
+    sessionStorage.setItem('capy_nickname', nickname);
     
     // Ensure we're using the correct avatar/color from session storage
     const storedColor = sessionStorage.getItem('capy_avatar_color');
@@ -327,37 +286,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
         set({ roomId });
       } else {
         console.error('Failed to connect to server');
-        alert('Failed to connect to the game server. Please try again.');
       }
     };
 
     if (!socket) {
-      console.log('[Join] No socket, connecting first...');
       get().connect();
       setTimeout(() => {
         const newSocket = get().socket;
-        if (newSocket) {
-          console.log('[Join] Connected, now joining room');
-          emitJoinRoom(newSocket);
-        } else {
-          console.error('[Join] Failed to connect after waiting');
-          alert('Could not connect to the game server. Please check your internet connection.');
-        }
+        if (newSocket) emitJoinRoom(newSocket);
       }, 1000);
     } else if (socket.connected) {
-      console.log('[Join] Socket already connected, joining directly');
       emitJoinRoom(socket);
     } else {
-      console.log('[Join] Socket exists but disconnected, reconnecting...');
       socket.connect();
       setTimeout(() => {
-        if (socket && socket.connected) {
-          console.log('[Join] Reconnected, now joining room');
-          emitJoinRoom(socket);
-        } else {
-          console.error('[Join] Failed to reconnect');
-          alert('Could not reconnect to the game server. Please refresh the page and try again.');
-        }
+        if (socket) emitJoinRoom(socket);
       }, 1000);
     }
   },

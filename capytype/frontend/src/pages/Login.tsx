@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { Filter } from 'bad-words';
+import { encryptRoomId } from '../utils/crypto';
 
 const RESERVED_WORDS = [
   'admin', 'host', 'moderator', 'capybara', 'room', 'test', 'null', 'undefined', 'root', 'server'
@@ -133,7 +134,7 @@ export default function Login() {
     }
   }, []); // Only run on mount
 
-  // Room code validation effect - only validate if user is trying to join
+  // Room code validation effect
   useEffect(() => {
     if (roomCode.length < 8) {
       setRoomName(null);
@@ -141,35 +142,19 @@ export default function Login() {
       setRoomCheckLoading(false);
       return;
     }
-    
-    // Don't validate room codes when user is just typing - only when they're clearly trying to join
     setRoomCheckLoading(true);
     setRoomName(null);
     setRoomValid(null);
-    
     // Debounce API call
     if (roomCodeCheckTimeout.current) clearTimeout(roomCodeCheckTimeout.current);
     roomCodeCheckTimeout.current = setTimeout(() => {
       // Use VITE_BACKEND_URL from env
       const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
-      const normalizedCode = roomCode.trim().toLowerCase();
-      
-      console.log('[Room Validation] Checking room code:', normalizedCode);
-      console.log('[Room Validation] Backend URL:', backendUrl);
-      
-      // Don't encrypt the room code - send it directly as the room ID
-      fetch(`${backendUrl}/api/room-info?code=${encodeURIComponent(normalizedCode)}`)
+      const encryptedCode = encryptRoomId(roomCode.toLowerCase());
+      fetch(`${backendUrl}/api/room-info?code=${encodeURIComponent(encryptedCode)}`)
         .then(async (res) => {
-          console.log('[Room Validation] Response status:', res.status);
-          if (!res.ok) {
-            const errorText = await res.text();
-            console.log('[Room Validation] Error response:', errorText);
-            throw new Error('Invalid');
-          }
-          return res.json();
-        })
-        .then((data) => {
-          console.log('[Room Validation] Response data:', data);
+          if (!res.ok) throw new Error('Invalid');
+          const data = await res.json();
           if (data && data.name) {
             setRoomName(data.name);
             setRoomValid(true);
@@ -178,14 +163,12 @@ export default function Login() {
             setRoomValid(false);
           }
         })
-        .catch((error) => {
-          console.log('[Room Validation] Error:', error);
+        .catch(() => {
           setRoomName(null);
           setRoomValid(false);
         })
         .finally(() => setRoomCheckLoading(false));
     }, 400);
-    
     // Cleanup
     return () => {
       if (roomCodeCheckTimeout.current) clearTimeout(roomCodeCheckTimeout.current);
@@ -194,8 +177,6 @@ export default function Login() {
 
   const handleCreateRoom = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('[Create Room] Starting room creation process');
-    
     const trimmedNickname = nickname.trim();
     if (trimmedNickname.length === 0) {
       setError('Nickname cannot be empty!');
@@ -209,9 +190,6 @@ export default function Login() {
       setNickname('');
       return;
     }
-    
-    console.log('[Create Room] Validation passed, creating room for:', trimmedNickname);
-    
     sessionStorage.setItem('capy_nickname', nickname);
     sessionStorage.setItem('capy_avatar_color', selectedAvatarColor);
     // Always get the avatar file from sessionStorage to ensure it's up to date
@@ -220,9 +198,6 @@ export default function Login() {
     // Clear room code on create
     sessionStorage.removeItem('capy_roomId');
     setRoomCode('');
-    
-    console.log('[Create Room] Calling createRoom with:', { nickname, avatarFile, selectedAvatarColor });
-    
     // Pass both avatarFile and selectedAvatarColor
     createRoom(nickname, avatarFile, selectedAvatarColor);
   };
@@ -244,13 +219,10 @@ export default function Login() {
       setError('Please enter a room code to join!');
       return;
     }
-    
-    // Check if room is valid before proceeding
-    if (roomValid !== true) {
+    if (!roomValid) {
       setError('Please enter a valid room code!');
       return;
     }
-    
     const normalizedRoomCode = roomCode.trim().toLowerCase();
     sessionStorage.setItem('capy_nickname', nickname);
     sessionStorage.setItem('capy_roomId', normalizedRoomCode);
@@ -258,7 +230,6 @@ export default function Login() {
     // Always get the avatar file from sessionStorage to ensure it's up to date
     const avatarFile = sessionStorage.getItem('capy_avatar_file') || (CAPYBARA_AVATARS.find(a => a.color === selectedAvatarColor)?.file || 'Capy-face-blue.png');
     sessionStorage.setItem('capy_avatar_file', avatarFile);
-    
     // Pass both avatarFile and selectedAvatarColor
     joinRoom(normalizedRoomCode, nickname, avatarFile, selectedAvatarColor);
   };

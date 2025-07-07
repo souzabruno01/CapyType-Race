@@ -523,10 +523,45 @@ export default function Lobby() {
   };
 
   useEffect(() => {
+    // Try to restore session from sessionStorage on page refresh
+    const storedRoomId = sessionStorage.getItem('capy_room_id');
+    const storedNickname = sessionStorage.getItem('capy_nickname');
+    const storedIsAdmin = sessionStorage.getItem('capy_is_admin');
+    const storedAvatarColor = sessionStorage.getItem('capy_avatar_color');
+    const storedAvatarFile = sessionStorage.getItem('capy_avatar_file');
+    
+    if (!roomId && storedRoomId && storedNickname) {
+      console.log('[Lobby] Restoring session from storage:', { 
+        roomId: storedRoomId, 
+        nickname: storedNickname,
+        isAdmin: storedIsAdmin === 'true'
+      });
+      
+      // Restore admin status
+      if (storedIsAdmin === 'true') {
+        useGameStore.getState().setAdmin(true);
+      }
+      
+      // Rejoin the room with stored credentials
+      useGameStore.getState().joinRoom(
+        storedRoomId, 
+        storedNickname, 
+        storedAvatarFile || 'Capy-face-green.png',
+        storedAvatarColor || '#6ee7b7'
+      );
+      return;
+    }
+    
     if (!roomId) {
-      console.log('[Lobby] No roomId, redirecting to login');
+      console.log('[Lobby] No roomId and no stored session, redirecting to login');
       navigate('/');
       return;
+    }
+    
+    // Store session data for persistence
+    sessionStorage.setItem('capy_room_id', roomId);
+    if (isAdmin) {
+      sessionStorage.setItem('capy_is_admin', 'true');
     }
     
     // Set room name and preload assets
@@ -541,7 +576,7 @@ export default function Lobby() {
       console.log('[Lobby] Socket not connected, reconnecting...');
       useGameStore.getState().connect();
     }
-  }, [roomId, navigate]);
+  }, [roomId, navigate, isAdmin]);
 
   useEffect(() => {
     if (gameState === 'playing') {
@@ -558,9 +593,36 @@ export default function Lobby() {
         return e.returnValue;
       }
     };
+
+    // Handle browser back button and navigation
+    const handlePopState = () => {
+      if (roomId) {
+        // Ask for confirmation before leaving
+        const confirmLeave = window.confirm('Are you sure you want to leave the room? You will be disconnected.');
+        if (!confirmLeave) {
+          // Push the current state back to prevent navigation
+          window.history.pushState(null, '', window.location.pathname);
+        } else {
+          // Clear session and leave
+          const socket = useGameStore.getState().socket;
+          if (socket) {
+            socket.emit('leaveRoom');
+            socket.disconnect();
+          }
+          sessionStorage.removeItem('capy_room_id');
+          sessionStorage.removeItem('capy_nickname');
+          sessionStorage.removeItem('capy_is_admin');
+          useGameStore.getState().resetGame();
+        }
+      }
+    };
+
     window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+    
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
     };
   }, [roomId]);
 
@@ -589,6 +651,68 @@ export default function Lobby() {
     }
   }, [showColorPicker]);
 
+  useEffect(() => {
+    // Handle socket events and session persistence
+    const socket = useGameStore.getState().socket;
+    
+    const handlePlayerColorChanged = ({ playerId, color, avatar }: { playerId: string; color: string; avatar?: string }) => {
+      // Find matching avatar for the color if not provided
+      const matchingAvatar = avatar || CAPYBARA_AVATARS.find(av => av.color === color)?.file;
+      
+      // Update players in store
+      useGameStore.setState((state) => ({
+        players: state.players.map((player) =>
+          player.id === playerId 
+            ? { 
+                ...player, 
+                color, 
+                avatar: matchingAvatar || player.avatar 
+              } 
+            : player
+        ),
+      }));
+    };
+
+    const handleRoomJoined = ({ roomId: joinedRoomId, isAdmin: joinedIsAdmin, nickname }: { roomId: string; isAdmin: boolean; nickname: string }) => {
+      console.log('[Lobby] Room joined successfully:', { roomId: joinedRoomId, isAdmin: joinedIsAdmin, nickname });
+      
+      // Store session data for persistence
+      sessionStorage.setItem('capy_room_id', joinedRoomId);
+      sessionStorage.setItem('capy_nickname', nickname);
+      if (joinedIsAdmin) {
+        sessionStorage.setItem('capy_is_admin', 'true');
+      } else {
+        sessionStorage.removeItem('capy_is_admin');
+      }
+      
+      useGameStore.setState({ roomId: joinedRoomId, isAdmin: joinedIsAdmin });
+    };
+
+    const handleRoomError = ({ message }: { message: string }) => {
+      console.error('[Lobby] Room error:', message);
+      // Clear invalid session data
+      sessionStorage.removeItem('capy_room_id');
+      sessionStorage.removeItem('capy_nickname');
+      sessionStorage.removeItem('capy_is_admin');
+      
+      // Show error and redirect
+      alert(message);
+      navigate('/');
+    };
+
+    if (socket) {
+      socket.on('playerColorChanged', handlePlayerColorChanged);
+      socket.on('roomJoined', handleRoomJoined);
+      socket.on('roomError', handleRoomError);
+      
+      return () => {
+        socket.off('playerColorChanged', handlePlayerColorChanged);
+        socket.off('roomJoined', handleRoomJoined);
+        socket.off('roomError', handleRoomError);
+      };
+    }
+  }, [navigate]);
+
 
 
   const handleCopyRoomId = () => {
@@ -607,6 +731,12 @@ export default function Lobby() {
         socket.emit('leaveRoom');
         socket.disconnect();
       }
+      
+      // Clear session data when leaving
+      sessionStorage.removeItem('capy_room_id');
+      sessionStorage.removeItem('capy_nickname');
+      sessionStorage.removeItem('capy_is_admin');
+      
       useGameStore.getState().resetGame();
       
       // Show notification briefly
@@ -627,6 +757,12 @@ export default function Lobby() {
       socket.emit('leaveRoom');
       socket.disconnect();
     }
+    
+    // Clear session data when leaving
+    sessionStorage.removeItem('capy_room_id');
+    sessionStorage.removeItem('capy_nickname');
+    sessionStorage.removeItem('capy_is_admin');
+    
     useGameStore.getState().resetGame();
     navigate('/login');
   };
