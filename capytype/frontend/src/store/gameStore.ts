@@ -51,7 +51,7 @@ interface GameStore extends GameState {
   setAdmin: (isAdmin: boolean) => void;
 }
 
-const VITE_APP_BACKEND_URL = import.meta.env.VITE_APP_BACKEND_URL || 'http://localhost:3001';
+const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
 export const useGameStore = create<GameStore>((set, get) => ({
   socket: null,
@@ -97,7 +97,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   connect: () => {
     if (get().socket) return; // Already connected
 
-    const newSocket = io(VITE_APP_BACKEND_URL, {
+    const newSocket = io(VITE_BACKEND_URL, {
       transports: ['websocket'],
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
@@ -144,8 +144,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }));
     });
 
-    newSocket.on('playerFinished', ({ playerId, time }) => {
+    newSocket.on('playerFinished', (data) => {
       // Handle player finish logic if needed
+      console.log('Player finished:', data);
     });
 
     newSocket.on('roomClosed', () => {
@@ -159,9 +160,43 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
   },
   createRoom: (nickname, avatar, color) => {
-    get().socket?.emit('createRoom', { nickname, avatar, color });
+    const { socket, connect } = get();
+    if (!socket || !socket.connected) {
+      console.log('Socket not connected, attempting to connect first...');
+      connect();
+      // Wait a short time for connection and retry
+      setTimeout(() => {
+        const { socket: newSocket } = get();
+        if (newSocket && newSocket.connected) {
+          console.log('Socket connected, creating room...');
+          newSocket.emit('createRoom', { nickname, avatar, color });
+        } else {
+          console.error('Failed to connect socket for room creation');
+        }
+      }, 1000);
+    } else {
+      console.log('Socket already connected, creating room...');
+      socket.emit('createRoom', { nickname, avatar, color });
+    }
   },
   joinRoom: (roomId, nickname, avatar, color) => {
-    get().socket?.emit('joinRoom', { roomId, nickname, avatar, color });
+    const { socket, connect } = get();
+    if (!socket || !socket.connected) {
+      console.log('Socket not connected, attempting to connect first...');
+      connect();
+      // Wait a short time for connection and retry
+      setTimeout(() => {
+        const { socket: newSocket } = get();
+        if (newSocket && newSocket.connected) {
+          console.log('Socket connected, joining room...');
+          newSocket.emit('joinRoom', { roomId, nickname, avatar, color });
+        } else {
+          console.error('Failed to connect socket for joining room');
+        }
+      }, 1000);
+    } else {
+      console.log('Socket already connected, joining room...');
+      socket.emit('joinRoom', { roomId, nickname, avatar, color });
+    }
   },
 }));

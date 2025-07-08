@@ -141,7 +141,7 @@ const QUOTES_HARD = [
   "What lies behind us and what lies before us are tiny matters compared to what lies within us. - Ralph Waldo Emerson",
 ];
 
-export function getTextByDifficulty(options: TextOptions): string {
+export function getTextByDifficulty(options: TextOptions, targetLength?: number): string {
   const { difficulty, category = 'general' } = options;
   
   let textPool: string[] = [];
@@ -185,9 +185,72 @@ export function getTextByDifficulty(options: TextOptions): string {
     }
   }
   
-  // Return a random text from the selected pool
-  const randomIndex = Math.floor(Math.random() * textPool.length);
-  return textPool[randomIndex];
+  // If no target length specified, return a single random text
+  if (!targetLength) {
+    const randomIndex = Math.floor(Math.random() * textPool.length);
+    return textPool[randomIndex];
+  }
+  
+  // Generate text to match target length by combining multiple texts
+  let combinedText = '';
+  const usedTexts = new Set<number>();
+  
+  while (combinedText.length < targetLength && usedTexts.size < textPool.length) {
+    let randomIndex;
+    do {
+      randomIndex = Math.floor(Math.random() * textPool.length);
+    } while (usedTexts.has(randomIndex));
+    
+    usedTexts.add(randomIndex);
+    const nextText = textPool[randomIndex];
+    
+    // Add space between texts if not the first one
+    if (combinedText.length > 0) {
+      combinedText += ' ';
+    }
+    
+    // Check if adding this text would exceed target length significantly
+    if (combinedText.length + nextText.length <= targetLength + 50) {
+      combinedText += nextText;
+    } else {
+      // If we're close to target length, try to find a shorter text
+      const shorterTexts = textPool.filter((text, index) => 
+        !usedTexts.has(index) && 
+        text.length <= (targetLength - combinedText.length + 20)
+      );
+      
+      if (shorterTexts.length > 0) {
+        const shorterText = shorterTexts[Math.floor(Math.random() * shorterTexts.length)];
+        combinedText += shorterText;
+      }
+      break;
+    }
+  }
+  
+  // If still too short, repeat some texts
+  if (combinedText.length < targetLength * 0.8) {
+    while (combinedText.length < targetLength) {
+      const randomIndex = Math.floor(Math.random() * textPool.length);
+      const additionalText = textPool[randomIndex];
+      
+      if (combinedText.length + additionalText.length + 1 <= targetLength + 50) {
+        combinedText += ' ' + additionalText;
+      } else {
+        break;
+      }
+    }
+  }
+  
+  // Trim to exact target length at word boundary if exceeded
+  if (combinedText.length > targetLength) {
+    combinedText = combinedText.substring(0, targetLength);
+    const lastSpaceIndex = combinedText.lastIndexOf(' ');
+    if (lastSpaceIndex > targetLength * 0.9) {
+      combinedText = combinedText.substring(0, lastSpaceIndex);
+    }
+  }
+  
+  return combinedText;
 }
 
 // Get a random text with default easy difficulty

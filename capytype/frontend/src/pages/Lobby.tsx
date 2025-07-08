@@ -6,7 +6,7 @@ import { useGameStore } from '../store/gameStore';
 import { generateRoomName } from '../utils/roomUtils';
 // Removed unused Player import
 import { getAvatarByFile, CAPYBARA_AVATARS } from '../utils/avatars';
-import { getTextByDifficulty, getRandomText, TextOptions } from '../utils/textGeneration';
+import { getTextByDifficulty, getRandomText } from '../utils/textGeneration';
 
 // Asset preloading for performance optimization (Step 1.2)
 const preloadGameAssets = () => {
@@ -105,7 +105,7 @@ const TextGenerationModal = ({
 }) => {
   if (!isOpen) return null;
 
-  const characterLimits = [50, 100, 150, 200, 300, 500, 750, 1000, 1250, 1500, 2000];
+  const characterLimits = [200, 300, 500, 750, 1000, 1250, 1500, 2000];
 
   return (
     <motion.div
@@ -134,16 +134,16 @@ const TextGenerationModal = ({
         transition={{ duration: 0.3 }}
         style={{
           width: '100%',
-          maxWidth: 650,
-          padding: 32,
+          maxWidth: 521, // Increased by 5% from 496
+          padding: 33,
           background: 'rgba(235, 228, 200, 0.95)',
-          borderRadius: 20,
-          boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+          borderRadius: 21,
+          boxShadow: '0 14px 46px rgba(0,0,0,0.2)',
           border: '2px solid #b6a77a',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 24,
+          gap: 25,
           maxHeight: '85vh',
           overflow: 'hidden' // Prevent outer scroll
         }}
@@ -153,20 +153,20 @@ const TextGenerationModal = ({
             onClick={onClose}
             style={{
               position: 'absolute',
-              top: -8,
-              right: -8,
-              width: 32,
-              height: 32,
+              top: -9,
+              right: -9,
+              width: 37,
+              height: 37,
               borderRadius: '50%',
               background: '#dc2626',
               color: '#fff',
               border: 'none',
-              fontSize: 16,
+              fontSize: 18,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              boxShadow: '0 2px 9px rgba(0,0,0,0.15)',
               fontWeight: 700
             }}
           >
@@ -174,27 +174,27 @@ const TextGenerationModal = ({
           </button>
           
           <h2 style={{
-            fontSize: '2rem',
+            fontSize: '1.84rem',
             fontWeight: 700,
             color: '#232323',
-            marginBottom: 8,
-            letterSpacing: '1.2px',
+            marginBottom: 7,
+            letterSpacing: '1.0px',
             textShadow: '0 1px 4px #fff8'
           }}>
             🏁 Generate Race Text
           </h2>
-          <p style={{ color: '#4b5563', marginBottom: 16 }}>
+          <p style={{ color: '#4b5563', marginBottom: 15, fontSize: '16px' }}>
             Create custom text for your typing race
           </p>
         </div>
 
         {/* Difficulty and Category Selectors */}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 15, marginBottom: 20 }}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 18 }}>
           {/* Help Text */}
           <div style={{ 
             background: 'rgba(99, 102, 241, 0.1)', 
             border: '1px solid rgba(99, 102, 241, 0.2)', 
-            borderRadius: 8, 
+            borderRadius: 7, 
             padding: 12,
             textAlign: 'center'
           }}>
@@ -208,15 +208,15 @@ const TextGenerationModal = ({
             </p>
           </div>
           
-          <div style={{ display: 'flex', flexDirection: 'row', gap: 20, justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'row', gap: 16, justifyContent: 'center' }}>
             {/* Difficulty Selector */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
             <label style={{ 
               display: 'block', 
-              marginBottom: 10, 
+              marginBottom: 8, 
               fontWeight: 600, 
               color: '#374151',
-              fontSize: 14,
+              fontSize: 12,
               textAlign: 'center'
             }}>
               Difficulty
@@ -226,12 +226,12 @@ const TextGenerationModal = ({
               onChange={(e) => setSelectedDifficulty(e.target.value as 'easy' | 'medium' | 'hard')}
               style={{
                 width: '100%',
-                minWidth: '120px',
-                maxWidth: '150px',
-                padding: '11px 16px',
+                minWidth: '96px',
+                maxWidth: '120px',
+                padding: '9px 13px',
                 border: '2px solid #b6a77a',
-                borderRadius: 12,
-                fontSize: 14,
+                borderRadius: 10,
+                fontSize: 12,
                 fontWeight: 600,
                 background: 'rgba(255, 255, 255, 0.95)',
                 color: '#374151',
@@ -242,9 +242,9 @@ const TextGenerationModal = ({
                 appearance: 'none',
                 backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6,9 12,15 18,9\'%3e%3c/polyline%3e%3c/svg%3e")',
                 backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 14px center',
-                backgroundSize: '16px',
-                paddingRight: '40px'
+                backgroundPosition: 'right 11px center',
+                backgroundSize: '14px',
+                paddingRight: '32px'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = '#8b7560';
@@ -265,10 +265,10 @@ const TextGenerationModal = ({
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
             <label style={{ 
               display: 'block', 
-              marginBottom: 10, 
+              marginBottom: 8, 
               fontWeight: 600, 
               color: '#374151',
-              fontSize: 14,
+              fontSize: 12,
               textAlign: 'center'
             }}>
               Category
@@ -278,12 +278,12 @@ const TextGenerationModal = ({
               onChange={(e) => setSelectedCategory(e.target.value as 'general' | 'programming' | 'quotes')}
               style={{
                 width: '100%',
-                minWidth: '120px',
-                maxWidth: '150px',
-                padding: '11px 16px',
+                minWidth: '96px',
+                maxWidth: '120px',
+                padding: '9px 13px',
                 border: '2px solid #b6a77a',
-                borderRadius: 12,
-                fontSize: 14,
+                borderRadius: 10,
+                fontSize: 12,
                 fontWeight: 600,
                 background: 'rgba(255, 255, 255, 0.95)',
                 color: '#374151',
@@ -294,9 +294,9 @@ const TextGenerationModal = ({
                 appearance: 'none',
                 backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6,9 12,15 18,9\'%3e%3c/polyline%3e%3c/svg%3e")',
                 backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'right 14px center',
-                backgroundSize: '16px',
-                paddingRight: '40px'
+                backgroundPosition: 'right 11px center',
+                backgroundSize: '14px',
+                paddingRight: '32px'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = '#8b7560';
@@ -313,16 +313,16 @@ const TextGenerationModal = ({
             </select>
           </div>
         </div>
-      </div>
+        </div>
 
         {/* Character Limit Selector */}
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <label style={{ 
             display: 'block', 
-            marginBottom: 10, 
+            marginBottom: 8, 
             fontWeight: 600, 
             color: '#374151',
-            fontSize: 14,
+            fontSize: 12,
             textAlign: 'center'
           }}>
             Character Limit
@@ -332,12 +332,12 @@ const TextGenerationModal = ({
             onChange={(e) => setCharacterLimit(Number(e.target.value))}
             style={{
               width: '50%',
-              minWidth: '170px',
-              maxWidth: '220px',
-              padding: '11px 16px',
+              minWidth: '136px',
+              maxWidth: '176px',
+              padding: '9px 13px',
               border: '2px solid #b6a77a',
-              borderRadius: 12,
-              fontSize: 14,
+              borderRadius: 10,
+              fontSize: 12,
               fontWeight: 600,
               background: 'rgba(255, 255, 255, 0.95)',
               color: '#374151',
@@ -345,13 +345,13 @@ const TextGenerationModal = ({
               outline: 'none',
               boxShadow: '0 2px 8px rgba(182, 167, 122, 0.1)',
               transition: 'all 0.2s ease',
-              marginBottom: 22,
+              marginBottom: 18,
               appearance: 'none',
               backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6,9 12,15 18,9\'%3e%3c/polyline%3e%3c/svg%3e")',
               backgroundRepeat: 'no-repeat',
-              backgroundPosition: 'right 14px center',
-              backgroundSize: '16px',
-              paddingRight: '40px'
+              backgroundPosition: 'right 11px center',
+              backgroundSize: '14px',
+              paddingRight: '32px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = '#8b7560';
@@ -375,10 +375,10 @@ const TextGenerationModal = ({
           <div style={{ 
             background: 'rgba(99, 102, 241, 0.1)', 
             border: '1px solid rgba(99, 102, 241, 0.2)', 
-            borderRadius: 10, 
-            padding: 14, 
-            marginBottom: 16,
-            fontSize: 13,
+            borderRadius: 8, 
+            padding: 11, 
+            marginBottom: 13,
+            fontSize: 11,
             color: '#4f46e5',
             lineHeight: 1.4,
             flexShrink: 0
@@ -393,12 +393,12 @@ const TextGenerationModal = ({
               style={{
                 width: '100%',
                 flex: 1,
-                minHeight: 140,
-                maxHeight: 280,
-                padding: 16,
+                minHeight: 112,
+                maxHeight: 224,
+                padding: 13,
                 border: '2px solid #b6a77a',
-                borderRadius: 12,
-                fontSize: 14,
+                borderRadius: 10,
+                fontSize: 12,
                 fontFamily: 'inherit',
                 resize: 'none',
                 background: 'rgba(255, 255, 255, 0.95)',
@@ -439,7 +439,7 @@ const TextGenerationModal = ({
                     border: 'none',
                     borderRadius: 6,
                     padding: '4px 8px',
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: 600,
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
@@ -470,10 +470,11 @@ const TextGenerationModal = ({
         {/* Generation Buttons */}
         <div style={{
           display: 'flex',
-          gap: 12,
+          flexDirection: 'column',
+          gap: 8,
           justifyContent: 'center',
           width: '100%',
-          maxWidth: '400px',
+          maxWidth: '280px',
           flexShrink: 0
         }}>
           <button
@@ -483,10 +484,10 @@ const TextGenerationModal = ({
               background: '#fff',
               color: '#232323',
               border: '2px solid #b6a77a',
-              borderRadius: 12,
-              padding: '10px 16px',
+              borderRadius: 8,
+              padding: '7px 11px',
               fontWeight: 700,
-              fontSize: 13,
+              fontSize: 12,
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: generatingText ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
@@ -494,12 +495,12 @@ const TextGenerationModal = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 8,
-              flex: '1',
-              minWidth: '160px'
+              gap: 6,
+              width: '100%',
+              minHeight: '32px'
             }}
           >
-            🎲 Generate by Difficulty
+            🎲 Generate {selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1)} {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} ({characterLimit} chars)
           </button>
           
           <button
@@ -509,19 +510,19 @@ const TextGenerationModal = ({
               background: generatingText ? '#9ca3af' : '#10b981',
               color: '#fff',
               border: 'none',
-              borderRadius: 12,
-              padding: '10px 16px',
+              borderRadius: 8,
+              padding: '7px 11px',
               fontWeight: 700,
-              fontSize: 13,
+              fontSize: 12,
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: generatingText ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 8,
-              flex: '1',
-              minWidth: '160px'
+              gap: 6,
+              width: '100%',
+              minHeight: '32px'
             }}
           >
             {generatingText ? (
@@ -543,13 +544,13 @@ const TextGenerationModal = ({
         {/* Action Buttons */}
         <div style={{
           display: 'flex',
-          gap: 12,
+          gap: 8,
           justifyContent: 'center',
           alignItems: 'center',
           width: '100%',
-          maxWidth: '400px',
+          maxWidth: '280px',
           flexShrink: 0,
-          paddingTop: 16
+          paddingTop: 13
         }}>
           <button
             onClick={onClose}
@@ -557,10 +558,10 @@ const TextGenerationModal = ({
               background: '#fff',
               color: '#232323',
               border: '2px solid #b6a77a',
-              borderRadius: 12,
-              padding: '14px 24px',
+              borderRadius: 8,
+              padding: '10px 17px',
               fontWeight: 700,
-              fontSize: 14,
+              fontSize: 12,
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
@@ -568,7 +569,7 @@ const TextGenerationModal = ({
               alignItems: 'center',
               justifyContent: 'center',
               flex: '1',
-              minWidth: '160px'
+              minWidth: '112px'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-1px)';
@@ -588,19 +589,19 @@ const TextGenerationModal = ({
               background: (!customText.trim() || generatingText) ? '#9ca3af' : '#232323',
               color: '#fff',
               border: 'none',
-              borderRadius: 12,
-              padding: '14px 24px',
+              borderRadius: 8,
+              padding: '10px 17px',
               fontWeight: 700,
-              fontSize: 14,
+              fontSize: 12,
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: (!customText.trim() || generatingText) ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 6,
+              gap: 4,
               flex: '1',
-              minWidth: '160px'
+              minWidth: '112px'
             }}
             onMouseEnter={(e) => {
               if (!(!customText.trim() || generatingText)) {
@@ -635,7 +636,7 @@ export default function Lobby() {
   const [showTextModal, setShowTextModal] = useState(false);
   const [customText, setCustomText] = useState('');
   const [generatingText, setGeneratingText] = useState(false);
-  const [characterLimit, setCharacterLimit] = useState(150);
+  const [characterLimit, setCharacterLimit] = useState(200);
   
   // Difficulty selection states
   const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
@@ -978,13 +979,13 @@ export default function Lobby() {
       const generatedText = getTextByDifficulty({
         difficulty: selectedDifficulty,
         category: selectedCategory
-      });
+      }, characterLimit);
       
       if (generatedText && generatedText.length > 20) {
         setCustomText(generatedText);
-        setNotificationMessage('✅ Random text generated successfully!');
+        setNotificationMessage(`✅ Generated ${selectedDifficulty.toUpperCase()} ${selectedCategory} text (${generatedText.length} chars)`);
         setShowNotification(true);
-        setTimeout(() => setShowNotification(false), 2000);
+        setTimeout(() => setShowNotification(false), 3000);
       } else {
         throw new Error('Generated text is too short');
       }
