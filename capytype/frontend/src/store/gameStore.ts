@@ -34,10 +34,13 @@ interface GameState {
   isAdmin: boolean;
   isPractice: boolean;
   gameStarted: boolean;
+  connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
+  lastError: string | null;
+  roomClosed: { reason: string; message: string } | null;
 }
 
 interface GameStore extends GameState {
-  setSocket: (socket: Socket) => void;
+  setSocket: (socket: Socket | null) => void;
   setRoomId: (roomId: string) => void;
   setPlayers: (players: Player[]) => void;
   setText: (text: string) => void;
@@ -49,6 +52,9 @@ interface GameStore extends GameState {
   createRoom: (nickname: string, avatar: string, color: string) => void;
   joinRoom: (roomId: string, nickname: string, avatar: string, color: string) => void;
   setAdmin: (isAdmin: boolean) => void;
+  setConnectionStatus: (status: 'disconnected' | 'connecting' | 'connected' | 'error') => void;
+  setError: (error: string | null) => void;
+  clearRoomClosed: () => void;
 }
 
 const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
@@ -64,24 +70,49 @@ export const useGameStore = create<GameStore>((set, get) => ({
   isAdmin: false,
   isPractice: false,
   gameStarted: false,
+  connectionStatus: 'disconnected',
+  lastError: null,
+  roomClosed: null,
 
   setSocket: (socket) => set({ socket }),
   setRoomId: (roomId) => set({ roomId }),
   setPlayers: (players) => set({ players }),
   setText: (text) => set({ text }),
   updateProgress: (progress) => set({ progress }),
+  setConnectionStatus: (connectionStatus) => set({ connectionStatus }),
+  setError: (lastError) => set({ lastError }),
   startGame: (text, isPractice = false) => {
-    const { socket, roomId } = get();
-    if (socket?.connected) {
+    const { socket, roomId, setError } = get();
+    console.log('[Store] startGame called with:', { text: text.substring(0, 50) + '...', isPractice, roomId, socketConnected: socket?.connected });
+    
+    if (!socket || !socket.connected) {
+      const error = 'Not connected to server. Please check your internet connection.';
+      console.error('[Store]', error);
+      setError(error);
+      return;
+    }
+
+    if (!isPractice && !roomId) {
+      const error = 'No room ID found. Please rejoin the room.';
+      console.error('[Store]', error);
+      setError(error);
+      return;
+    }
+    
+    if (socket.connected) {
+      setError(null); // Clear any previous errors
       if (isPractice) {
+        console.log('[Store] Setting up practice game');
         set({ text, gameState: 'playing', isPractice: true, gameStarted: true });
       } else {
+        console.log('[Store] Emitting startGame to backend with roomId:', roomId);
         socket.emit('startGame', { roomId, text });
       }
     }
   },
   setGameResults: (results) => set({ gameResults: results, gameState: 'finished' }),
   setAdmin: (isAdmin) => set({ isAdmin }),
+  clearRoomClosed: () => set({ roomClosed: null }),
   resetGame: () => set({ 
     socket: null,
     roomId: null,
@@ -92,10 +123,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
     gameResults: [],
     isAdmin: false,
     isPractice: false,
-    gameStarted: false
+    gameStarted: false,
+    connectionStatus: 'disconnected',
+    lastError: null,
+    roomClosed: null
   }),
   connect: () => {
-    if (get().socket) return; // Already connected
+    const { socket: existingSocket, setConnectionStatus, setError } = get();
+    if (existingSocket?.connected) {
+      console.log('[Store] Already connected');
+      return;
+    }
+
+    console.log('[Store] Connecting to backend:', VITE_BACKEND_URL);
+    setConnectionStatus('connecting');
+    setError(null);
 
     const newSocket = io(VITE_BACKEND_URL, {
       transports: ['websocket'],
@@ -104,13 +146,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
 
     newSocket.on('connect', () => {
-      console.log('Socket connected:', newSocket.id);
-      set({ socket: newSocket });
+      console.log('[Store] Socket connected:', newSocket.id);
+      const { setSocket, setConnectionStatus, setError } = get();
+      setSocket(newSocket);
+      setConnectionStatus('connected');
+      setError(null);
     });
 
     newSocket.on('disconnect', () => {
-      console.log('Socket disconnected');
-      set({ socket: null });
+      console.log('[Store] Socket disconnected');
+      const { setSocket, setConnectionStatus } = get();
+      setSocket(null);
+      setConnectionStatus('disconnected');
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('[Store] Connection error:', error);
+      const { setConnectionStatus, setError } = get();
+      setConnectionStatus('error');
+      setError(`Connection failed: ${error.message}`);
     });
 
     // Centralized event listeners
@@ -149,13 +203,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
       console.log('Player finished:', data);
     });
 
-    newSocket.on('roomClosed', () => {
-      get().resetGame();
-      // Optionally, redirect to home or show a message
+    newSocket.on('roomClosed', (data: { reason: string; message: string }) => {
+      console.log('Room closed:', data);
+      set({ roomClosed: data });
+      // Don't call resetGame() here - let the components handle it after showing the message
     });
 
     newSocket.on('roomError', (error) => {
       console.error('Room Error:', error.message);
+      // Handle error display to the user
+    });
+
+    newSocket.on('error', (error) => {
+      console.error('Socket Error:', error);
       // Handle error display to the user
     });
   },

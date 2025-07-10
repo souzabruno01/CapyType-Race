@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore, Player } from '../store/gameStore';
 import ReactConfetti from 'react-confetti';
@@ -14,117 +14,6 @@ const CapybaraIcon = ({ avatar, color, size = 32 }: { avatar?: string; color?: s
     }}
   />
 );
-
-const PodiumPlayer = ({ player, position, height }: { 
-  player: any; 
-  position: number; 
-  height: number; 
-}) => {
-  const getMedalColor = (pos: number) => {
-    switch(pos) {
-      case 1: return '#fbbf24'; // Gold
-      case 2: return '#9ca3af'; // Silver  
-      case 3: return '#f59e0b'; // Bronze
-      default: return '#6366f1';
-    }
-  };
-
-  const getMedalEmoji = (pos: number) => {
-    switch(pos) {
-      case 1: return '🥇';
-      case 2: return '🥈';
-      case 3: return '🥉';
-      default: return '🏆';
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 * position, type: "spring", stiffness: 200 }}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        position: 'relative'
-      }}
-    >
-      {/* Player Card */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
-        border: `3px solid ${getMedalColor(position)}`,
-        borderRadius: 20,
-        padding: 16,
-        textAlign: 'center',
-        boxShadow: '0 8px 25px rgba(0,0,0,0.2)',
-        marginBottom: 8,
-        position: 'relative',
-        minWidth: 140
-      }}>
-        {/* Medal */}
-        <div style={{
-          position: 'absolute',
-          top: -15,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          fontSize: 30
-        }}>
-          {getMedalEmoji(position)}
-        </div>
-        
-        <div style={{ marginTop: 20 }}>
-          <CapybaraIcon avatar={player.avatar} color={player.color} size={48} />
-          <h4 style={{
-            fontWeight: 700,
-            color: '#232323',
-            fontSize: 14,
-            margin: '8px 0 4px 0',
-            wordBreak: 'break-word'
-          }}>
-            {player.nickname}
-          </h4>
-          <div style={{
-            background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-            color: '#fff',
-            padding: '4px 8px',
-            borderRadius: 12,
-            fontWeight: 800,
-            fontSize: 12
-          }}>
-            {player.points} pts
-          </div>
-        </div>
-      </div>
-      
-      {/* Podium Base */}
-      <div style={{
-        width: 100,
-        height: height,
-        background: `linear-gradient(135deg, ${getMedalColor(position)}, ${getMedalColor(position)}dd)`,
-        borderRadius: '8px 8px 0 0',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#fff',
-        fontWeight: 800,
-        fontSize: 24,
-        boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-        position: 'relative'
-      }}>
-        {position}
-        <div style={{
-          position: 'absolute',
-          bottom: -2,
-          left: 0,
-          right: 0,
-          height: 4,
-          background: 'rgba(0,0,0,0.2)'
-        }} />
-      </div>
-    </motion.div>
-  );
-};
 
 /*
 const CheckeredFlag = () => (
@@ -143,80 +32,37 @@ const CheckeredFlag = () => (
 );
 */
 
-const TimeUpOverlay = ({ onAnimationComplete }: { 
+const TimeUpOverlay = ({ onAnimationComplete, onReturnToLobby }: { 
   onAnimationComplete: () => void;
+  onReturnToLobby: () => void;
 }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.5 }}
     animate={{ opacity: 1, scale: 1 }}
     exit={{ opacity: 0, scale: 1.5 }}
-    transition={{ duration: 0.6 }}
+    transition={{ duration: 0.5 }}
     onAnimationComplete={onAnimationComplete}
-    style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.8)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 50,
-      backdropFilter: 'blur(8px)'
-    }}
+    className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
   >
     <motion.div
-      initial={{ y: -100, rotateX: -90 }}
-      animate={{ y: 0, rotateX: 0 }}
-      transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
-      style={{
-        background: 'rgba(235, 228, 200, 0.98)',
-        borderRadius: 24,
-        padding: 48,
-        textAlign: 'center',
-        border: '3px solid #b6a77a',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
-      }}
+      initial={{ y: -50 }}
+      animate={{ y: 0 }}
+      className="bg-white rounded-lg p-8 text-center"
     >
       <motion.h2
-        animate={{ scale: [1, 1.1, 1], rotateZ: [0, -2, 2, 0] }}
-        transition={{ duration: 1, repeat: 2 }}
-        style={{
-          fontSize: '4rem',
-          fontWeight: 800,
-          color: '#e11d48',
-          marginBottom: 16,
-          textShadow: '0 4px 8px rgba(0,0,0,0.3)'
-        }}
+        animate={{ scale: [1, 1.2, 1] }}
+        transition={{ duration: 0.5, repeat: 2 }}
+        className="text-4xl font-bold text-red-600 mb-4"
       >
-        ⏰ TIME'S UP! ⏰
+        Time's Up!
       </motion.h2>
-      <motion.p 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        style={{
-          fontSize: '1.5rem',
-          color: '#374151',
-          fontWeight: 600,
-          marginBottom: 24
-        }}
+      <p className="text-gray-600 mb-4">Calculating your results...</p>
+      <button
+        onClick={onReturnToLobby}
+        className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
       >
-        🏁 Finalizing race results...
-      </motion.p>
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-        style={{
-          width: 40,
-          height: 40,
-          border: '4px solid #e5e7eb',
-          borderTop: '4px solid #6366f1',
-          borderRadius: '50%',
-          margin: '0 auto'
-        }}
-      />
+        Return to Lobby
+      </button>
     </motion.div>
   </motion.div>
 );
@@ -225,388 +71,258 @@ const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: {
   players: Player[];
   onReturnToLobby: () => void;
   onBackToLogin: () => void;
-}) => {
-  // Helper function for medal colors
-  const getMedalColor = (position: number) => {
-    switch(position) {
-      case 1: return '#fbbf24'; // Gold (1st place)
-      case 2: return '#9ca3af'; // Silver (2nd place)
-      case 3: return '#f59e0b'; // Bronze (3rd place)
-      default: return '#6366f1'; // Default blue
-    }
-  };
-
-  // Calculate points for each player (WPM * 10 - errors * 5 + progress bonus)
-  const playersWithPoints = players.map(player => ({
-    ...player,
-    points: Math.max(0, (player.wpm || 0) * 10 - (player.errors || 0) * 5 + Math.round((player.progress || 0) / 10))
-  })).sort((a, b) => {
-    // Sort by points first, then by progress, then by WPM
-    if (b.points !== a.points) return b.points - a.points;
-    if (b.progress !== a.progress) return (b.progress || 0) - (a.progress || 0);
-    return (b.wpm || 0) - (a.wpm || 0);
-  });
-
-  const playerCount = playersWithPoints.length;
-  
-  // Calculate adaptive sizing
-  const getPlayerCardSize = (index: number) => {
-    if (index < 3) return { // Top 3 - reduced by 35%
-      minWidth: 130,
-      maxWidth: 155,
-      avatarSize: 42,
-      fontSize: 15,
+}) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 50,
+      backdropFilter: 'blur(4px)',
       padding: 16
-    };
-    
-    // Scale down for more players - reduced by 35%
-    if (playerCount <= 6) return {
-      minWidth: 110,
-      maxWidth: 130,
-      avatarSize: 32,
-      fontSize: 14,
-      padding: 14
-    };
-    
-    if (playerCount <= 12) return {
-      minWidth: 90,
-      maxWidth: 110,
-      avatarSize: 26,
-      fontSize: 12,
-      padding: 12
-    };
-    
-    return { // Many players - smallest size - reduced by 35%
-      minWidth: 80,
-      maxWidth: 90,
-      avatarSize: 22,
-      fontSize: 10,
-      padding: 8
-    };
-  };
-
-  const getGridColumns = () => {
-    if (playerCount <= 3) return 'repeat(3, 1fr)';
-    if (playerCount <= 6) return 'repeat(3, 1fr)';
-    if (playerCount <= 9) return 'repeat(3, 1fr)';
-    if (playerCount <= 12) return 'repeat(4, 1fr)';
-    return 'repeat(5, 1fr)';
-  };
-
-  return (
+    }}
+  >
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      initial={{ scale: 0.8, y: 50 }}
+      animate={{ scale: 1, y: 0 }}
+      exit={{ scale: 0.8, y: 50, opacity: 0 }}
+      transition={{ duration: 0.3 }}
       style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.7)',
+        background: 'rgba(235, 228, 200, 0.95)',
+        borderRadius: 20,
+        padding: 32,
+        maxWidth: 1000,
+        width: '100%',
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        boxShadow: '0 12px 40px rgba(0,0,0,0.2)',
+        border: '2px solid #b6a77a',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 50,
-        backdropFilter: 'blur(6px)',
-        padding: 16
+        flexDirection: 'column',
+        alignItems: 'center'
       }}
     >
-      <motion.div
-        initial={{ scale: 0.8, y: 50 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.8, y: 50, opacity: 0 }}
-        transition={{ duration: 0.4 }}
-        style={{
-          background: 'rgba(235, 228, 200, 0.98)',
-          borderRadius: 24,
-          padding: 32,
-          maxWidth: Math.min(900, playerCount > 6 ? 750 : 600),
-          width: '95%',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-          border: '3px solid #b6a77a',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center'
-        }}
-      >
-        {/* Title with animation */}
-        <motion.h2 
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          style={{
-            fontSize: '3rem',
-            fontWeight: 800,
-            color: '#232323',
-            marginBottom: 40,
-            textAlign: 'center',
-            letterSpacing: '1.5px',
-            textShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}
-        >
-          🏁 RACE RESULTS 🏁
-        </motion.h2>
-        
-        {/* Podium for top 3 - Special highlighting */}
-        {playersWithPoints.length >= 3 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'end',
-              gap: 20,
-              marginBottom: 40,
-              flexWrap: 'wrap'
-            }}
-          >
-            {/* 2nd Place */}
-            {playersWithPoints[1] && (
-              <PodiumPlayer player={playersWithPoints[1]} position={2} height={100} />
-            )}
-            {/* 1st Place */}
-            {playersWithPoints[0] && (
-              <PodiumPlayer player={playersWithPoints[0]} position={1} height={130} />
-            )}
-            {/* 3rd Place */}
-            {playersWithPoints[2] && (
-              <PodiumPlayer player={playersWithPoints[2]} position={3} height={80} />
-            )}
-          </motion.div>
-        )}
-        
-        {/* All Players Grid */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: getGridColumns(),
-            gap: playerCount > 9 ? 18 : 24,
-            marginBottom: 32,
-            width: '100%',
-            justifyItems: 'center'
-          }}
-        >
-          {playersWithPoints.map((player, index) => {
+      <h2 style={{
+        fontSize: '2.5rem',
+        fontWeight: 700,
+        color: '#232323',
+        marginBottom: 32,
+        textAlign: 'center',
+        letterSpacing: '1.2px',
+        textShadow: '0 1px 4px #fff8'
+      }}>
+        🏁 Race Results
+      </h2>
+      
+      {/* Adaptive Grid Layout */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: (() => {
+          const playerCount = players.length;
+          if (playerCount <= 2) return 'repeat(2, 1fr)';
+          if (playerCount <= 4) return 'repeat(2, 1fr)';
+          if (playerCount <= 6) return 'repeat(3, 1fr)';
+          if (playerCount <= 9) return 'repeat(3, 1fr)';
+          return 'repeat(4, 1fr)';
+        })(),
+        gap: 20,
+        marginBottom: 32,
+        width: '100%',
+        justifyItems: 'center'
+      }}>
+        {Array.isArray(players) && players
+          .sort((a, b) => b.progress - a.progress)
+          .map((player, index) => {
             if (!player || typeof player !== 'object') return null;
+            const avatar = player.avatar;
+            const color = player.color;
             const isCurrentUser = player.id === useGameStore.getState().socket?.id;
-            const size = getPlayerCardSize(index);
+            
+            // Medal colors for podium positions
+            const getMedalColor = (position: number) => {
+              switch(position) {
+                case 0: return '#fbbf24'; // Gold
+                case 1: return '#9ca3af'; // Silver  
+                case 2: return '#f59e0b'; // Bronze
+                default: return '#6366f1'; // Default blue
+              }
+            };
             
             return (
-              <motion.div
+              <div
                 key={player.id || player.nickname}
-                initial={{ opacity: 0, scale: 0.5, y: 50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ delay: 0.1 * index, type: "spring", stiffness: 150 }}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  padding: size.padding,
+                  padding: 20,
                   borderRadius: 16,
-                  boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-                  minWidth: size.minWidth,
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+                  transition: 'all 0.3s ease',
+                  minWidth: 180,
                   width: '100%',
-                  maxWidth: size.maxWidth,
+                  maxWidth: 220,
                   background: isCurrentUser 
-                    ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)'
-                    : 'rgba(255, 255, 255, 0.95)',
+                    ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%)'
+                    : 'rgba(255, 255, 255, 0.9)',
                   border: isCurrentUser 
-                    ? '3px solid #6366f1' 
-                    : index < 3 ? `3px solid ${getMedalColor(index + 1)}` : '2px solid #e5e7eb',
-                  position: 'relative',
-                  overflow: 'hidden'
+                    ? '2px solid #6366f1' 
+                    : '2px solid #e5e7eb',
+                  transform: isCurrentUser ? 'scale(1.05)' : 'scale(1)',
+                  position: 'relative'
                 }}
               >
                 {/* Position Badge */}
                 <div style={{
                   position: 'absolute',
-                  top: -8,
-                  right: -8,
-                  width: 32,
-                  height: 32,
+                  top: -10,
+                  right: -10,
+                  width: 36,
+                  height: 36,
                   borderRadius: '50%',
-                  background: getMedalColor(index + 1),
+                  background: getMedalColor(index),
                   color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontWeight: 800,
+                  fontWeight: 700,
                   fontSize: 14,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-                  border: '2px solid #fff',
-                  zIndex: 2
+                  boxShadow: '0 3px 10px rgba(0,0,0,0.2)',
+                  border: '2px solid #fff'
                 }}>
                   {index + 1}
                 </div>
-                
-                {/* Medal Emoji for top 3 */}
-                {index < 3 && (
-                  <div style={{
-                    position: 'absolute',
-                    top: -12,
-                    left: -12,
-                    fontSize: 24,
-                    zIndex: 2
-                  }}>
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                  </div>
-                )}
                 
                 {/* Current User Crown */}
                 {isCurrentUser && (
                   <div style={{
                     position: 'absolute',
-                    top: -10,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: 20,
-                    zIndex: 2
+                    top: -8,
+                    left: -8,
+                    fontSize: 20
                   }}>
                     👑
                   </div>
                 )}
                 
-                <CapybaraIcon avatar={player.avatar} color={player.color} size={size.avatarSize} />
+                <CapybaraIcon avatar={avatar} color={color} size={56} />
                 
                 <h3 style={{
                   fontWeight: 700,
                   color: '#232323',
-                  marginTop: 8,
-                  fontSize: size.fontSize,
+                  marginTop: 12,
+                  fontSize: 18,
                   textAlign: 'center',
                   wordBreak: 'break-word',
-                  maxWidth: '100%',
-                  lineHeight: 1.2
+                  maxWidth: '100%'
                 }}>
                   {typeof player.nickname === 'string' ? player.nickname : 'Player'}
                 </h3>
-                
-                {/* Points - Prominently displayed */}
-                <div style={{
-                  background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-                  color: '#fff',
-                  padding: '6px 12px',
-                  borderRadius: 20,
-                  fontWeight: 800,
-                  fontSize: size.fontSize,
-                  marginTop: 8,
-                  boxShadow: '0 2px 8px rgba(251, 191, 36, 0.3)',
-                  textAlign: 'center',
-                  minWidth: '60px'
-                }}>
-                  {player.points} pts
-                </div>
                 
                 {/* Stats Grid */}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr',
-                  gap: 6,
-                  marginTop: 8,
+                  gap: 8,
+                  marginTop: 12,
                   width: '100%'
                 }}>
-                  <div style={{
-                    background: 'rgba(16, 185, 129, 0.15)',
-                    padding: '4px 8px',
-                    borderRadius: 8,
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: Math.max(10, size.fontSize - 4), color: '#6b7280', fontWeight: 500 }}>WPM</div>
-                    <div style={{ fontSize: Math.max(12, size.fontSize - 2), color: '#059669', fontWeight: 700 }}>
-                      {Math.round(player.wpm || 0)}
-                    </div>
-                  </div>
-                  
-                  <div style={{
-                    background: player.errors > 0 ? 'rgba(220, 38, 38, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                    padding: '4px 8px',
-                    borderRadius: 8,
-                    border: `1px solid ${player.errors > 0 ? 'rgba(220, 38, 38, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: Math.max(10, size.fontSize - 4), color: '#6b7280', fontWeight: 500 }}>Errors</div>
-                    <div style={{ 
-                      fontSize: Math.max(12, size.fontSize - 2), 
-                      color: player.errors > 0 ? '#dc2626' : '#059669', 
-                      fontWeight: 700 
+                  {player.wpm !== undefined && (
+                    <div style={{
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid rgba(16, 185, 129, 0.2)',
+                      textAlign: 'center'
                     }}>
-                      {player.errors || 0}
+                      <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>WPM</div>
+                      <div style={{ fontSize: 18, color: '#059669', fontWeight: 700 }}>
+                        {Math.round(player.wpm || 0)}
+                      </div>
                     </div>
-                  </div>
+                  )}
+                  
+                  {player.errors !== undefined && (
+                    <div style={{
+                      background: player.errors > 0 ? 'rgba(220, 38, 38, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: `1px solid ${player.errors > 0 ? 'rgba(220, 38, 38, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
+                      textAlign: 'center'
+                    }}>
+                      <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>Errors</div>
+                      <div style={{ 
+                        fontSize: 18, 
+                        color: player.errors > 0 ? '#dc2626' : '#059669', 
+                        fontWeight: 700 
+                      }}>
+                        {player.errors}
+                      </div>
+                    </div>
+                  )}
                   
                   <div style={{
-                    background: 'rgba(99, 102, 241, 0.15)',
-                    padding: '4px 8px',
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    padding: '8px 12px',
                     borderRadius: 8,
-                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    border: '1px solid rgba(99, 102, 241, 0.2)',
                     textAlign: 'center'
                   }}>
-                    <div style={{ fontSize: Math.max(10, size.fontSize - 4), color: '#6b7280', fontWeight: 500 }}>Progress</div>
-                    <div style={{ fontSize: Math.max(12, size.fontSize - 2), color: '#6366f1', fontWeight: 700 }}>
-                      {Math.round(player.progress || 0)}%
+                    <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>Progress</div>
+                    <div style={{ fontSize: 18, color: '#6366f1', fontWeight: 700 }}>
+                      {typeof player.progress === 'number' ? Math.round(player.progress) : 0}%
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
-        </motion.div>
-        
-        {/* Action Buttons */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
+      </div>
+      
+      <div style={{
+        display: 'flex',
+        flexDirection: 'row',
+        justifyContent: 'center',
+        gap: 16,
+        width: '100%',
+        flexWrap: 'wrap'
+      }}>
+        <button
+          onClick={onReturnToLobby}
           style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            gap: 16,
-            width: '100%',
-            flexWrap: 'wrap'
+            ...modernButtonStyle,
+            background: '#fff',
+            color: '#232323',
+            border: '2px solid #b6a77a',
+            fontSize: 16,
+            padding: '12px 24px'
           }}
         >
-          <button
-            onClick={onReturnToLobby}
-            style={{
-              ...modernButtonStyle,
-              background: '#fff',
-              color: '#232323',
-              border: '2px solid #b6a77a',
-              fontSize: 16,
-              padding: '14px 28px'
-            }}
-          >
-            ← Back to Lobby
-          </button>
-          <button
-            onClick={onBackToLogin}
-            style={{
-              ...modernButtonStyle,
-              fontSize: 16,
-              padding: '14px 28px'
-            }}
-          >
-            ← Back to Login
-          </button>
-        </motion.div>
-      </motion.div>
+          ← Back to Lobby
+        </button>
+        <button
+          onClick={onBackToLogin}
+          style={{
+            ...modernButtonStyle,
+            fontSize: 16,
+            padding: '12px 24px'
+          }}
+        >
+          ← Back to Login
+        </button>
+      </div>
     </motion.div>
-  );
-};
+  </motion.div>
+);
 
 interface PlayerStats {
   wpm: number;
@@ -763,20 +479,6 @@ export default function Game() {
     }
   }, [gameStarted, timeLeft]);
 
-  // Handle game over logic
-  const handleGameOver = useCallback(() => {
-    const finishTime = startTime ? (Date.now() - startTime) / 1000 : 0;
-    // Emit game completion to server
-    const socket = useGameStore.getState().socket;
-    if (socket) {
-      socket.emit('playerFinished', {
-        time: finishTime,
-        wpm: playerStats.wpm,
-        errors: playerStats.errors
-      });
-    }
-  }, [startTime, playerStats.wpm, playerStats.errors]);
-
   // Handle time's up
   useEffect(() => {
     if (timeLeft === 0 && !gameFinished) {
@@ -810,22 +512,34 @@ export default function Game() {
       setGameFinished(true);
       handleGameOver();
       
-      // Show results modal after confetti
+      // Stop confetti after 5 seconds
       setTimeout(() => {
         setShowConfetti(false);
-        setShowResults(true);
+      }, 5000);
+    }
+  }, [progress]);
+
+  // Navigate to results when all players finish or time's up
+  useEffect(() => {
+    if (gameState === 'finished') {
+      setTimeout(() => {
+        navigate('/results');
       }, 3000);
     }
-  }, [progress, gameFinished, handleGameOver]);
+  }, [gameState, navigate]);
 
-  // Show results modal when all players finish or time's up
-  useEffect(() => {
-    if (gameState === 'finished' && !showResults) {
-      setTimeout(() => {
-        setShowResults(true);
-      }, 2000); // Show results after 2 seconds
+  const handleGameOver = () => {
+    const finishTime = startTime ? (Date.now() - startTime) / 1000 : 0;
+    // Emit game completion to server
+    const socket = useGameStore.getState().socket;
+    if (socket) {
+      socket.emit('playerFinished', {
+        time: finishTime,
+        wpm: playerStats.wpm,
+        errors: playerStats.errors
+      });
     }
-  }, [gameState, showResults]);
+  };
 
   // Calculate WPM
   useEffect(() => {
@@ -983,6 +697,7 @@ export default function Game() {
           {showTimeUp && (
             <TimeUpOverlay 
               onAnimationComplete={() => setShowTimeUp(false)} 
+              onReturnToLobby={handleReturnToLobby}
             />
           )}
           {showResults && (
@@ -1181,31 +896,31 @@ export default function Game() {
               }}>
                 <span style={{ 
                   fontSize: 16, 
-                  color: '#fff', 
+                  color: '#047857', 
                   fontWeight: 800,
-                  background: 'rgba(16, 185, 129, 0.9)',
+                  background: 'rgba(16, 185, 129, 0.25)',
                   padding: '8px 16px',
                   borderRadius: 10,
-                  border: '2px solid rgba(16, 185, 129, 1)',
+                  border: '2px solid rgba(16, 185, 129, 0.5)',
                   minWidth: '90px',
                   textAlign: 'center',
-                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.1)'
                 }}>
                   WPM: {playerStats.wpm}
                 </span>
                 <span style={{ 
                   fontSize: 16, 
-                  color: '#fff', 
+                  color: playerStats.errors > 0 ? '#b91c1c' : '#047857', 
                   fontWeight: 800,
-                  background: playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.9)' : 'rgba(16, 185, 129, 0.9)',
+                  background: playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.25)' : 'rgba(16, 185, 129, 0.25)',
                   padding: '8px 16px',
                   borderRadius: 10,
-                  border: `2px solid ${playerStats.errors > 0 ? 'rgba(220, 38, 38, 1)' : 'rgba(16, 185, 129, 1)'}`,
+                  border: `2px solid ${playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.5)' : 'rgba(16, 185, 129, 0.5)'}`,
                   minWidth: '90px',
                   textAlign: 'center',
-                  boxShadow: `0 2px 8px ${playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
-                  textShadow: '0 1px 2px rgba(0,0,0,0.3)'
+                  boxShadow: `0 2px 8px ${playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.2)' : 'rgba(16, 185, 129, 0.2)'}`,
+                  textShadow: '0 1px 2px rgba(0,0,0,0.1)'
                 }}>
                   Errors: {playerStats.errors}
                 </span>

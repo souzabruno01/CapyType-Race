@@ -358,12 +358,22 @@ io.on('connection', (socket) => {
 
   // Start the game
   socket.on('startGame', ({ roomId, text }) => {
+    console.log(`[Backend] startGame received from ${socket.id} for room ${roomId}`);
     const room = rooms.get(roomId);
-    if (!room || room.admin !== socket.id) {
+    
+    if (!room) {
+      console.log(`[Backend] Room ${roomId} not found`);
+      socket.emit('error', 'Room not found');
+      return;
+    }
+    
+    if (room.admin !== socket.id) {
+      console.log(`[Backend] Admin check failed. Room admin: ${room.admin}, Socket ID: ${socket.id}`);
       socket.emit('error', 'Not authorized to start the game');
       return;
     }
 
+    console.log(`[Backend] Starting game in room ${roomId} with text length: ${text?.length || 0}`);
     room.gameState = 'countdown';
     room.text = text;
     io.to(roomId).emit('gameStarting', { text });

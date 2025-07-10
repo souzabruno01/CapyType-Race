@@ -407,7 +407,6 @@ const TextGenerationModal = ({
                 transition: 'border-color 0.2s, box-shadow 0.2s',
                 lineHeight: 1.5,
                 boxSizing: 'border-box',
-                overflow: 'auto',
                 wordWrap: 'break-word'
               }}
               onFocus={(e) => e.target.style.borderColor = '#6366f1'}
@@ -624,7 +623,7 @@ const TextGenerationModal = ({
 
 export default function Lobby() {
   const navigate = useNavigate();
-  const { roomId, players, isAdmin, gameState, startGame } = useGameStore();
+  const { roomId, players, isAdmin, gameState, startGame, connectionStatus, lastError, roomClosed, clearRoomClosed } = useGameStore();
   const [playAlone, setPlayAlone] = useState(false);
   const [roomName, setRoomName] = useState({ readableId: '', fullId: '' });
   const [showFullId, setShowFullId] = useState(false);
@@ -729,6 +728,42 @@ export default function Lobby() {
       useGameStore.getState().connect();
     }
   }, [roomId, navigate, isAdmin]);
+
+  useEffect(() => {
+    // Monitor for store errors and show them as notifications
+    if (lastError) {
+      setNotificationMessage(`❌ ${lastError}`);
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 5000);
+      
+      // Clear the error after showing notification
+      setTimeout(() => {
+        useGameStore.getState().setError(null);
+      }, 5500);
+    }
+  }, [lastError]);
+
+  useEffect(() => {
+    // Handle room closure notifications
+    if (roomClosed) {
+      console.log('[Lobby] Room was closed:', roomClosed);
+      
+      // Clear session data
+      sessionStorage.removeItem('capy_room_id');
+      sessionStorage.removeItem('capy_nickname');
+      sessionStorage.removeItem('capy_is_admin');
+      
+      // Show the room closure message
+      alert(roomClosed.message);
+      
+      // Reset the game state and clear the room closed state
+      useGameStore.getState().resetGame();
+      clearRoomClosed();
+      
+      // Navigate back to login
+      navigate('/');
+    }
+  }, [roomClosed, clearRoomClosed, navigate]);
 
   useEffect(() => {
     if (gameState === 'playing') {
@@ -1292,14 +1327,53 @@ export default function Lobby() {
 
   // Handle starting game with custom text
   const handleStartWithCustomText = () => {
-    if (customText.trim()) {
-      if (playAlone) {
-        startGame(customText, true);
-      } else {
-        startGame(customText);
-      }
-      setShowTextModal(false);
+    console.log('[Lobby] Starting game with text:', customText.trim());
+    console.log('[Lobby] playAlone:', playAlone);
+    console.log('[Lobby] players.length:', players.length);
+    console.log('[Lobby] roomId:', roomId);
+    console.log('[Lobby] isAdmin:', isAdmin);
+    console.log('[Lobby] connectionStatus:', connectionStatus);
+    
+    const socket = useGameStore.getState().socket;
+    console.log('[Lobby] socket connected:', socket?.connected);
+    
+    if (!customText.trim()) {
+      console.log('[Lobby] No text provided, not starting game');
+      setNotificationMessage('❌ Please enter or generate text first');
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 3000);
+      return;
     }
+
+    if (connectionStatus !== 'connected') {
+      console.log('[Lobby] Not connected to server');
+      setNotificationMessage('❌ Not connected to server. Please check your connection.');
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 3000);
+      return;
+    }
+
+    if (!playAlone && players.length < 2) {
+      console.log('[Lobby] Not enough players');
+      setNotificationMessage('❌ Need at least 2 players to start multiplayer race');
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 3000);
+      return;
+    }
+    
+    if (playAlone) {
+      console.log('[Lobby] Starting practice game');
+      startGame(customText, true);
+    } else {
+      console.log('[Lobby] Starting multiplayer game');
+      startGame(customText);
+    }
+    setShowTextModal(false);
+    
+    // Show success notification
+    setNotificationMessage('🚀 Starting race...');
+    setShowNotification(true);
+    setTimeout(() => setShowNotification(false), 2000);
   };
 
   return (
@@ -1317,8 +1391,7 @@ export default function Lobby() {
         flexDirection: 'column', 
         alignItems: 'center', 
         gap: 24,
-        maxHeight: '90vh',
-        overflowY: 'auto'
+        maxHeight: '90vh'
       }}>        <button onClick={handleBackToLogin} style={{ ...modernButtonStyle, alignSelf: 'flex-start', marginBottom: 8, padding: '6px 12px', fontSize: 13 }}>
           ← Back to Login
         </button>
@@ -1339,6 +1412,93 @@ export default function Lobby() {
             </div>
           )}
           <h2 style={{ ...capyTitleStyle, marginBottom: 4 }}>{roomName.readableId}</h2>
+          
+          {/* Connection Status Indicator - Only for admins */}
+          {isAdmin && (
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: 8, 
+              marginBottom: 12,
+              padding: '4px 12px',
+              borderRadius: 8,
+              fontSize: 12,
+              fontWeight: 600,
+              background: connectionStatus === 'connected' ? 'rgba(16, 185, 129, 0.1)' :
+                         connectionStatus === 'connecting' ? 'rgba(245, 158, 11, 0.1)' :
+                         connectionStatus === 'error' ? 'rgba(239, 68, 68, 0.1)' :
+                         'rgba(156, 163, 175, 0.1)',
+              color: connectionStatus === 'connected' ? '#047857' :
+                     connectionStatus === 'connecting' ? '#d97706' :
+                     connectionStatus === 'error' ? '#dc2626' :
+                     '#6b7280',
+              border: `1px solid ${connectionStatus === 'connected' ? '#10b981' :
+                                  connectionStatus === 'connecting' ? '#f59e0b' :
+                                  connectionStatus === 'error' ? '#ef4444' :
+                                  '#9ca3af'}20`
+            }}>
+              <div style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: connectionStatus === 'connected' ? '#10b981' :
+                           connectionStatus === 'connecting' ? '#f59e0b' :
+                           connectionStatus === 'error' ? '#ef4444' :
+                           '#9ca3af'
+              }} />
+              {connectionStatus === 'connected' && '🟢 Connected to server'}
+              {connectionStatus === 'connecting' && '🟡 Connecting...'}
+              {connectionStatus === 'error' && '🔴 Connection failed'}
+              {connectionStatus === 'disconnected' && '⚫ Disconnected'}
+            </div>
+          )}
+          
+          {isAdmin && lastError && (
+            <div style={{ 
+              background: 'rgba(239, 68, 68, 0.1)', 
+              color: '#dc2626', 
+              padding: '8px 12px', 
+              borderRadius: 8, 
+              fontSize: 12,
+              marginBottom: 12,
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8
+            }}>
+              <span>⚠️ {lastError}</span>
+              {connectionStatus === 'error' && (
+                <button
+                  onClick={() => {
+                    console.log('[Lobby] Retrying connection...');
+                    useGameStore.getState().connect();
+                  }}
+                  style={{
+                    background: '#dc2626',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 4,
+                    padding: '4px 8px',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#b91c1c';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#dc2626';
+                  }}
+                >
+                  Retry
+                </button>
+              )}
+            </div>
+          )}
+          
           <p style={{ color: '#4b5563', marginBottom: 12 }}>Waiting for players to join...</p>
         </div>
         <div style={{ width: '100%', display: 'flex', alignItems: 'center', margin: '0 0 8px 0' }}>
@@ -1730,13 +1890,33 @@ export default function Lobby() {
             </div>
             <button 
               disabled={!playAlone && players.length < 2} 
-              style={{ ...modernButtonStyle, width: '100%', marginBottom: 0 }}
-              onClick={() => setShowTextModal(true)}
+              style={{ 
+                ...modernButtonStyle, 
+                width: '100%', 
+                marginBottom: 0,
+                background: (!playAlone && players.length < 2) ? '#9ca3af' : modernButtonStyle.background,
+                cursor: (!playAlone && players.length < 2) ? 'not-allowed' : 'pointer'
+              }}
+              onClick={() => {
+                // Auto-generate some default text when modal opens if none exists
+                if (!customText.trim()) {
+                  const defaultText = getTextByDifficulty({
+                    difficulty: selectedDifficulty,
+                    category: selectedCategory
+                  }, characterLimit);
+                  setCustomText(defaultText);
+                }
+                setShowTextModal(true);
+              }}
+              title={
+                !playAlone && players.length < 2 ? 'Need at least 2 players' :
+                'Click to start the race'
+              }
             >
               🎮 Generate & Start Race
             </button>
             {!playAlone && players.length < 2 && (
-              <p style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', margin: 0 }}>
+              <p style={{ fontSize: 13, color: '#6b7280', textAlign: 'center', margin: '8px 0 0 0' }}>
                 Waiting for more players to join...
               </p>
             )}
