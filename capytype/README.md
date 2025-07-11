@@ -8,12 +8,8 @@ A real-time multiplayer typing game with a capybara theme where players race aga
 - **Capybara-themed UI** - Cute and engaging interface with customizable avatar colors
 - **Room-based Gameplay** - Create or join private rooms with readable room names
 - **Avatar Customization** - Choose from 10 different capybara colors and personalities
-- **AI-powered Text Generation** - Host can generate race text using advanced AI with topic prompts and multiple character limits (50-2000)
-- **Character Limit Control** - Set precise character limits for race text with extensive options from 50 to 2000 characters
-- **Smart Text Truncation** - Ensures text always ends at logical boundaries (sentence/word) for all text sources
-- **Enhanced AI Integration** - Multiple AI providers (Groq, Together AI, Hugging Face) for reliable text generation
-- **Individual Player Lanes** - Focus on your own performance during the race
-- **Real-time Color Feedback** - Instantly see typing correctness with color highlighting
+- **Enhanced Visibility** - Improved UI transparency and color contrast
+- **Live Progress Tracking** - See everyone's progress in real-time with vibrant player cards
 - **Performance Metrics** - Track WPM, errors, and accuracy
 - **Results Dashboard** - Compare your performance with others
 
@@ -21,15 +17,10 @@ A real-time multiplayer typing game with a capybara theme where players race aga
 
 - **Frontend**: React + TypeScript + Vite
 - **Backend**: Node.js + Express + Socket.IO
-- **State Management**: Zustand with persistent session storage
+- **State Management**: Zustand
 - **Styling**: Tailwind CSS
 - **Animations**: Framer Motion
-- **UI Components**: Custom reusable components with TypeScript
-- **AI Text Generation**: Hugging Face Inference API
-- **Real-time Communication**: WebSocket with Socket.IO
-- **Asset Management**: Vite with optimized bundling and preloading
-- **Hosting**: Firebase (Frontend) + Railway (Backend)
-- **Version Control**: Git + GitHub with automated CI/CD
+- **Hosting**: Firebase (Frontend) + Render/Railway (Backend)
 
 ## 🏗️ Architecture
 
@@ -42,64 +33,42 @@ graph TB
         A --> E[Lobby Components]
         A --> F[Avatar System]
         F --> G[Color Picker]
-        F --> SS[Session Storage]
-        E --> H[Text Generation Modal]
-        H --> I[AI Text Generation]
-        H --> J[Smart Text Truncation]
-        D --> K[Real-time Feedback]
-        D --> L[Individual Lanes]
-        D --> M[Asset Preloading]
     end
     
-    subgraph "Backend (Railway)"
-        N[Express Server] --> O[Socket.IO Server]
-        O --> P[Room Manager]
-        P --> Q[Game Logic]
-        O --> R[Player Management]
-        R --> S[Avatar Color Sync]
-        T[Room Validation] --> U[UUID Processing]
-        V[Connection Handler] --> W[Auto Reconnection]
-    end
-    
-    subgraph "External Services"
-        X[Hugging Face API] --> I
+    subgraph "Backend (Railway/Render)"
+        H[Express Server] --> I[Socket.IO Server]
+        I --> J[Room Manager]
+        J --> K[Game Logic]
+        I --> L[Player Management]
+        L --> M[Avatar Color Sync]
     end
     
     subgraph "Real-time Communication"
-        C <--> O
-        G <--> S
-        SS <--> G
-        V <--> C
+        C <--> I
+        G <--> M
     end
     
     subgraph "Game Flow"
-        Y[Login & Avatar Selection] --> Z[Create/Join Room]
-        Z --> AA[Lobby with Player Cards]
-        AA --> BB[Text Generation]
-        BB --> CC[Game Start]
-        CC --> DD[Typing Race]
-        DD --> EE[Results]
-        EE --> AA
+        N[Login & Avatar Selection] --> O[Create/Join Room]
+        O --> P[Lobby with Player Cards]
+        P --> Q[Game Start]
+        Q --> R[Typing Race]
+        R --> S[Results]
+        S --> P
     end
     
-    subgraph "Performance Features"
-        M[Asset Preloading]
-        L[Individual Player Lanes]
-        K[Real-time Typing Feedback]
-        FF[Smart Text Boundaries]
-        GG[Session Persistence]
+    subgraph "UI Improvements"
+        T[Enhanced Transparency]
+        U[Better Color Visibility]
+        V[Improved Player Cards]
     end
     
     style A fill:#e1f5fe
-    style N fill:#f3e5f5
+    style H fill:#f3e5f5
     style C fill:#fff3e0
-    style O fill:#fff3e0
+    style I fill:#fff3e0
     style F fill:#e8f5e8
     style G fill:#e8f5e8
-    style I fill:#e0f7fa
-    style X fill:#bbdefb
-    style SS fill:#f0f9ff
-    style V fill:#ecfdf5
 ```
 
 ## 🚀 Quick Start
@@ -132,12 +101,6 @@ graph TB
    **Frontend (.env)**
    ```env
    VITE_BACKEND_URL=http://localhost:3001
-   
-   # Optional: For enhanced AI text generation
-   # Get free API keys from:
-   # - Groq: https://console.groq.com/
-   # - Together AI: https://api.together.xyz/
-   VITE_AI_API_KEY=your_api_key_here
    ```
    
    **Backend (.env)**
@@ -183,10 +146,9 @@ firebase deploy
 3. **Create a room** or **join an existing room** with a room ID
 4. **Wait in the lobby** for other players to join (you'll see colorful player cards)
 5. **Customize your color** anytime in the lobby using the edit button on your player card
-6. **Generate race text** (host only) - Choose a topic and character limit or use random text
-7. **Start the game** when ready (room admin only)
-8. **Type the displayed text** as fast and accurately as possible (green for correct, red for errors)
-9. **View results** and compare your performance with others
+6. **Start the game** when ready (room admin only)
+7. **Type the displayed text** as fast and accurately as possible
+8. **View results** and compare your performance with others
 
 ## 📊 Game Metrics
 
@@ -221,47 +183,25 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🐛 Known Issues & Solutions
 
 ### "Failed to connect to server"
-- **Cause**: Backend URL misconfiguration or server unavailable
-- **Solution**: Update `VITE_BACKEND_URL` in frontend `.env` file, check server status
+- **Cause**: Backend URL misconfiguration
+- **Solution**: Update `VITE_BACKEND_URL` in frontend `.env` file
 
 ### CORS Errors
 - **Cause**: Frontend domain not allowed in backend CORS
 - **Solution**: Add your domain to `CORS_ORIGIN` in backend `.env` file
 
-### "Invalid room code" when trying to join
-- **Cause**: Room does not exist, has been closed, or expired
-- **Solution**: Double-check the room code or create a new room
+## 🚀 Recent Updates
 
-### Avatar/Color not persisting
-- **Cause**: Session storage cleared or browser restrictions
-- **Solution**: Re-select avatar/color; settings will persist for future sessions
-
-### Socket connection drops during game
-- **Cause**: Network instability or server restart
-- **Solution**: App will attempt auto-reconnection; refresh page if issues persist
-
-### Text generation fails
-- **Cause**: Hugging Face API rate limits or connectivity issues
-- **Solution**: Try again after a moment or use random text generation as fallback
-
-## 🚀 Recent Updates (July 2025)
-
-- ✅ **Performance Optimization** - Implemented asset preloading to eliminate game start latency
-- ✅ **Host-Driven Text Generation** - Moved text generation to lobby (host-only) with real AI integration
-- ✅ **Individual Player Lanes** - Updated to show only the current player's lane during the race
-- ✅ **Real-time Typing Feedback** - Added color-coded feedback (green, red, yellow) and error counting
-- ✅ **Adaptive Results Modal** - Redesigned to be responsive and visually separated
-- ✅ **Hugging Face AI Integration** - Using real AI text generation with topic and character limit options
-- ✅ **Smart Text Truncation** - Implemented boundary-aware text truncation (sentence/word) for all text sources
-- ✅ **Room Validation Fix** - Simplified room joining with plain UUIDs for better reliability
-- ✅ **Enhanced Error Handling** - Improved validation and error handling for room joining
-- ✅ **Backend Auto-deployment** - Updated Railway configuration for automatic deployment on git push
-- ✅ **Enhanced AI Text Generation** - Implemented multiple AI providers (Groq, Together AI, Hugging Face) with topic-specific generation
-- ✅ **Extended Character Limits** - Added support for text lengths from 50 to 2000 characters with improved selection UI
-- ✅ **Smart Random Text** - Random text now generated by AI instead of stored templates
-- ✅ **Improved Modal Layout** - Better alignment, spacing, and responsive design for text generation modal
-- ✅ **Topic-Specific Generation** - AI now properly generates content about specified topics (e.g., "headphones", "technology")
-- ✅ **Enhanced Fallback System** - Comprehensive topic-aware fallback text when AI services are unavailable
+- ✅ **Enhanced UI Visibility** - Improved transparency for login card and player cards in lobby
+- ✅ **Avatar Customization** - Added 10 capybara color options with real-time color picker
+- ✅ **Better Player Cards** - Increased color opacity for better visibility on the lobby board
+- ✅ **Railway Deployment** - Optimized backend deployment configuration
+- ✅ **Improved UX** - Better color contrast and visual feedback
+- ✅ **Real-time Color Sync** - Avatar colors update instantly across all connected players
+- ✅ **Fixed environment variable configuration**
+- ✅ **Updated CORS settings for production**
+- ✅ **Resolved TypeScript compilation errors**
+- ✅ **Improved error handling and connection stability**
 
 ---
 
