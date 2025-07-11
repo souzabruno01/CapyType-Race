@@ -147,10 +147,10 @@ const TimeUpOverlay = ({ onAnimationComplete }: {
   onAnimationComplete: () => void;
 }) => (
   <motion.div
-    initial={{ opacity: 0, scale: 0.5 }}
-    animate={{ opacity: 1, scale: 1 }}
-    exit={{ opacity: 0, scale: 1.5 }}
-    transition={{ duration: 0.6 }}
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    transition={{ duration: 1.5 }}
     onAnimationComplete={onAnimationComplete}
     style={{
       position: 'fixed',
@@ -158,30 +158,36 @@ const TimeUpOverlay = ({ onAnimationComplete }: {
       left: 0,
       right: 0,
       bottom: 0,
-      background: 'rgba(0, 0, 0, 0.8)',
+      background: 'rgba(0, 0, 0, 0.9)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 50,
-      backdropFilter: 'blur(8px)'
+      backdropFilter: 'blur(12px)'
     }}
   >
     <motion.div
-      initial={{ y: -100, rotateX: -90 }}
-      animate={{ y: 0, rotateX: 0 }}
-      transition={{ duration: 0.8, type: "spring", stiffness: 100 }}
+      initial={{ scale: 0.3, y: -100, rotateX: -90 }}
+      animate={{ scale: 1, y: 0, rotateX: 0 }}
+      transition={{ duration: 2.0, type: "spring", stiffness: 60, damping: 15 }}
       style={{
         background: 'rgba(235, 228, 200, 0.98)',
         borderRadius: 24,
         padding: 48,
         textAlign: 'center',
         border: '3px solid #b6a77a',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
+        boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+        maxWidth: '90vw'
       }}
     >
       <motion.h2
-        animate={{ scale: [1, 1.1, 1], rotateZ: [0, -2, 2, 0] }}
-        transition={{ duration: 1, repeat: 2 }}
+        initial={{ scale: 0.5, opacity: 0 }}
+        animate={{ 
+          scale: [0.5, 1.1, 1], 
+          opacity: 1,
+          rotateZ: [0, -2, 2, 0] 
+        }}
+        transition={{ duration: 2.5, repeat: 1, ease: "easeInOut" }}
         style={{
           fontSize: '4rem',
           fontWeight: 800,
@@ -193,9 +199,9 @@ const TimeUpOverlay = ({ onAnimationComplete }: {
         ⏰ TIME'S UP! ⏰
       </motion.h2>
       <motion.p 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.0, duration: 1.2 }}
         style={{
           fontSize: '1.5rem',
           color: '#374151',
@@ -203,16 +209,26 @@ const TimeUpOverlay = ({ onAnimationComplete }: {
           marginBottom: 24
         }}
       >
-        🏁 Finalizing race results...
+        🏁 Calculating final results...
       </motion.p>
       <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ 
+          opacity: 1, 
+          scale: 1,
+          rotate: 360 
+        }}
+        transition={{ 
+          delay: 1.5,
+          duration: 2.5, 
+          repeat: Infinity, 
+          ease: "linear" 
+        }}
         style={{
-          width: 40,
-          height: 40,
-          border: '4px solid #e5e7eb',
-          borderTop: '4px solid #6366f1',
+          width: 48,
+          height: 48,
+          border: '5px solid #e5e7eb',
+          borderTop: '5px solid #6366f1',
           borderRadius: '50%',
           margin: '0 auto'
         }}
@@ -321,10 +337,11 @@ const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: {
         style={{
           background: 'rgba(235, 228, 200, 0.98)',
           borderRadius: 24,
-          padding: 32,
+          padding: window.innerWidth < 768 ? 16 : 32,
           maxWidth: Math.min(900, playerCount > 6 ? 750 : 600),
           width: '95%',
-          maxHeight: '90vh',
+          minWidth: 320,
+          maxHeight: '95vh',
           overflowY: 'auto',
           boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
           border: '3px solid #b6a77a',
@@ -766,33 +783,61 @@ export default function Game() {
   // Handle game over logic
   const handleGameOver = useCallback(() => {
     const finishTime = startTime ? (Date.now() - startTime) / 1000 : 0;
-    // Emit game completion to server
+    // Emit game completion to server with updated stats
     const socket = useGameStore.getState().socket;
     if (socket) {
       socket.emit('playerFinished', {
         time: finishTime,
         wpm: playerStats.wpm,
-        errors: playerStats.errors
+        errors: playerStats.errors,
+        progress: progress
+      });
+      
+      // Also update the player's stats in the store
+      socket.emit('updatePlayerStats', {
+        wpm: playerStats.wpm,
+        errors: playerStats.errors,
+        progress: progress
       });
     }
-  }, [startTime, playerStats.wpm, playerStats.errors]);
+  }, [startTime, playerStats.wpm, playerStats.errors, progress]);
 
   // Handle time's up
   useEffect(() => {
     if (timeLeft === 0 && !gameFinished) {
-      setShowTimeUp(true);
-      setGameFinished(true);
+      setGameFinished(true); // Freeze typing area immediately
+      
+      // Send final stats to server before showing overlay
+      const socket = useGameStore.getState().socket;
+      if (socket) {
+        const finalStats = {
+          wpm: playerStats.wpm,
+          errors: playerStats.errors,
+          progress: progress,
+          time: startTime ? (Date.now() - startTime) / 1000 : 0
+        };
+        
+        console.log('[Game] Sending final stats on time up:', finalStats);
+        socket.emit('playerFinished', finalStats);
+        socket.emit('updatePlayerStats', finalStats);
+      }
+      
       handleGameOver();
       
-      // Set a timer to show results after animation
+      // Show Time's Up overlay with slower animation timing
+      setTimeout(() => {
+        setShowTimeUp(true);
+      }, 200); // Small delay to let page freeze first
+      
+      // Set a longer timer to show results after slower animation
       const timer = setTimeout(() => {
         setShowTimeUp(false);
         setShowResults(true);
-      }, 2000);
+      }, 5000); // Increased to 5 seconds for slower display
       
       setTimeUpTimer(timer);
     }
-  }, [timeLeft]);
+  }, [timeLeft, playerStats.wpm, playerStats.errors, progress, startTime]);
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -808,6 +853,22 @@ export default function Game() {
     if (progress === 100 && !gameFinished) {
       setShowConfetti(true);
       setGameFinished(true);
+      
+      // Send final stats to server before finishing
+      const socket = useGameStore.getState().socket;
+      if (socket) {
+        const finalStats = {
+          wpm: playerStats.wpm,
+          errors: playerStats.errors,
+          progress: 100,
+          time: startTime ? (Date.now() - startTime) / 1000 : 0
+        };
+        
+        console.log('[Game] Sending final stats on completion:', finalStats);
+        socket.emit('playerFinished', finalStats);
+        socket.emit('updatePlayerStats', finalStats);
+      }
+      
       handleGameOver();
       
       // Show results modal after confetti
@@ -816,7 +877,7 @@ export default function Game() {
         setShowResults(true);
       }, 3000);
     }
-  }, [progress, gameFinished, handleGameOver]);
+  }, [progress, gameFinished, handleGameOver, playerStats.wpm, playerStats.errors, startTime]);
 
   // Show results modal when all players finish or time's up
   useEffect(() => {
@@ -942,10 +1003,17 @@ export default function Game() {
   const handleReturnToLobby = () => {
     const socket = useGameStore.getState().socket;
     if (socket) {
-      socket.emit('leaveRoom');
-      socket.disconnect();
+      // Don't disconnect - just emit return to lobby event
+      socket.emit('returnToLobby');
     }
-    useGameStore.getState().resetGame();
+    
+    // Reset game state but keep room connection
+    useGameStore.setState({
+      gameState: 'waiting',
+      text: '',
+      progress: 0
+    });
+    
     navigate('/lobby');
   };
   const handleBackToLogin = () => {

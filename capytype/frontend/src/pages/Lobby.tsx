@@ -133,9 +133,10 @@ const TextGenerationModal = ({
         exit={{ scale: 0.8, y: 50, opacity: 0 }}
         transition={{ duration: 0.3 }}
         style={{
-          width: '100%',
-          maxWidth: 521, // Increased by 5% from 496
-          padding: 33,
+          width: '95%',
+          maxWidth: 480,
+          minWidth: 320,
+          padding: '16px',
           background: 'rgba(235, 228, 200, 0.95)',
           borderRadius: 21,
           boxShadow: '0 14px 46px rgba(0,0,0,0.2)',
@@ -143,9 +144,10 @@ const TextGenerationModal = ({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 25,
-          maxHeight: '85vh',
-          overflow: 'hidden' // Prevent outer scroll
+          gap: 8,
+          maxHeight: '95vh',
+          minHeight: '400px',
+          overflow: 'hidden'
         }}
       >
         <div style={{ textAlign: 'center', width: '100%', position: 'relative' }}>
@@ -188,8 +190,19 @@ const TextGenerationModal = ({
           </p>
         </div>
 
-        {/* Difficulty and Category Selectors */}
-        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 18 }}>
+        {/* Scrollable Content Area */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          width: '100%',
+          flex: 1,
+          minHeight: 0,
+          overflow: 'auto',
+          padding: '4px'
+        }}>
+          {/* Difficulty and Category Selectors */}
+          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 12, flexShrink: 0 }}>
           {/* Help Text */}
           <div style={{ 
             background: 'rgba(99, 102, 241, 0.1)', 
@@ -371,31 +384,31 @@ const TextGenerationModal = ({
         </div>
 
         {/* Text Area */}
-        <div style={{ width: '100%', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', minHeight: 120, maxHeight: 200 }}>
           <div style={{ 
             background: 'rgba(99, 102, 241, 0.1)', 
             border: '1px solid rgba(99, 102, 241, 0.2)', 
             borderRadius: 8, 
-            padding: 11, 
-            marginBottom: 13,
-            fontSize: 11,
+            padding: 8, 
+            marginBottom: 10,
+            fontSize: 10,
             color: '#4f46e5',
-            lineHeight: 1.4,
+            lineHeight: 1.3,
             flexShrink: 0
           }}>
-            💡 <strong>Tip:</strong> Type a topic or keywords (like "technology", "space", "nature"), then click "AI Expand Text" to generate a complete typing text, or write your full custom text manually.
+            💡 <strong>Tip:</strong> Type a topic or keywords, then click "AI Expand Text" to generate a complete typing text.
           </div>
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 80, maxHeight: 140 }}>
             <textarea
               value={customText}
               onChange={(e) => setCustomText(e.target.value.substring(0, characterLimit))}
-              placeholder="Enter a topic (e.g., 'artificial intelligence', 'ocean exploration', 'ancient history') or write your complete custom text here..."
+              placeholder="Enter a topic (e.g., 'artificial intelligence', 'ocean exploration') or write your complete custom text here..."
               style={{
                 width: '100%',
-                flex: 1,
-                minHeight: 112,
-                maxHeight: 224,
-                padding: 13,
+                height: '100%',
+                minHeight: 70,
+                maxHeight: 120,
+                padding: 10,
                 border: '2px solid #b6a77a',
                 borderRadius: 10,
                 fontSize: 12,
@@ -407,7 +420,8 @@ const TextGenerationModal = ({
                 transition: 'border-color 0.2s, box-shadow 0.2s',
                 lineHeight: 1.5,
                 boxSizing: 'border-box',
-                wordWrap: 'break-word'
+                wordWrap: 'break-word',
+                overflow: 'auto'
               }}
               onFocus={(e) => e.target.style.borderColor = '#6366f1'}
               onBlur={(e) => e.target.style.borderColor = '#b6a77a'}
@@ -470,11 +484,12 @@ const TextGenerationModal = ({
         <div style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: 8,
+          gap: 6,
           justifyContent: 'center',
           width: '100%',
           maxWidth: '280px',
-          flexShrink: 0
+          flexShrink: 0,
+          marginTop: 8
         }}>
           <button
             onClick={onGenerateRandom}
@@ -484,9 +499,9 @@ const TextGenerationModal = ({
               color: '#232323',
               border: '2px solid #b6a77a',
               borderRadius: 8,
-              padding: '7px 11px',
+              padding: '6px 10px',
               fontWeight: 700,
-              fontSize: 12,
+              fontSize: 11,
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: generatingText ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
@@ -494,12 +509,13 @@ const TextGenerationModal = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 6,
+              gap: 4,
               width: '100%',
-              minHeight: '32px'
+              minHeight: '30px',
+              lineHeight: 1.2
             }}
           >
-            🎲 Generate {selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1)} {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} ({characterLimit} chars)
+            🎲 Generate {selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1)} Text ({characterLimit} chars)
           </button>
           
           <button
@@ -510,18 +526,19 @@ const TextGenerationModal = ({
               color: '#fff',
               border: 'none',
               borderRadius: 8,
-              padding: '7px 11px',
+              padding: '6px 10px',
               fontWeight: 700,
-              fontSize: 12,
+              fontSize: 11,
               boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
               cursor: generatingText ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 6,
+              gap: 4,
               width: '100%',
-              minHeight: '32px'
+              minHeight: '30px',
+              lineHeight: 1.2
             }}
           >
             {generatingText ? (
@@ -540,7 +557,10 @@ const TextGenerationModal = ({
           </button>
         </div>
 
-        {/* Action Buttons */}
+        {/* End of Scrollable Content Area */}
+        </div>
+
+        {/* Action Buttons - Fixed at bottom */}
         <div style={{
           display: 'flex',
           gap: 8,
@@ -549,7 +569,9 @@ const TextGenerationModal = ({
           width: '100%',
           maxWidth: '280px',
           flexShrink: 0,
-          paddingTop: 13
+          paddingTop: 8,
+          borderTop: '1px solid rgba(182, 167, 122, 0.2)',
+          marginTop: 8
         }}>
           <button
             onClick={onClose}
