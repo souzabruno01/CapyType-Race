@@ -926,6 +926,7 @@ export default function Lobby() {
 
   const handleCopyRoomId = () => {
     if (roomId) {
+      // Copy the plain UUID room code
       navigator.clipboard.writeText(roomId);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -1601,7 +1602,7 @@ export default function Lobby() {
                 position: 'relative',
                 backdropFilter: 'blur(2px)'
               }}>
-                {roomName.fullId}
+                {roomId || roomName.fullId}
                 <button
                   onClick={handleCopyRoomId}
                   style={{ 

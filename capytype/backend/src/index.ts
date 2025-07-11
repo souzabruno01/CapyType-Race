@@ -5,24 +5,9 @@ import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 import { generateRoomName } from './roomUtils';
-import crypto from 'crypto';
-import CryptoJS from 'crypto-js';
 
 // Load environment variables
 dotenv.config();
-
-const SECRET = 'capytype-shared-secret'; // Must match frontend secret
-
-// Utility functions for room ID encryption/decryption
-function decryptRoomId(cipher: string): string {
-  try {
-    const bytes = CryptoJS.AES.decrypt(cipher, SECRET);
-    return bytes.toString(CryptoJS.enc.Utf8);
-  } catch (error) {
-    console.log('[DECRYPT ERROR] Failed to decrypt room ID:', cipher);
-    return '';
-  }
-}
 
 const app = express();
 const httpServer = createServer(app);
@@ -156,20 +141,19 @@ app.get('/api/room-info', (req, res) => {
   }
 
   console.log('\n================= ROOM INFO LOOKUP =================');
-  console.log('Received encrypted code:', code);
+  console.log('Received room code:', code);
   
-  // Decrypt the room ID
-  const decryptedRoomId = decryptRoomId(code);
-  if (!decryptedRoomId) {
-    console.log('[room-info] Failed to decrypt room ID');
+  // Validate UUID format
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(code)) {
+    console.log('[room-info] Invalid UUID format for code:', code);
     return res.status(400).json({ error: 'Invalid room code format' });
   }
   
-  // Normalize the room ID to lowercase for lookup
-  const roomIdToLookup = decryptedRoomId.trim().toLowerCase();
+  // Normalize the room ID to lowercase for lookup (UUID format)
+  const roomIdToLookup = code.trim().toLowerCase();
   
-  console.log('Decrypted room ID:  ', decryptedRoomId);
-  console.log('Normalized room ID: ', roomIdToLookup);
+  console.log('Room ID to lookup:  ', roomIdToLookup);
   console.log('Current room keys:  ', Array.from(rooms.keys()));
   // Print a grid of room info
   if (rooms.size > 0) {
@@ -248,6 +232,10 @@ io.on('connection', (socket) => {
     console.log(`  - Room keys: [${Array.from(rooms.keys()).join(', ')}]`);
     
     socket.join(roomId);
+    
+    // Send the plain room ID to the frontend
+    console.log(`  - Room code: ${roomId}`);
+    
     socket.emit('roomCreated', roomId);
     socket.emit('roomJoined', { roomId, isAdmin: true, nickname });
     io.to(roomId).emit('playerJoined', Array.from(room.players.values()).filter((p: any) => !p.disconnected));

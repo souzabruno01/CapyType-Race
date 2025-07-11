@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
 import { Filter } from 'bad-words';
-import { encryptRoomId } from '../utils/crypto';
 
 const RESERVED_WORDS = [
   'admin', 'host', 'moderator', 'capybara', 'room', 'test', 'null', 'undefined', 'root', 'server'
@@ -150,8 +149,8 @@ export default function Login() {
     roomCodeCheckTimeout.current = setTimeout(() => {
       // Use VITE_BACKEND_URL from env
       const backendUrl = import.meta.env.VITE_BACKEND_URL || '';
-      const encryptedCode = encryptRoomId(roomCode.toLowerCase());
-      fetch(`${backendUrl}/api/room-info?code=${encodeURIComponent(encryptedCode)}`)
+      // Send the plain UUID to the backend
+      fetch(`${backendUrl}/api/room-info?code=${encodeURIComponent(roomCode.toLowerCase())}`)
         .then(async (res) => {
           if (!res.ok) throw new Error('Invalid');
           const data = await res.json();
