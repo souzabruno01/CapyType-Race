@@ -155,7 +155,7 @@ export default function Login() {
           if (!res.ok) {
             const errorData = await res.json().catch(() => ({ error: 'UNKNOWN' }));
             
-            // Handle specific error types
+            // Handle specific error types with professional messages
             if (errorData.error === 'INVALID_FORMAT') {
               throw new Error('Invalid room code format');
             } else if (errorData.error === 'ROOM_NOT_FOUND') {
@@ -167,7 +167,7 @@ export default function Login() {
           
           const data = await res.json();
           if (data && data.name) {
-            // Check if room is joinable
+            // Check if room is joinable with detailed feedback
             if (data.isFull) {
               setRoomName(`${data.name} (Full - ${data.playerCount}/${data.maxPlayers})`);
               setRoomValid(false);
@@ -179,7 +179,7 @@ export default function Login() {
               setRoomValid(true);
             }
           } else {
-            setRoomName(null);
+            setRoomName('Room validation failed');
             setRoomValid(false);
           }
         })
@@ -455,6 +455,8 @@ export default function Login() {
                   <span style={{ color: '#a78bfa' }}>Checking room...</span>
                 ) : roomValid === true && roomName ? (
                   <span style={{ color: '#059669' }}>Room: {roomName}</span>
+                ) : roomValid === false && roomName ? (
+                  <span style={{ color: '#e11d48' }}>{roomName}</span>
                 ) : roomValid === false ? (
                   <span style={{ color: '#e11d48' }}>Invalid room code</span>
                 ) : null}
