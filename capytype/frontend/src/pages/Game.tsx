@@ -65,10 +65,12 @@ const PodiumPlayer = ({ player, position, height }: {
         {/* Medal */}
         <div style={{
           position: 'absolute',
-          top: -15,
+          top: -8,
           left: '50%',
           transform: 'translateX(-50%)',
-          fontSize: 30
+          fontSize: 28,
+          lineHeight: 1,
+          zIndex: 10
         }}>
           {getMedalEmoji(position)}
         </div>
@@ -802,7 +804,7 @@ export default function Game() {
     }
   }, [startTime, playerStats.wpm, playerStats.errors, progress]);
 
-  // Handle time's up
+  // Handle time's up - ensure all final stats are synced
   useEffect(() => {
     if (timeLeft === 0 && !gameFinished) {
       setGameFinished(true); // Freeze typing area immediately
@@ -830,14 +832,15 @@ export default function Game() {
       }, 200); // Small delay to let page freeze first
       
       // Set a longer timer to show results after slower animation
+      // This gives time for all players' final stats to sync
       const timer = setTimeout(() => {
         setShowTimeUp(false);
         setShowResults(true);
-      }, 5000); // Increased to 5 seconds for slower display
+      }, 5000); // Increased to 5 seconds for slower display and stats sync
       
       setTimeUpTimer(timer);
     }
-  }, [timeLeft, playerStats.wpm, playerStats.errors, progress, startTime]);
+  }, [timeLeft, playerStats.wpm, playerStats.errors, progress, startTime, gameFinished, handleGameOver]);
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -848,36 +851,32 @@ export default function Game() {
     };
   }, [timeUpTimer]);
 
-  // Handle game completion
+  // Handle game completion - but DON'T end the race until time is up
   useEffect(() => {
-    if (progress === 100 && !gameFinished) {
+    if (progress === 100 && !gameFinished && timeLeft !== null && timeLeft > 0) {
       setShowConfetti(true);
-      setGameFinished(true);
       
-      // Send final stats to server before finishing
+      // Send completion stats to server but don't end the game yet
       const socket = useGameStore.getState().socket;
       if (socket) {
-        const finalStats = {
+        const completionStats = {
           wpm: playerStats.wpm,
           errors: playerStats.errors,
           progress: 100,
           time: startTime ? (Date.now() - startTime) / 1000 : 0
         };
         
-        console.log('[Game] Sending final stats on completion:', finalStats);
-        socket.emit('playerFinished', finalStats);
-        socket.emit('updatePlayerStats', finalStats);
+        console.log('[Game] Player finished early, sending completion stats:', completionStats);
+        socket.emit('playerFinished', completionStats);
+        socket.emit('updatePlayerStats', completionStats);
       }
       
-      handleGameOver();
-      
-      // Show results modal after confetti
+      // Hide confetti after 3 seconds but don't show results yet
       setTimeout(() => {
         setShowConfetti(false);
-        setShowResults(true);
       }, 3000);
     }
-  }, [progress, gameFinished, handleGameOver, playerStats.wpm, playerStats.errors, startTime]);
+  }, [progress, gameFinished, playerStats.wpm, playerStats.errors, startTime, timeLeft]);
 
   // Show results modal when all players finish or time's up
   useEffect(() => {
@@ -888,15 +887,36 @@ export default function Game() {
     }
   }, [gameState, showResults]);
 
-  // Calculate WPM
+  // Calculate WPM and continuously update stats
   useEffect(() => {
     if (gameStarted && startTime && hasStartedTyping) {
       const timeElapsed = (Date.now() - startTime) / 1000 / 60; // in minutes
       const wordsTyped = input.trim().split(/\s+/).length;
       const wpm = Math.round(wordsTyped / timeElapsed);
       setPlayerStats(prev => ({ ...prev, wpm }));
+      
+      // Continuously update server with latest stats while game is active
+      if (timeLeft !== null && timeLeft > 0) {
+        const socket = useGameStore.getState().socket;
+        if (socket) {
+          const currentStats = {
+            wpm: wpm,
+            errors: totalErrors,
+            progress: progress,
+            time: timeElapsed * 60 // convert back to seconds
+          };
+          
+          // Throttle updates to every 2 seconds to avoid spam
+          const lastUpdate = (window as any).lastStatsUpdate || 0;
+          const now = Date.now();
+          if (now - lastUpdate > 2000) {
+            socket.emit('updatePlayerStats', currentStats);
+            (window as any).lastStatsUpdate = now;
+          }
+        }
+      }
     }
-  }, [input, gameStarted, startTime, hasStartedTyping]);
+  }, [input, gameStarted, startTime, hasStartedTyping, totalErrors, progress, timeLeft]);
 
   useEffect(() => {
     setInput('');

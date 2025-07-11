@@ -198,9 +198,29 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }));
     });
 
+    newSocket.on('playerStatsUpdated', ({ playerId, wpm, errors, progress }) => {
+      set((state) => ({
+        players: state.players.map((p) => 
+          p.id === playerId ? { ...p, wpm, errors, progress } : p
+        ),
+      }));
+    });
+
     newSocket.on('playerFinished', (data) => {
-      // Handle player finish logic if needed
+      // Handle player finish logic and update their final stats
       console.log('Player finished:', data);
+      if (data.playerId && data.wpm !== undefined && data.errors !== undefined) {
+        set((state) => ({
+          players: state.players.map((p) => 
+            p.id === data.playerId ? { 
+              ...p, 
+              wpm: data.wpm, 
+              errors: data.errors, 
+              progress: data.progress || p.progress 
+            } : p
+          ),
+        }));
+      }
     });
 
     newSocket.on('roomClosed', (data: { reason: string; message: string }) => {

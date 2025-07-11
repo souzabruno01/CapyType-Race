@@ -437,7 +437,7 @@ io.on('connection', (socket) => {
         progress
       });
 
-      // Check if player has completed the text
+      // Check if player has completed the text but don't end the race
       if (progress >= 100) {
         const timeTaken = (Date.now() - room.startTime) / 1000;
         io.to(roomId).emit('playerFinished', {
@@ -445,6 +445,66 @@ io.on('connection', (socket) => {
           nickname: player.nickname,
           time: timeTaken
         });
+      }
+    }
+  });
+
+  // Update player stats (WPM, errors, etc.) - separate from progress
+  socket.on('updatePlayerStats', ({ wpm, errors, progress, time }) => {
+    // Find the room this player is in
+    for (const [roomId, room] of rooms.entries()) {
+      if (room.players.has(socket.id) && room.gameState === 'playing') {
+        const player = room.players.get(socket.id);
+        if (player) {
+          // Update all stats
+          player.wpm = wpm || 0;
+          player.errors = errors || 0;
+          player.progress = progress || player.progress;
+          
+          // Broadcast updated stats to all players in the room
+          io.to(roomId).emit('playerStatsUpdated', {
+            playerId: socket.id,
+            nickname: player.nickname,
+            wpm: player.wpm,
+            errors: player.errors,
+            progress: player.progress
+          });
+        }
+        break;
+      }
+    }
+  });
+
+  // Handle explicit player finished event (when they complete the text)
+  socket.on('playerFinished', ({ wpm, errors, progress, time }) => {
+    // Find the room this player is in
+    for (const [roomId, room] of rooms.entries()) {
+      if (room.players.has(socket.id)) {
+        const player = room.players.get(socket.id);
+        if (player) {
+          // Update final stats
+          player.wpm = wpm || player.wpm;
+          player.errors = errors || player.errors;
+          player.progress = progress || player.progress;
+          
+          console.log(`[Backend] Player ${player.nickname} finished with stats:`, {
+            wpm: player.wpm,
+            errors: player.errors,
+            progress: player.progress,
+            time
+          });
+          
+          // Broadcast that this player finished
+          io.to(roomId).emit('playerFinished', {
+            playerId: socket.id,
+            nickname: player.nickname,
+            wpm: player.wpm,
+            errors: player.errors,
+            progress: player.progress,
+            time: time || ((Date.now() - room.startTime) / 1000)
+          });
+        }
+        break;
       }
     }
   });
