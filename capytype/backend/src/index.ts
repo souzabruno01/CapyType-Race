@@ -15,7 +15,7 @@ const httpServer = createServer(app);
 // Configure allowed origins
 const allowedOrigins = process.env.CORS_ORIGIN 
   ? process.env.CORS_ORIGIN.split(',')
-  : ['http://localhost:5173', 'http://127.0.0.1:5173'];
+  : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'];
 
 console.log('Allowed origins:', allowedOrigins);
 
@@ -132,8 +132,21 @@ app.get('/', (req, res) => {
   });
 });
 
+// Handle OPTIONS preflight requests for room-info
+app.options('/api/room-info', (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  res.status(200).send();
+});
+
 // Room info endpoint for frontend validation
 app.get('/api/room-info', (req, res) => {
+  // Add specific CORS headers for this endpoint
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  
   const code = req.query.code;
   if (!code || typeof code !== 'string') {
     console.log('[room-info] Missing or invalid code:', code);
