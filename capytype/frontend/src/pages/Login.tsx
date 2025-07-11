@@ -152,18 +152,40 @@ export default function Login() {
       // Send the plain UUID to the backend
       fetch(`${backendUrl}/api/room-info?code=${encodeURIComponent(roomCode.toLowerCase())}`)
         .then(async (res) => {
-          if (!res.ok) throw new Error('Invalid');
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({ error: 'UNKNOWN' }));
+            
+            // Handle specific error types
+            if (errorData.error === 'INVALID_FORMAT') {
+              throw new Error('Invalid room code format');
+            } else if (errorData.error === 'ROOM_NOT_FOUND') {
+              throw new Error('Room not found');
+            } else {
+              throw new Error('Unable to validate room');
+            }
+          }
+          
           const data = await res.json();
           if (data && data.name) {
-            setRoomName(data.name);
-            setRoomValid(true);
+            // Check if room is joinable
+            if (data.isFull) {
+              setRoomName(`${data.name} (Full - ${data.playerCount}/${data.maxPlayers})`);
+              setRoomValid(false);
+            } else if (data.gameInProgress) {
+              setRoomName(`${data.name} (Game in Progress)`);
+              setRoomValid(false);
+            } else {
+              setRoomName(`${data.name} (${data.playerCount}/${data.maxPlayers} players)`);
+              setRoomValid(true);
+            }
           } else {
             setRoomName(null);
             setRoomValid(false);
           }
         })
-        .catch(() => {
-          setRoomName(null);
+        .catch((error) => {
+          console.log('Room validation error:', error.message);
+          setRoomName(error.message || 'Room validation failed');
           setRoomValid(false);
         })
         .finally(() => setRoomCheckLoading(false));

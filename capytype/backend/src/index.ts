@@ -137,7 +137,10 @@ app.get('/api/room-info', (req, res) => {
   const code = req.query.code;
   if (!code || typeof code !== 'string') {
     console.log('[room-info] Missing or invalid code:', code);
-    return res.status(400).json({ error: 'Missing or invalid code' });
+    return res.status(400).json({ 
+      error: 'INVALID_FORMAT', 
+      message: 'Invalid room code format' 
+    });
   }
 
   console.log('\n================= ROOM INFO LOOKUP =================');
@@ -147,7 +150,10 @@ app.get('/api/room-info', (req, res) => {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(code)) {
     console.log('[room-info] Invalid UUID format for code:', code);
-    return res.status(400).json({ error: 'Invalid room code format' });
+    return res.status(400).json({ 
+      error: 'INVALID_FORMAT', 
+      message: 'Invalid room code format' 
+    });
   }
   
   // Normalize the room ID to lowercase for lookup (UUID format)
@@ -173,11 +179,29 @@ app.get('/api/room-info', (req, res) => {
   const room = rooms.get(roomIdToLookup);
   if (!room) {
     console.log('[room-info] Room not found for code:', roomIdToLookup);
-    return res.status(404).json({ error: 'Room not found' });
+    return res.status(404).json({ 
+      error: 'ROOM_NOT_FOUND', 
+      message: 'Room not found' 
+    });
   }
+
+  // Check room status for additional validation
+  const playerCount = room.players ? room.players.size : 0;
+  const isFull = playerCount >= 32;
+  const gameInProgress = room.gameState !== 'waiting';
+
   const name = generateRoomName(roomIdToLookup);
   console.log('[room-info] Room found. Name:', name, 'ID:', roomIdToLookup);
-  res.json({ name, id: roomIdToLookup });
+  
+  res.json({ 
+    name, 
+    id: roomIdToLookup,
+    playerCount,
+    maxPlayers: 32,
+    isFull,
+    gameInProgress,
+    gameState: room.gameState
+  });
 });
 
 // Socket.io connection handling
