@@ -15,10 +15,100 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
   const podiumPlayers = podiumOrder.map((index) => players[index]).filter((p) => p);
 
   const podiumStyles = [
-    { height: 150, color: "#c0c0c0", shadow: "rgba(192, 192, 192, 0.4)" }, // 2nd
-    { height: 200, color: "#ffd700", shadow: "rgba(255, 215, 0, 0.4)" }, // 1st
-    { height: 100, color: "#cd7f32", shadow: "rgba(205, 127, 50, 0.4)" }, // 3rd
+    { height: 60, color: "#c0c0c0", shadow: "rgba(192, 192, 192, 0.4)", position: 2 }, // 2nd
+    { height: 80, color: "#ffd700", shadow: "rgba(255, 215, 0, 0.4)", position: 1 }, // 1st
+    { height: 45, color: "#cd7f32", shadow: "rgba(205, 127, 50, 0.4)", position: 3 }, // 3rd
   ];
+
+  // If no players, don't render anything
+  if (players.length === 0) return null;
+
+  // If only one player, show only the winner centered
+  if (players.length === 1) {
+    const winner = players[0];
+    const winnerStyle = podiumStyles[1]; // Gold style for winner
+    
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "flex-end",
+          marginBottom: 24,
+          marginTop: 32,
+          width: "100%",
+          height: 140,
+        }}
+      >
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 120 }}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            width: 120,
+          }}
+        >
+          <div style={{ fontSize: 20, marginBottom: 4 }}>🥇</div>
+          <img
+            src={winner.avatar ? `/images/${winner.avatar}` : "/images/Capy-progress-bar-icon.svg"}
+            alt="avatar"
+            style={{
+              width: 50,
+              height: 50,
+              borderRadius: "50%",
+              border: `3px solid ${winner.color || winnerStyle.color}`,
+              background: "#fff",
+              objectFit: "cover",
+              marginBottom: 6,
+              boxShadow: `0 4px 12px ${winnerStyle.shadow}`,
+            }}
+          />
+          <div style={{
+            fontWeight: 700,
+            fontSize: 12,
+            color: "#232323",
+            marginBottom: 3,
+            textAlign: "center",
+            maxWidth: "100%",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}>
+            {winner.nickname}
+          </div>
+          <div style={{
+            fontSize: 10,
+            color: "#b6a77a",
+            fontWeight: 600,
+            marginBottom: 6,
+          }}>
+            {winner.points} pts
+          </div>
+          <div style={{
+            width: "100%",
+            height: winnerStyle.height,
+            backgroundColor: winnerStyle.color,
+            borderTopLeftRadius: 6,
+            borderTopRightRadius: 6,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 24,
+            fontWeight: "bold",
+            color: "white",
+            textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+            boxShadow: `inset 0 2px 8px rgba(0,0,0,0.2), 0 2px 6px ${winnerStyle.shadow}`,
+          }}>
+            1
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -26,11 +116,11 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
         display: "flex",
         justifyContent: "center",
         alignItems: "flex-end",
-        gap: 4,
-        marginBottom: 32,
+        gap: 8,
+        marginBottom: 24,
+        marginTop: 32,
         width: "100%",
-        height: 250,
-        position: "relative",
+        height: 140,
       }}
     >
       {podiumPlayers.map((player, i) => {
@@ -39,82 +129,79 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
         return (
           <motion.div
             key={player.id}
-            initial={{ y: 100, opacity: 0 }}
+            initial={{ y: 50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: i * 0.2, type: "spring", stiffness: 100 }}
+            transition={{ delay: i * 0.2, type: "spring", stiffness: 120 }}
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "flex-end",
               width: "33%",
-              position: "relative",
+              maxWidth: 120,
+              minWidth: 80,
             }}
           >
-            <div
-              style={{
-                fontSize: 28,
-                fontWeight: 800,
-                color: style.color,
-                marginBottom: 8,
-                textShadow: `0 2px 8px ${style.shadow}`,
-              }}
-            >
-              {podiumIndex === 1 ? "🥇" : podiumIndex === 0 ? "🥈" : "🥉"}
+            <div style={{
+              fontSize: 18,
+              fontWeight: 800,
+              color: style.color,
+              marginBottom: 4,
+              textShadow: `0 2px 6px ${style.shadow}`,
+            }}>
+              {style.position === 1 ? "🥇" : style.position === 2 ? "🥈" : "🥉"}
             </div>
             <img
               src={player.avatar ? `/images/${player.avatar}` : "/images/Capy-progress-bar-icon.svg"}
               alt="avatar"
               style={{
-                width: 80,
-                height: 80,
+                width: 45,
+                height: 45,
                 borderRadius: "50%",
-                border: `4px solid ${player.color || style.color}`,
+                border: `3px solid ${player.color || style.color}`,
                 background: "#fff",
                 objectFit: "cover",
-                marginBottom: 12,
-                boxShadow: `0 4px 16px ${style.shadow}`,
+                marginBottom: 6,
+                boxShadow: `0 3px 10px ${style.shadow}`,
               }}
             />
-            <div
-              style={{
-                fontWeight: 700,
-                fontSize: 20,
-                color: "#232323",
-                marginBottom: 4,
-                textAlign: "center",
-              }}
-            >
+            <div style={{
+              fontWeight: 700,
+              fontSize: 11,
+              color: "#232323",
+              marginBottom: 3,
+              textAlign: "center",
+              maxWidth: "100%",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}>
               {player.nickname}
             </div>
-            <div
-              style={{
-                fontSize: 18,
-                color: "#b6a77a",
-                fontWeight: 700,
-              }}
-            >
+            <div style={{
+              fontSize: 9,
+              color: "#b6a77a",
+              fontWeight: 600,
+              marginBottom: 6,
+            }}>
               {player.points} pts
             </div>
-            <div
-              style={{
-                width: "100%",
-                height: style.height,
-                backgroundColor: style.color,
-                borderTopLeftRadius: 8,
-                borderTopRightRadius: 8,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: 48,
-                fontWeight: "bold",
-                color: "white",
-                textShadow: "0 2px 4px rgba(0,0,0,0.3)",
-                marginTop: 12,
-                boxShadow: `inset 0 4px 12px rgba(0,0,0,0.2), 0 4px 8px ${style.shadow}`,
-              }}
-            >
-              {podiumIndex + 1}
+            <div style={{
+              width: "100%",
+              height: style.height,
+              backgroundColor: style.color,
+              borderTopLeftRadius: 6,
+              borderTopRightRadius: 6,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: 20,
+              fontWeight: "bold",
+              color: "white",
+              textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+              boxShadow: `inset 0 2px 8px rgba(0,0,0,0.2), 0 2px 6px ${style.shadow}`,
+            }}>
+              {style.position}
             </div>
           </motion.div>
         );

@@ -35,7 +35,6 @@ export const useGameTimer = (gameStarted: boolean, text: string) => {
       const timer = setInterval(() => {
         setTimeLeft(prev => {
           if (prev === null || prev <= 1) {
-            clearInterval(timer);
             return 0;
           }
           return prev - 1;
@@ -44,7 +43,7 @@ export const useGameTimer = (gameStarted: boolean, text: string) => {
 
       return () => clearInterval(timer);
     }
-  }, [gameStarted, timeLeft]);
+  }, [gameStarted]);
 
   return { countdown, setCountdown, timeLeft, setTimeLeft };
 };

@@ -187,24 +187,52 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Centralized event listeners
     newSocket.on('roomCreated', (roomId) => {
       set({ roomId });
+      // When creating a room, the creator becomes the host
+      const { socket } = get();
+      if (socket) {
+        set({ hostId: socket.id, isAdmin: true });
+      }
     });
 
     newSocket.on('roomJoined', ({ roomId, isAdmin, hostId }) => {
+      console.log('[Store] Room joined event:', { roomId, isAdmin, hostId });
       set({ roomId, isAdmin, hostId });
+      // Update all players with host status
+      set((state) => ({
+        players: state.players.map((p) => ({ ...p, isHost: p.id === hostId })),
+      }));
     });
 
     newSocket.on('playerJoined', (players: Player[]) => {
       const { hostId } = get();
-      // Trust the incoming player list, but ensure isHost is correctly set from the store's hostId
-      const updatedPlayers = players.map(p => ({ ...p, isHost: p.id === hostId }));
+      // If no hostId is set, make the first player the host
+      const effectiveHostId = hostId || (players.length > 0 ? players[0].id : null);
+      const updatedPlayers = players.map((p, index) => ({ 
+        ...p, 
+        isHost: p.id === effectiveHostId || (index === 0 && !hostId)
+      }));
       set({ players: updatedPlayers });
+      
+      // Update hostId if it wasn't set
+      if (!hostId && players.length > 0) {
+        set({ hostId: players[0].id });
+      }
     });
 
     newSocket.on('playerLeft', (players: Player[]) => {
       const { hostId } = get();
-      // Trust the incoming player list, but ensure isHost is correctly set from the store's hostId
-      const updatedPlayers = players.map(p => ({ ...p, isHost: p.id === hostId }));
+      // If no hostId is set, make the first player the host
+      const effectiveHostId = hostId || (players.length > 0 ? players[0].id : null);
+      const updatedPlayers = players.map((p, index) => ({ 
+        ...p, 
+        isHost: p.id === effectiveHostId || (index === 0 && !hostId)
+      }));
       set({ players: updatedPlayers });
+      
+      // Update hostId if it wasn't set
+      if (!hostId && players.length > 0) {
+        set({ hostId: players[0].id });
+      }
     });
 
     newSocket.on('gameStarting', ({ text }) => {

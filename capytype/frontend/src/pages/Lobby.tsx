@@ -346,19 +346,28 @@ export default function Lobby() {
           position: 'absolute',
           bottom: '20px',
           right: '20px',
-          width: '40px',
-          height: '40px',
+          width: '50px',
+          height: '50px',
           borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.8)',
-          border: '1px solid rgba(0, 0, 0, 0.1)',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+          border: 'none',
+          boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '24px',
-          color: '#333',
+          fontSize: '20px',
+          color: '#fff',
           zIndex: 10,
+          transition: 'all 0.2s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.1)';
+          e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.4)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
         }}
         title="Game Rules"
       >

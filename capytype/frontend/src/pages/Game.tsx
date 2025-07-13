@@ -58,6 +58,7 @@ export default function Game() {
   const [playerFinishedEarly, setPlayerFinishedEarly] = useState(false);
   const [currentPlayerPosition, setCurrentPlayerPosition] = useState<number | null>(null);
   const [waitingForOthers, setWaitingForOthers] = useState(false);
+  const [waitingTimeLeft, setWaitingTimeLeft] = useState<number | null>(null);
   
   // Get the current player's nickname from the store
   const currentPlayer = players.find(player => player.id === useGameStore.getState().socket?.id);
@@ -183,6 +184,8 @@ export default function Game() {
       // This gives time for all players' final stats to sync
       const timer = setTimeout(() => {
         setShowTimeUp(false);
+        // Set game state to finished and show results
+        useGameStore.setState({ gameState: 'finished' });
         setShowResults(true);
       }, TIME_UP_RESULTS_DELAY);
       
@@ -205,6 +208,7 @@ export default function Game() {
       setShowConfetti(true);
       setPlayerFinishedEarly(true);
       setWaitingForOthers(true);
+      setWaitingTimeLeft(timeLeft); // Set the waiting timer to match current timeLeft
       
       // Send completion stats to server but don't end the game yet
       const socket = useGameStore.getState().socket;
@@ -220,9 +224,18 @@ export default function Game() {
         socket.emit('playerFinished', completionStats);
         socket.emit('updatePlayerStats', completionStats);
         
-        // Calculate current position based on finished players
-        const finishedPlayers = players.filter(p => p.progress >= 100).length;
-        setCurrentPlayerPosition(finishedPlayers + 1);
+        // Calculate current position based on how many players finished before you
+        const playersFinishedBefore = players.filter(p => p.progress >= 100 && p.id !== useGameStore.getState().socket?.id).length;
+        setCurrentPlayerPosition(playersFinishedBefore + 1);
+      }
+      
+      // If playing alone or all players finished, end the game immediately
+      if (players.length === 1 || players.every(p => p.progress >= 100)) {
+        setTimeout(() => {
+          setWaitingForOthers(false);
+          useGameStore.setState({ gameState: 'finished' });
+          setShowResults(true);
+        }, 2000); // Brief delay to show the congratulations
       }
       
       // Hide confetti after 3 seconds but don't show results yet
@@ -231,6 +244,37 @@ export default function Game() {
       }, CONFETTI_DURATION);
     }
   }, [progress, gameFinished, wpm, totalErrors, startTime, timeLeft, players]);
+
+  // Separate timer for waiting overlay
+  useEffect(() => {
+    if (waitingForOthers && waitingTimeLeft !== null && waitingTimeLeft > 0) {
+      const timer = setInterval(() => {
+        setWaitingTimeLeft(prev => {
+          if (prev === null || prev <= 1) {
+            // Time's up while waiting - end the game
+            setWaitingForOthers(false);
+            useGameStore.setState({ gameState: 'finished' });
+            setShowResults(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [waitingForOthers, waitingTimeLeft]);
+
+  // Check if all players finished while waiting
+  useEffect(() => {
+    if (waitingForOthers && players.every(p => p.progress >= 100)) {
+      setTimeout(() => {
+        setWaitingForOthers(false);
+        useGameStore.setState({ gameState: 'finished' });
+        setShowResults(true);
+      }, 1500); // Short delay to show "all players finished" message
+    }
+  }, [waitingForOthers, players]);
 
   // Show results modal when all players finish or time's up
   useEffect(() => {
@@ -396,7 +440,7 @@ export default function Game() {
           {waitingForOthers && !showTimeUp && (
             <WaitingForOthersOverlay 
               position={currentPlayerPosition}
-              timeLeft={timeLeft}
+              timeLeft={waitingTimeLeft}
               finishedPlayers={players.filter(p => p.progress >= 100).length}
               totalPlayers={players.length}
             />

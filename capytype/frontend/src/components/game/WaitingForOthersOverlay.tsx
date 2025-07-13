@@ -108,7 +108,10 @@ const WaitingForOthersOverlay = ({
           marginBottom: 20
         }}
       >
-        Waiting for other players to finish...
+        {finishedPlayers >= totalPlayers ? 
+          'All players finished! Showing results...' : 
+          'Waiting for other players to finish...'
+        }
       </motion.p>
       
       <motion.div
@@ -129,8 +132,14 @@ const WaitingForOthersOverlay = ({
           fontSize: '1.1rem',
           color: '#6b7280'
         }}>
-          <span>⏱️ Time left: <strong>{timeLeft}s</strong></span>
-          <span>👥 {finishedPlayers}/{totalPlayers} finished</span>
+          {finishedPlayers >= totalPlayers ? (
+            <span>🎉 All players completed! Getting results ready...</span>
+          ) : (
+            <>
+              <span>⏱️ Time left: <strong>{timeLeft}s</strong></span>
+              <span>👥 {finishedPlayers}/{totalPlayers} finished</span>
+            </>
+          )}
         </div>
         
         <motion.div
