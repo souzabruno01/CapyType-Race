@@ -37,34 +37,61 @@ export const GameInfoModal = ({ isOpen, onClose }: GameInfoModalProps) => {
               borderRadius: '16px',
               boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
               width: '90%',
-              maxWidth: '500px',
+              maxWidth: '600px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               position: 'relative',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <h2 style={{ marginTop: 0, textAlign: 'center', color: '#333' }}>
-              How to Play CapyType Race
+              🏁 How to Play CapyType Race 🐾
             </h2>
             <div style={{ color: '#555', lineHeight: 1.6 }}>
               <p>
-                <strong>Objective:</strong> Type the given text as fast and accurately as you can to race your capybara to the finish line!
+                <strong>🎯 Objective:</strong> Race your adorable capybara to the finish line by typing as fast and accurately as possible!
               </p>
+              
+              <h3 style={{ color: '#f59e0b', marginTop: '20px', marginBottom: '10px' }}>🚀 How to Race:</h3>
               <ul>
                 <li>
-                  <strong>Start the Race:</strong> The host of the room will start the game when everyone is ready.
+                  <strong>🏁 Start the Race:</strong> The room host clicks "Start Game" when everyone is ready
                 </li>
                 <li>
-                  <strong>Typing:</strong> Once the countdown finishes, start typing the text shown on the screen. Your capybara avatar will advance as you type correctly.
+                  <strong>⏱️ Get Ready:</strong> A 3-second countdown gives you time to prepare
                 </li>
                 <li>
-                  <strong>Accuracy Matters:</strong> Making mistakes will slow you down. Try to be as accurate as possible. Your WPM (Words Per Minute) and error count are tracked.
+                  <strong>💨 Type Fast:</strong> Type the displayed text exactly as shown - your capy advances with each correct word!
                 </li>
                 <li>
-                  <strong>Winning:</strong> The first player to accurately type the entire text wins the race! Results for all players will be shown at the end.
+                  <strong>🎯 Stay Accurate:</strong> Mistakes slow you down! Fix errors by backspacing
+                </li>
+                <li>
+                  <strong>⏰ Race Against Time:</strong> Complete the text before time runs out
                 </li>
               </ul>
-              <p>
-                Have fun and may the fastest capy win!
+
+              <h3 style={{ color: '#f59e0b', marginTop: '20px', marginBottom: '10px' }}>🏆 Scoring System:</h3>
+              <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '8px', border: '2px solid #e9ecef' }}>
+                <p style={{ margin: '0 0 10px 0', fontWeight: 'bold', color: '#333' }}>Points = (WPM × 10) - (Errors × 5) + (Progress ÷ 10)</p>
+                <ul style={{ margin: 0 }}>
+                  <li><strong>+10 points</strong> per WPM (Words Per Minute)</li>
+                  <li><strong>-5 points</strong> per typing error</li>
+                  <li><strong>+1 point</strong> per 10% progress completed</li>
+                </ul>
+              </div>
+
+              <h3 style={{ color: '#f59e0b', marginTop: '20px', marginBottom: '10px' }}>🎉 Fun Features:</h3>
+              <ul>
+                <li><strong>🥇 Live Leaderboard:</strong> Watch your capy race in real-time!</li>
+                <li><strong>🎨 Custom Capybaras:</strong> Choose your favorite capy avatar and color</li>
+                <li><strong>🏅 Podium Ceremony:</strong> Top 3 finishers get medals and glory</li>
+                <li><strong>📊 Detailed Stats:</strong> See your WPM, accuracy, and ranking</li>
+                <li><strong>👥 Multiplayer Fun:</strong> Race up to 32 players simultaneously</li>
+              </ul>
+
+              <p style={{ textAlign: 'center', marginTop: '20px', fontStyle: 'italic', color: '#666' }}>
+                🐾 Ready to become the ultimate CapyType champion? Let's race! 🏃‍♂️💨
               </p>
             </div>
             <button
@@ -73,16 +100,26 @@ export const GameInfoModal = ({ isOpen, onClose }: GameInfoModalProps) => {
                 marginTop: '20px',
                 width: '100%',
                 padding: '12px',
-                borderRadius: '8px',
+                borderRadius: '12px',
                 border: 'none',
-                background: '#f59e0b',
+                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
                 color: 'white',
                 fontSize: '16px',
                 fontWeight: 'bold',
                 cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 6px 16px rgba(245, 158, 11, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.3)';
               }}
             >
-              Got it!
+              🏁 Ready to Race! 🐾
             </button>
           </motion.div>
         </motion.div>
