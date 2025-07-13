@@ -48,7 +48,7 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
   }
 };
 
-export const useGameState = (text: string, gameStarted: boolean) => {
+export const useGameState = (text: string, gameStarted: boolean, countdown: number | null) => {
   const [state, dispatch] = useReducer(gameReducer, initialState);
   const { updateProgress } = useGameStore();
 
@@ -57,7 +57,7 @@ export const useGameState = (text: string, gameStarted: boolean) => {
   }, [text]);
 
   useEffect(() => {
-    if (gameStarted && state.startTime && state.hasStartedTyping) {
+    if (gameStarted && countdown === null && state.startTime && state.hasStartedTyping) {
       const timeElapsed = (Date.now() - state.startTime) / 1000 / 60; // in minutes
       if (timeElapsed > 0) {
         const wordsTyped = state.input.trim().split(/\s+/).length;
@@ -65,13 +65,22 @@ export const useGameState = (text: string, gameStarted: boolean) => {
         dispatch({ type: 'SET_WPM', payload: wpm });
       }
     }
-  }, [state.input, gameStarted, state.startTime, state.hasStartedTyping]);
+  }, [state.input, gameStarted, countdown, state.startTime, state.hasStartedTyping]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (!gameStarted) return;
+    // Prevent typing if game hasn't started or countdown is still active
+    if (!gameStarted || countdown !== null) {
+      console.log('[Input] Blocked - Game not started or countdown active:', { gameStarted, countdown });
+      return;
+    }
     
     const value = e.target.value;
     if (value.length > text.length) return;
+
+    // Start the timer on first keystroke
+    if (!state.startTime) {
+      dispatch({ type: 'START_GAME' });
+    }
 
     dispatch({ type: 'SET_INPUT', payload: value });
 

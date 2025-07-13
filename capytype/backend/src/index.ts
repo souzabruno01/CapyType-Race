@@ -598,6 +598,70 @@ io.on('connection', (socket) => {
             progress: player.progress,
             time: adjustedTime
           });
+
+          // Check if all players have finished
+          const activePlayers = Array.from(room.players.values()).filter((p: any) => !p.disconnected);
+          const finishedPlayers = activePlayers.filter((p: any) => p.progress >= 100);
+          
+          if (finishedPlayers.length === activePlayers.length && activePlayers.length > 0) {
+            // All players have finished - end the race immediately
+            console.log(`[Backend] All ${activePlayers.length} players finished in room ${roomId}`);
+            
+            // Clear the race timer if it exists
+            const timer = raceTimers.get(roomId);
+            if (timer) {
+              clearInterval(timer);
+              raceTimers.delete(roomId);
+            }
+            
+            // Update room state
+            room.gameState = 'finished';
+            
+            // Notify all players that race is completed
+            io.to(roomId).emit('raceFinished', { 
+              reason: 'allPlayersFinished', 
+              serverTime: Date.now() 
+            });
+          }
+        }
+        break;
+      }
+    }
+  });
+
+  // Handle return to lobby
+  socket.on('returnToLobby', () => {
+    logWithInfo('returning to lobby');
+    
+    // Find the room this player is in
+    for (const [roomId, room] of rooms.entries()) {
+      if (room.players.has(socket.id)) {
+        console.log(`[Backend] Player ${socket.id} returning to lobby in room ${roomId}`);
+        
+        // Reset room to waiting state if in finished state
+        if (room.gameState === 'finished') {
+          room.gameState = 'waiting';
+          room.text = '';
+          room.startTime = null;
+          room.raceDuration = null;
+          
+          // Reset all player stats but keep them in the room
+          for (const [playerId, player] of room.players.entries()) {
+            player.progress = 0;
+            player.wpm = 0;
+            player.errors = 0;
+            player.position = 1;
+          }
+          
+          console.log(`[Backend] Room ${roomId} reset to waiting state`);
+          
+          // Notify all players in the room that we're back in lobby
+          const activePlayers = Array.from(room.players.values()).filter((p: any) => !p.disconnected);
+          io.to(roomId).emit('gameStateChanged', { 
+            gameState: 'waiting',
+            players: activePlayers 
+          });
+          io.to(roomId).emit('playerJoined', activePlayers);
         }
         break;
       }

@@ -9,10 +9,12 @@ export const useTextGeneration = () => {
   const [characterLimit, setCharacterLimit] = useState(200);
   const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
   const [selectedCategory, setSelectedCategory] = useState<'general' | 'programming' | 'quotes' | 'science' | 'literature' | 'history' | 'business' | 'health' | 'sports' | 'food' | 'arts' | 'nature' | 'mathematics'>('general');
+  const [generatingText, setGeneratingText] = useState(false);
 
   // Generate random text based on difficulty and category selection
   const generateRandomText = async (): Promise<{ success: boolean; message: string }> => {
     try {
+      setGeneratingText(true);
       // Use our curated text generation with selected difficulty and category
       const generatedText = getTextByDifficulty({
         difficulty: selectedDifficulty,
@@ -37,6 +39,23 @@ export const useTextGeneration = () => {
         success: false,
         message: '⚠️ Using fallback text due to generation error'
       };
+    } finally {
+      setGeneratingText(false);
+    }
+  };
+
+  // Placeholder for ChatGPT generation (not implemented)
+  const generateWithChatGPT = async (): Promise<{ success: boolean; message: string }> => {
+    setGeneratingText(true);
+    try {
+      // For now, fall back to random text generation
+      const result = await generateRandomText();
+      return {
+        success: result.success,
+        message: result.success ? '✅ Generated text using fallback method' : result.message
+      };
+    } finally {
+      setGeneratingText(false);
     }
   };
 
@@ -49,6 +68,8 @@ export const useTextGeneration = () => {
     setSelectedDifficulty,
     selectedCategory,
     setSelectedCategory,
-    generateRandomText
+    generatingText,
+    generateRandomText,
+    generateWithChatGPT
   };
 };

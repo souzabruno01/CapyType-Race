@@ -56,15 +56,13 @@ export default function Lobby() {
   const {
     customText,
     setCustomText,
-    generatingText,
     characterLimit,
     setCharacterLimit,
     selectedDifficulty,
     setSelectedDifficulty,
     selectedCategory,
     setSelectedCategory,
-    generateRandomText,
-    generateWithChatGPT
+    generateRandomText
   } = useTextGeneration();
 
   // Effects for navigation and room management
@@ -198,13 +196,8 @@ export default function Lobby() {
     showNotificationWithMessage(result.message, result.success ? 3000 : 2000);
   };
 
-  const handleGenerateWithChatGPT = async () => {
-    const result = await generateWithChatGPT();
-    showNotificationWithMessage(result.message, result.success ? 3000 : 2000);
-  };
-
   const handleStartWithCustomText = () => {
-    if (customText.trim() && !generatingText) {
+    if (customText.trim()) {
       startGame(customText.trim());
       setShowTextModal(false);
     }
@@ -304,7 +297,6 @@ export default function Lobby() {
         <PlayerGrid
           players={players}
           currentPlayerId={socket?.id || ''}
-          isCurrentPlayerAdmin={isAdmin}
           showColorPicker={showColorPicker}
           setShowColorPicker={setShowColorPicker}
           onColorChange={handleColorChange}
@@ -333,8 +325,6 @@ export default function Lobby() {
           characterLimit={characterLimit}
           setCharacterLimit={setCharacterLimit}
           onGenerateRandom={handleGenerateRandom}
-          onGenerateWithChatGPT={handleGenerateWithChatGPT}
-          generatingText={generatingText}
           onStartGame={handleStartWithCustomText}
           selectedDifficulty={selectedDifficulty}
           setSelectedDifficulty={setSelectedDifficulty}

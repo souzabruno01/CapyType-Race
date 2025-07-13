@@ -57,9 +57,7 @@ export default function Lobby() {
     setSelectedDifficulty,
     selectedCategory,
     setSelectedCategory,
-    generatingText,
-    generateRandomText,
-    generateWithChatGPT
+    generateRandomText
   } = useTextGeneration();
 
   // Get current player ID from socket
@@ -251,7 +249,6 @@ export default function Lobby() {
       <PlayerGrid
         players={players}
         currentPlayerId={currentPlayerId}
-        isCurrentPlayerAdmin={isAdmin}
         showColorPicker={showColorPicker}
         setShowColorPicker={setShowColorPicker}
         onColorChange={handleColorChange}
@@ -280,8 +277,6 @@ export default function Lobby() {
             characterLimit={characterLimit}
             setCharacterLimit={setCharacterLimit}
             onGenerateRandom={generateRandomText}
-            onGenerateWithChatGPT={generateWithChatGPT}
-            generatingText={generatingText}
             onStartGame={handleStartWithCustomText}
             selectedDifficulty={selectedDifficulty}
             setSelectedDifficulty={setSelectedDifficulty}

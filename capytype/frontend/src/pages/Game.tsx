@@ -42,11 +42,11 @@ const modernButtonStyle = {
 
 export default function Game() {
   const navigate = useNavigate();
-  const { text, players, gameState, roomClosed, clearRoomClosed } = useGameStore();
+  const { text, players, gameState, roomId, roomClosed, clearRoomClosed } = useGameStore();
   
   const gameStarted = gameState === 'playing';
   const { countdown, setCountdown, timeLeft, setTimeLeft } = useGameTimer();
-  const { state, dispatch, handleInputChange } = useGameState(text, gameStarted);
+  const { state, dispatch, handleInputChange } = useGameState(text, gameStarted, countdown);
   const { input, errorPositions, totalErrors, progress, wpm, startTime } = state;
 
   const [showConfetti, setShowConfetti] = useState(false);
@@ -350,6 +350,19 @@ export default function Game() {
     }
   }, [gameStarted, dispatch]);
 
+  // Handle automatic navigation when game state changes to waiting (backend-initiated)
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    // Only navigate if we're currently on the game page and state changes to waiting
+    // This handles cases where backend resets room state (e.g., all players returned to lobby)
+    if (gameState === 'waiting' && currentPath === '/game' && roomId) {
+      // Small delay to ensure state is properly updated
+      setTimeout(() => {
+        navigate('/lobby');
+      }, 100);
+    }
+  }, [gameState, roomId, navigate]);
+
   const handlePause = () => {
     setIsPaused(!isPaused);
     if (!isPaused) {
@@ -364,7 +377,7 @@ export default function Game() {
   const handleReturnToLobby = () => {
     const socket = useGameStore.getState().socket;
     if (socket) {
-      // Don't disconnect - just emit return to lobby event
+      // Emit return to lobby event to reset room state on server
       socket.emit('returnToLobby');
     }
     
@@ -680,9 +693,13 @@ export default function Game() {
               value={input}
               onChange={handleInputChange}
               className="w-full max-w-2xl h-32 p-4 border-2 border-indigo-200 rounded-lg focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 font-mono text-lg shadow"
-              placeholder={isPaused ? 'Game Paused' : 'Start typing...'}
+              placeholder={
+                countdown !== null ? `Wait for countdown: ${countdown}...` :
+                isPaused ? 'Game Paused' : 
+                'Start typing...'
+              }
               autoFocus
-              disabled={gameFinished || timeLeft === 0 || isPaused}
+              disabled={gameFinished || timeLeft === 0 || isPaused || countdown !== null}
               style={{ 
                 width: '100%', 
                 maxWidth: 700, 
@@ -690,9 +707,11 @@ export default function Game() {
                 borderRadius: 10, 
                 fontSize: 18, 
                 marginBottom: 0, 
-                background: 'rgba(235, 228, 200, 0.95)', // Brown background matching lobby
-                border: '2px solid #b6a77a',
-                color: '#374151'
+                background: countdown !== null ? 'rgba(220, 210, 180, 0.8)' : 'rgba(235, 228, 200, 0.95)', // Slightly darker when disabled
+                border: countdown !== null ? '2px solid #a69574' : '2px solid #b6a77a',
+                color: countdown !== null ? '#6b7280' : '#374151',
+                cursor: countdown !== null ? 'not-allowed' : 'text',
+                opacity: countdown !== null ? 0.7 : 1
               }}
             />
           </div>

@@ -240,7 +240,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ text, gameState: 'playing', gameStarted: true });
     });
 
-    newSocket.on('gameStarted', ({ startTime, duration, serverTime }) => {
+    newSocket.on('gameStarted', ({ duration, serverTime }) => {
       console.log('[Store] Game started at server time:', serverTime, 'duration:', duration);
       set({ gameState: 'playing' });
     });
@@ -248,6 +248,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
     newSocket.on('raceFinished', ({ reason, serverTime }) => {
       console.log('[Store] Race finished:', reason, 'at server time:', serverTime);
       set({ gameState: 'finished' });
+    });
+
+    // Handle game state changes from backend (e.g., when returning to lobby)
+    newSocket.on('gameStateChanged', ({ gameState, reason }) => {
+      console.log('[Store] Game state changed to:', gameState, 'reason:', reason);
+      set({ gameState });
+      
+      // If we're returning to waiting state, clear race data
+      if (gameState === 'waiting') {
+        set((state) => ({
+          text: '',
+          progress: 0,
+          gameStarted: false,
+          gameResults: [],
+          players: state.players.map(p => ({
+            ...p,
+            wpm: 0,
+            errors: 0,
+            progress: 0,
+            time: 0,
+            position: 0
+          }))
+        }));
+      }
     });
 
     newSocket.on('progressUpdate', ({ playerId, progress }) => {
