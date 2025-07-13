@@ -235,12 +235,19 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
     });
 
-    newSocket.on('gameStarting', ({ text }) => {
+    newSocket.on('gameStarting', ({ text, raceDuration }) => {
+      console.log('[Store] Game starting with duration:', raceDuration);
       set({ text, gameState: 'playing', gameStarted: true });
     });
 
-    newSocket.on('gameStarted', () => {
+    newSocket.on('gameStarted', ({ startTime, duration, serverTime }) => {
+      console.log('[Store] Game started at server time:', serverTime, 'duration:', duration);
       set({ gameState: 'playing' });
+    });
+
+    newSocket.on('raceFinished', ({ reason, serverTime }) => {
+      console.log('[Store] Race finished:', reason, 'at server time:', serverTime);
+      set({ gameState: 'finished' });
     });
 
     newSocket.on('progressUpdate', ({ playerId, progress }) => {
