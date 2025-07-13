@@ -1,49 +1,80 @@
 import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
-import { INITIAL_COUNTDOWN, WORDS_PER_MINUTE_MULTIPLIER, MINIMUM_RACE_TIME } from '../utils/constants';
+import { INITIAL_COUNTDOWN } from '../utils/constants';
+import { TimeSync } from '../utils/timeSync';
 
-export const useGameTimer = (gameStarted: boolean, text: string) => {
+export const useGameTimer = () => {
   const [countdown, setCountdown] = useState<number | null>(INITIAL_COUNTDOWN);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [serverSync, setServerSync] = useState<TimeSync | null>(null);
 
+  // Initialize time synchronization
   useEffect(() => {
-    if (text) {
-      const wordCount = text.trim().split(/\s+/).length;
-      const estimatedTime = wordCount * WORDS_PER_MINUTE_MULTIPLIER;
-      const totalTime = Math.max(estimatedTime, MINIMUM_RACE_TIME);
-      setTimeLeft(totalTime);
+    const socket = useGameStore.getState().socket;
+    if (socket && !serverSync) {
+      const sync = new TimeSync(socket);
+      sync.calibrate().then(() => {
+        console.log('[Timer] Time synchronization calibrated');
+      });
+      setServerSync(sync);
     }
-  }, [text]);
+  }, [serverSync]);
 
+  // Listen for server-controlled countdown
   useEffect(() => {
-    if (countdown === null) return;
+    const socket = useGameStore.getState().socket;
+    if (!socket) return;
 
-    const timer = setTimeout(() => {
-      if (countdown > 1) {
-        setCountdown(countdown - 1);
-      } else {
-        setCountdown(null);
-        useGameStore.setState({ gameState: 'playing' });
+    const handleCountdown = (data: { count: number; serverTime: number }) => {
+      setCountdown(data.count);
+    };
+
+    const handleGameStarted = (data: { startTime: number; duration: number; serverTime: number }) => {
+      setCountdown(null);
+      setTimeLeft(data.duration);
+      useGameStore.setState({ gameState: 'playing' });
+    };
+
+    const handleRaceTimer = (data: { elapsed: number; remaining: number; serverTime: number }) => {
+      // Apply lag compensation if available
+      let adjustedRemaining = data.remaining;
+      if (serverSync) {
+        const lagCompensation = serverSync.getLagCompensation() / 1000; // Convert to seconds
+        adjustedRemaining = Math.max(0, data.remaining - lagCompensation);
       }
-    }, 1000);
+      
+      setTimeLeft(Math.ceil(adjustedRemaining));
+    };
 
-    return () => clearTimeout(timer);
-  }, [countdown]);
+    const handleRaceFinished = () => {
+      setTimeLeft(0);
+    };
 
+    socket.on('countdown', handleCountdown);
+    socket.on('gameStarted', handleGameStarted);
+    socket.on('raceTimer', handleRaceTimer);
+    socket.on('raceFinished', handleRaceFinished);
+
+    return () => {
+      socket.off('countdown', handleCountdown);
+      socket.off('gameStarted', handleGameStarted);
+      socket.off('raceTimer', handleRaceTimer);
+      socket.off('raceFinished', handleRaceFinished);
+    };
+  }, [serverSync]);
+
+  // Recalibrate time sync periodically
   useEffect(() => {
-    if (gameStarted && timeLeft !== null && timeLeft > 0) {
-      const timer = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev === null || prev <= 1) {
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+    if (!serverSync) return;
 
-      return () => clearInterval(timer);
-    }
-  }, [gameStarted]);
+    const interval = setInterval(() => {
+      if (serverSync.shouldRecalibrate()) {
+        serverSync.calibrate();
+      }
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [serverSync]);
 
   return { countdown, setCountdown, timeLeft, setTimeLeft };
 };

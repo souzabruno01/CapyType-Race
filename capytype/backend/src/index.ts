@@ -37,6 +37,42 @@ const io = new Server(httpServer, {
 
 // Store active rooms
 const rooms = new Map();
+const raceTimers = new Map(); // Store race timers for each room
+
+// Race timer management
+function startRaceTimer(roomId: string, duration: number) {
+  const timer = setInterval(() => {
+    const room = rooms.get(roomId);
+    if (!room || room.gameState !== 'playing') {
+      clearInterval(timer);
+      raceTimers.delete(roomId);
+      return;
+    }
+
+    const elapsed = (Date.now() - room.startTime) / 1000;
+    const remaining = Math.max(0, duration - elapsed);
+
+    // Send precise server time updates
+    io.to(roomId).emit('raceTimer', {
+      elapsed,
+      remaining,
+      serverTime: Date.now()
+    });
+
+    // End race when time is up
+    if (remaining <= 0) {
+      clearInterval(timer);
+      raceTimers.delete(roomId);
+      room.gameState = 'finished';
+      io.to(roomId).emit('raceFinished', { 
+        reason: 'timeUp', 
+        serverTime: Date.now() 
+      });
+    }
+  }, 250); // 250ms for smooth updates without overwhelming network
+
+  raceTimers.set(roomId, timer);
+}
 
 // Helper function to handle player leaving (either explicit leave or disconnect)
 function handlePlayerLeaving(socketId: string, isExplicitLeave: boolean = false) {
@@ -381,6 +417,11 @@ io.on('connection', (socket) => {
     logWithInfo(`${actionType} room ${normalizedRoomId} with nickname: ${nickname}${isAdmin ? ' (admin)' : ''}`);
   });
 
+  // Handle time synchronization ping
+  socket.on('timePing', (clientTime) => {
+    socket.emit('timePong', Date.now());
+  });
+
   // Start the game
   socket.on('startGame', ({ roomId, text }) => {
     console.log(`[Backend] startGame received from ${socket.id} for room ${roomId}`);
@@ -399,21 +440,41 @@ io.on('connection', (socket) => {
     }
 
     console.log(`[Backend] Starting game in room ${roomId} with text length: ${text?.length || 0}`);
+    
+    // Calculate race duration based on text length with professional formula
+    const textLength = text?.length || 0;
+    const baseTime = 30; // Minimum 30 seconds
+    const charMultiplier = 0.1; // 100ms per character
+    const networkBuffer = 10; // 10 second buffer for network delays
+    const raceDuration = Math.max(baseTime, (textLength * charMultiplier) + networkBuffer);
+    
     room.gameState = 'countdown';
     room.text = text;
-    io.to(roomId).emit('gameStarting', { text });
+    room.raceDuration = raceDuration;
+    
+    console.log(`[Backend] Race duration calculated: ${raceDuration}s for ${textLength} characters`);
+    
+    io.to(roomId).emit('gameStarting', { text, raceDuration });
 
-    // Start countdown
+    // Server-controlled countdown with precise timing
     let countdown = 3;
     const countdownInterval = setInterval(() => {
-      io.to(roomId).emit('countdown', countdown);
+      io.to(roomId).emit('countdown', { count: countdown, serverTime: Date.now() });
       countdown--;
 
       if (countdown < 0) {
         clearInterval(countdownInterval);
         room.gameState = 'playing';
         room.startTime = Date.now();
-        io.to(roomId).emit('gameStarted');
+        
+        // Start the race timer
+        startRaceTimer(roomId, raceDuration);
+        
+        io.to(roomId).emit('gameStarted', { 
+          startTime: room.startTime,
+          duration: raceDuration,
+          serverTime: Date.now()
+        });
       }
     }, 1000);
   });

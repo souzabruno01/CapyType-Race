@@ -45,7 +45,7 @@ export default function Game() {
   const { text, players, gameState, roomClosed, clearRoomClosed } = useGameStore();
   
   const gameStarted = gameState === 'playing';
-  const { countdown, setCountdown, timeLeft, setTimeLeft } = useGameTimer(gameStarted, text);
+  const { countdown, setCountdown, timeLeft, setTimeLeft } = useGameTimer();
   const { state, dispatch, handleInputChange } = useGameState(text, gameStarted);
   const { input, errorPositions, totalErrors, progress, wpm, startTime } = state;
 
