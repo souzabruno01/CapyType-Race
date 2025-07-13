@@ -465,10 +465,15 @@ io.on('connection', (socket) => {
       // Check if player has completed the text but don't end the race
       if (progress >= 100) {
         const timeTaken = (Date.now() - room.startTime) / 1000;
+        const minimumRaceTime = 30; // Minimum race duration in seconds
+        
+        // If race duration is less than minimum, adjust the time to minimum
+        const adjustedTime = Math.max(timeTaken, minimumRaceTime);
+        
         io.to(roomId).emit('playerFinished', {
           playerId: socket.id,
           nickname: player.nickname,
-          time: timeTaken
+          time: adjustedTime
         });
       }
     }
@@ -520,13 +525,17 @@ io.on('connection', (socket) => {
           });
           
           // Broadcast that this player finished
+          const timeTaken = time || ((Date.now() - room.startTime) / 1000);
+          const minimumRaceTime = 30; // Minimum race duration in seconds
+          const adjustedTime = Math.max(timeTaken, minimumRaceTime);
+          
           io.to(roomId).emit('playerFinished', {
             playerId: socket.id,
             nickname: player.nickname,
             wpm: player.wpm,
             errors: player.errors,
             progress: player.progress,
-            time: time || ((Date.now() - room.startTime) / 1000)
+            time: adjustedTime
           });
         }
         break;

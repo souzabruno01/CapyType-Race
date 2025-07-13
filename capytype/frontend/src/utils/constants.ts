@@ -1,0 +1,11 @@
+export const INITIAL_COUNTDOWN = 3;
+export const LOBBY_COUNTDOWN = 5;
+export const WORDS_PER_MINUTE_MULTIPLIER = 2;
+export const POINTS_PER_WPM = 10;
+export const PENALTY_PER_ERROR = 5;
+export const POINTS_PER_PROGRESS_PERCENT = 0.1;
+export const CONFETTI_DURATION = 3000;
+export const TIME_UP_RESULTS_DELAY = 5000;
+export const GAME_STATE_SYNC_DELAY = 1500;
+export const STATS_SYNC_THROTTLE = 1000;
+export const MINIMUM_RACE_TIME = 30;

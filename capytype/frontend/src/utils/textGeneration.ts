@@ -1,7 +1,7 @@
 // Text generation utility with difficulty levels
 export interface TextOptions {
   difficulty: 'easy' | 'medium' | 'hard';
-  category?: 'general' | 'programming' | 'quotes';
+  category?: 'general' | 'programming' | 'quotes' | 'science' | 'literature' | 'history' | 'business' | 'health' | 'sports' | 'food' | 'arts' | 'nature' | 'mathematics';
 }
 
 // Easy difficulty texts - short sentences, common words, minimal punctuation
@@ -141,48 +141,582 @@ const QUOTES_HARD = [
   "What lies behind us and what lies before us are tiny matters compared to what lies within us. - Ralph Waldo Emerson",
 ];
 
+// Science texts for different difficulties
+const SCIENCE_EASY = [
+  "Water boils at 100 degrees Celsius at sea level.",
+  "The Earth revolves around the Sun once every year.",
+  "Plants need sunlight water and carbon dioxide to grow.",
+  "The human body has 206 bones in total.",
+  "Sound travels faster in water than in air.",
+  "Gravity pulls objects toward the center of the Earth.",
+  "The heart pumps blood throughout the body.",
+  "DNA contains the genetic information of living things.",
+  "The speed of light is about 300,000 kilometers per second.",
+  "Oxygen is essential for human breathing and survival.",
+];
+
+const SCIENCE_MEDIUM = [
+  "Photosynthesis is the process by which plants convert light energy into chemical energy using chlorophyll.",
+  "The periodic table organizes chemical elements by their atomic number and similar properties.",
+  "Newton's first law states that an object at rest stays at rest unless acted upon by force.",
+  "The mitochondria are often called the powerhouses of the cell because they produce ATP.",
+  "Evolution occurs through natural selection where favorable traits increase survival chances.",
+  "The electromagnetic spectrum includes radio waves, microwaves, infrared, visible light, and X-rays.",
+  "Chemical bonds form when atoms share or transfer electrons to achieve stable configurations.",
+  "The nervous system coordinates body functions through electrical and chemical signals.",
+  "Ecosystems maintain balance through complex interactions between producers, consumers, and decomposers.",
+  "Plate tectonics explains how continents move and mountains form over geological time.",
+];
+
+const SCIENCE_HARD = [
+  "Quantum mechanics describes the probabilistic nature of subatomic particles and wave-particle duality phenomena.",
+  "CRISPR-Cas9 is a revolutionary gene-editing technology that allows precise modifications to DNA sequences.",
+  "Thermodynamics dictates that entropy in an isolated system always increases over time, known as the second law.",
+  "Protein folding is determined by amino acid sequences and environmental factors, affecting biological function.",
+  "General relativity demonstrates how massive objects warp spacetime, causing gravitational effects we observe.",
+  "Neurotransmitters like dopamine, serotonin, and acetylcholine regulate mood, cognition, and motor functions.",
+  "The Standard Model of particle physics describes fundamental particles and three of the four known forces.",
+  "Epigenetic modifications can alter gene expression without changing DNA sequences, affecting inheritance patterns.",
+  "Climate systems involve complex feedback loops between atmosphere, hydrosphere, biosphere, and geosphere interactions.",
+  "Molecular orbital theory explains chemical bonding through quantum mechanical principles and electron delocalization.",
+];
+
+// Literature texts for different difficulties  
+const LITERATURE_EASY = [
+  "To be or not to be that is the question.",
+  "It was the best of times it was the worst of times.",
+  "All that glitters is not gold.",
+  "The pen is mightier than the sword.",
+  "Pride comes before a fall.",
+  "Actions speak louder than words.",
+  "Beauty is in the eye of the beholder.",
+  "Time heals all wounds slowly but surely.",
+  "Where there is a will there is a way.",
+  "Knowledge is power and power corrupts absolutely.",
+];
+
+const LITERATURE_MEDIUM = [
+  "It is a truth universally acknowledged that a single man in possession of good fortune must be in want of a wife.",
+  "Call me Ishmael. Some years ago, having little or no money in my purse, I thought I would sail about.",
+  "In the beginning was the Word, and the Word was with God, and the Word was God.",
+  "It was the age of wisdom, it was the age of foolishness, it was the epoch of belief.",
+  "Happy families are all alike; every unhappy family is unhappy in its own way.",
+  "The only way out of the labyrinth of suffering is to forgive according to Alaska Young.",
+  "We are all in the gutter, but some of us are looking at the stars, said Oscar Wilde.",
+  "The past is a foreign country: they do things differently there, wrote L.P. Hartley.",
+  "If you want to know what a man's like, take a good look at how he treats his inferiors.",
+  "Words have no power to impress the mind without the exquisite horror of their reality.",
+];
+
+const LITERATURE_HARD = [
+  "Stately, plump Buck Mulligan came from the stairhead, bearing a bowl of lather on which a mirror and a razor lay crossed.",
+  "It was a bright cold day in April, and the clocks were striking thirteen when Winston Smith slipped quickly through the glass doors.",
+  "In those days cheap apartments were almost impossible to find in Manhattan, so I had to move to Brooklyn Heights.",
+  "The snow began to fall as we talked, and I watched it through the restaurant window, settling on the sidewalk.",
+  "Many years later, as he faced the firing squad, Colonel Aureliano Buendía was to remember that distant afternoon.",
+  "Mother died today, or maybe yesterday; I can't be sure because the telegram was not clear about the date.",
+  "When he was nearly forty years old, and in response to a famine that had devastated the country for three years running.",
+  "Ships at a distance carry every man's wish on board, but the tide brings some wishes to shore while others sail away.",
+  "It is a melancholy object to those who walk through this great town or travel in the country when they see the streets.",
+  "The past is never dead. It's not even past, which explains why we continue to wrestle with historical consequences today.",
+];
+
+// History texts for different difficulties
+const HISTORY_EASY = [
+  "World War Two ended in 1945 with Allied victory.",
+  "The American Civil War lasted from 1861 to 1865.",
+  "The Berlin Wall fell in 1989 reuniting Germany.",
+  "Christopher Columbus reached America in 1492.",
+  "The French Revolution began in 1789 with uprising.",
+  "Ancient Rome was founded according to legend in 753 BC.",
+  "The Great Wall of China took centuries to build.",
+  "The Renaissance began in Italy during the 14th century.",
+  "Napoleon was defeated at Waterloo in 1815.",
+  "The Industrial Revolution started in Britain around 1760.",
+];
+
+const HISTORY_MEDIUM = [
+  "The Treaty of Versailles officially ended World War One and imposed harsh reparations on Germany.",
+  "The Magna Carta signed in 1215 limited the power of English kings and established rule of law.",
+  "The Black Death pandemic swept through Europe in the 14th century, killing millions of people.",
+  "The Declaration of Independence was signed on July 4, 1776, establishing American independence from Britain.",
+  "The Silk Road connected East and West, facilitating trade and cultural exchange for over 1,400 years.",
+  "The Russian Revolution of 1917 led to the overthrow of the Tsarist regime and rise of communism.",
+  "The Age of Exploration brought Europeans to the Americas, changing world history forever through colonization.",
+  "The Enlightenment period emphasized reason, science, and individual rights over traditional authority and superstition.",
+  "The Cold War divided the world into competing ideological blocs led by the United States and Soviet Union.",
+  "The Scientific Revolution challenged medieval worldviews and established modern methods of inquiry and discovery.",
+];
+
+const HISTORY_HARD = [
+  "The Peace of Westphalia in 1648 established the principle of national sovereignty and ended the devastating Thirty Years' War.",
+  "The Congress of Vienna in 1815 redrew the European map after Napoleon's defeat, creating a balance of power system.",
+  "The Meiji Restoration transformed Japan from a feudal society into a modern industrial nation within decades of implementation.",
+  "The partition of India in 1947 created Pakistan and led to massive population displacement and communal violence.",
+  "The Scramble for Africa resulted in European colonization of virtually the entire continent by the end of the 19th century.",
+  "The Treaty of Brest-Litovsk allowed Germany to focus on the Western Front while Russia withdrew from World War One.",
+  "The Hundred Years' War between England and France fundamentally altered medieval European politics and military technology.",
+  "The Byzantine Empire preserved Roman and Greek knowledge for over a thousand years before falling to the Ottomans.",
+  "The Mongol Empire under Genghis Khan and his successors created the largest contiguous land empire in human history.",
+  "The Reformation sparked by Martin Luther divided Christianity and reshaped European politics, culture, and religious practice permanently.",
+];
+
+// Business texts for different difficulties
+const BUSINESS_EASY = [
+  "Supply and demand determine market prices for goods.",
+  "Customer service is essential for business success.",
+  "Profit equals revenue minus total business expenses.",
+  "Marketing helps companies reach their target audience effectively.",
+  "Good leadership motivates employees to work harder.",
+  "Budgets help businesses plan and control their spending.",
+  "Innovation drives competitive advantage in modern markets.",
+  "Quality products build strong customer loyalty over time.",
+  "Teamwork improves productivity and workplace satisfaction significantly.",
+  "Strategic planning guides long-term business growth and success.",
+];
+
+const BUSINESS_MEDIUM = [
+  "Return on investment measures the efficiency of an investment relative to its cost and potential gains.",
+  "Cash flow management ensures businesses have enough liquidity to meet their operational obligations and expenses.",
+  "Market segmentation divides consumers into distinct groups based on demographics, behavior, and preferences for targeting.",
+  "Human resources departments handle recruitment, training, benefits, and employee relations within modern organizations effectively.",
+  "Supply chain optimization reduces costs while improving delivery times and customer satisfaction across global networks.",
+  "Brand equity represents the commercial value derived from consumer perception and recognition of a company's products.",
+  "Financial statements including balance sheets and income statements provide insights into company performance and health.",
+  "Competitive analysis helps businesses understand market positioning and identify opportunities for growth and improvement strategies.",
+  "Corporate social responsibility initiatives demonstrate company commitment to ethical practices and community engagement beyond profits.",
+  "Digital transformation integrates technology into all business areas, fundamentally changing operations and customer value delivery methods.",
+];
+
+const BUSINESS_HARD = [
+  "Disruptive innovation creates new markets by introducing simpler, more affordable products that eventually displace established competitors.",
+  "The efficient market hypothesis suggests that stock prices reflect all available information, making consistent outperformance nearly impossible.",
+  "Blue ocean strategy involves creating uncontested market spaces rather than competing in existing markets with established players.",
+  "Vertical integration allows companies to control multiple stages of production, potentially reducing costs but increasing complexity significantly.",
+  "Behavioral economics demonstrates how psychological factors influence economic decisions, challenging traditional rational choice theory assumptions.",
+  "Network effects occur when products become more valuable as more people use them, creating powerful competitive moats.",
+  "Six Sigma methodology uses statistical analysis to identify and eliminate defects in manufacturing and business processes systematically.",
+  "Agile methodology emphasizes iterative development, customer collaboration, and rapid response to change in project management approaches.",
+  "Leveraged buyouts involve acquiring companies using significant debt, with the acquired company's assets serving as collateral for loans.",
+  "Intellectual property protection through patents, trademarks, and copyrights creates sustainable competitive advantages in knowledge-based industries.",
+];
+
+// Health texts for different difficulties
+const HEALTH_EASY = [
+  "Regular exercise keeps your body strong and healthy.",
+  "Eating vegetables and fruits provides essential vitamins daily.",
+  "Getting eight hours of sleep helps your body recover.",
+  "Drinking water throughout the day prevents dehydration completely.",
+  "Washing hands frequently reduces the spread of germs.",
+  "Dental hygiene prevents cavities and gum disease effectively.",
+  "Sunscreen protects skin from harmful ultraviolet radiation damage.",
+  "Deep breathing exercises help reduce stress and anxiety.",
+  "Regular medical checkups detect health problems early on.",
+  "Balanced meals provide energy and nutrients for daily activities.",
+];
+
+const HEALTH_MEDIUM = [
+  "Cardiovascular exercise strengthens the heart muscle and improves circulation throughout the entire body system.",
+  "Proper nutrition requires balancing proteins, carbohydrates, fats, vitamins, and minerals for optimal bodily function.",
+  "Mental health is just as important as physical health and requires attention, care, and professional support.",
+  "Vaccines help prevent serious diseases by training the immune system to recognize and fight specific pathogens.",
+  "Chronic stress can lead to various health problems including high blood pressure, diabetes, and depression.",
+  "Regular screenings for cancer, diabetes, and heart disease can save lives through early detection and treatment.",
+  "Smoking cessation dramatically reduces the risk of lung cancer, heart disease, and numerous other health conditions.",
+  "Meditation and mindfulness practices have been shown to reduce anxiety, improve focus, and enhance well-being.",
+  "Maintaining a healthy weight through diet and exercise reduces the risk of many chronic diseases significantly.",
+  "Social connections and relationships contribute significantly to mental health and overall life satisfaction and longevity.",
+];
+
+const HEALTH_HARD = [
+  "Epigenetic modifications influenced by lifestyle factors can alter gene expression patterns affecting disease susceptibility across generations.",
+  "The gut microbiome plays a crucial role in immune function, mental health, and metabolism through complex biochemical interactions.",
+  "Neuroplasticity allows the brain to reorganize and form new neural connections throughout life, enabling recovery from injury.",
+  "Autoimmune diseases occur when the immune system mistakenly attacks healthy cells, requiring immunosuppressive treatment strategies.",
+  "Pharmacokinetics and pharmacodynamics determine how drugs are absorbed, distributed, metabolized, and eliminated from the human body.",
+  "Precision medicine tailors treatment approaches based on individual genetic profiles, lifestyle factors, and environmental exposures for optimization.",
+  "The endocrine system regulates hormones that control metabolism, growth, reproduction, and stress response through feedback mechanisms.",
+  "Inflammatory pathways link chronic diseases including diabetes, cardiovascular disease, and cancer through common molecular mechanisms.",
+  "Telemedicine and digital health technologies are revolutionizing healthcare delivery and patient monitoring in remote settings.",
+  "Evidence-based medicine integrates clinical expertise with the best available research evidence and patient values for treatment decisions.",
+];
+
+// Sports texts for different difficulties
+const SPORTS_EASY = [
+  "Soccer is played with two teams of eleven players each.",
+  "Basketball players score by shooting the ball through hoops.",
+  "Tennis matches are played on grass clay or hard courts.",
+  "Swimming builds strength and improves cardiovascular health significantly.",
+  "Golf requires precision and patience to score well consistently.",
+  "Running marathons tests endurance and mental strength equally.",
+  "Baseball games consist of nine innings with three outs.",
+  "Football teams advance the ball toward the end zone.",
+  "Cycling provides excellent exercise and transportation benefits together.",
+  "Hockey players use sticks to control and shoot pucks.",
+];
+
+const SPORTS_MEDIUM = [
+  "The Olympics bring together athletes from around the world to compete in various sports every four years.",
+  "Professional athletes must maintain strict training regimens and follow nutritional guidelines for peak performance.",
+  "Team sports teach valuable lessons about cooperation, communication, and working toward common goals together.",
+  "Individual sports like tennis and golf require mental toughness and the ability to perform under pressure.",
+  "Sports medicine helps athletes prevent injuries and recover more quickly when injuries do occur unfortunately.",
+  "The World Cup is the most prestigious soccer tournament, held every four years with global participation.",
+  "Athletic scholarships provide opportunities for talented students to receive higher education while competing in sports.",
+  "Youth sports programs promote physical fitness, social skills, and character development in children and teenagers.",
+  "Sports psychology helps athletes improve mental performance, manage anxiety, and maintain focus during competition.",
+  "Paralympic Games showcase the incredible abilities of athletes with disabilities, inspiring millions worldwide continuously.",
+];
+
+const SPORTS_HARD = [
+  "Biomechanical analysis of athletic movement patterns helps optimize performance while reducing injury risk through scientific methodology.",
+  "Sports analytics and performance metrics are revolutionizing how teams evaluate players and develop strategic game plans.",
+  "The psychological phenomenon known as flow state occurs when athletes achieve optimal performance through complete focus and immersion.",
+  "Periodization training involves systematically planning athletic development cycles to peak performance at specific competition times.",
+  "Plyometric exercises improve explosive power and athletic performance by utilizing the stretch-shortening cycle of muscle contractions.",
+  "Sports-related concussions have led to significant protocol changes and increased awareness of traumatic brain injury risks.",
+  "The evolution of sports technology including equipment, surfaces, and monitoring devices continues to push performance boundaries.",
+  "Gender equality in sports remains an ongoing challenge, with pay gaps and media coverage disparities persisting globally.",
+  "Anti-doping agencies work continuously to maintain fair competition by detecting and deterring performance-enhancing drug use.",
+  "The commercialization of professional sports has transformed athletics into a multi-billion dollar entertainment industry worldwide.",
+];
+
+// Food texts for different difficulties
+const FOOD_EASY = [
+  "Fresh fruits and vegetables provide essential vitamins and minerals.",
+  "Cooking at home allows you to control ingredients and portions.",
+  "Protein helps build and repair muscles in your body.",
+  "Whole grains provide fiber and sustained energy throughout the day.",
+  "Dairy products are good sources of calcium for bones.",
+  "Spices and herbs add flavor without extra calories or sodium.",
+  "Drinking plenty of water aids digestion and nutrient absorption.",
+  "Meal planning saves time and helps maintain healthy eating habits.",
+  "Reading food labels helps you make informed dietary choices.",
+  "Moderation is key to maintaining a balanced and healthy diet.",
+];
+
+const FOOD_MEDIUM = [
+  "The Mediterranean diet emphasizes olive oil, fish, fruits, vegetables, and whole grains for heart health.",
+  "Fermented foods like yogurt, kimchi, and kombucha promote beneficial gut bacteria and digestive health.",
+  "Sustainable agriculture practices help protect the environment while producing nutritious food for growing populations.",
+  "Food safety protocols prevent contamination and foodborne illnesses through proper handling, storage, and preparation techniques.",
+  "Culinary arts combine creativity, technique, and cultural traditions to create memorable dining experiences for people.",
+  "Seasonal eating connects us with local agriculture and provides the freshest, most nutritious ingredients available.",
+  "Plant-based diets can provide all necessary nutrients while reducing environmental impact and promoting animal welfare.",
+  "Food allergies and intolerances require careful ingredient monitoring and alternative preparation methods for safe consumption.",
+  "The farm-to-table movement supports local farmers and reduces the environmental impact of food transportation significantly.",
+  "Molecular gastronomy applies scientific principles to cooking, creating innovative textures and presentations in modern cuisine.",
+];
+
+const FOOD_HARD = [
+  "Nutritional genomics studies how genetic variations affect individual responses to nutrients and dietary interventions for personalized nutrition.",
+  "The Maillard reaction between amino acids and sugars creates complex flavors and aromas in cooked foods through chemical processes.",
+  "Food security involves ensuring reliable access to sufficient, safe, and nutritious food for all people globally.",
+  "Umami, the fifth basic taste, is created by glutamates and enhances savory flavors in foods like cheese and mushrooms.",
+  "Precision fermentation uses microorganisms to produce specific compounds for food ingredients without traditional agriculture methods.",
+  "The glycemic index measures how quickly carbohydrates raise blood sugar levels, affecting energy and satiety patterns.",
+  "Terroir encompasses environmental factors including soil, climate, and geography that influence agricultural product characteristics distinctively.",
+  "Food technology innovations including lab-grown meat and alternative proteins address sustainability and ethical concerns effectively.",
+  "Phytochemicals in plants provide health benefits beyond basic nutrition through antioxidant and anti-inflammatory properties naturally.",
+  "The global food system involves complex supply chains connecting production, processing, distribution, and consumption across continents.",
+];
+
+// Arts texts for different difficulties
+const ARTS_EASY = [
+  "Painting uses colors and brushes to create beautiful images.",
+  "Music combines rhythm melody and harmony to express emotions.",
+  "Sculpture shapes materials like clay stone or metal creatively.",
+  "Dance expresses stories and feelings through body movement.",
+  "Photography captures moments and memories with cameras skillfully.",
+  "Theater brings stories to life through acting and performance.",
+  "Drawing requires only pencils and paper to create art.",
+  "Singing uses the human voice as a musical instrument.",
+  "Crafts create useful and decorative items by hand.",
+  "Museums display art for everyone to enjoy and learn.",
+];
+
+const ARTS_MEDIUM = [
+  "The Renaissance period produced masterpieces by Leonardo da Vinci, Michelangelo, and other influential artists throughout Europe.",
+  "Abstract art moves away from realistic representation to focus on colors, shapes, and forms that express ideas.",
+  "Classical music follows traditional structures and forms developed over centuries by composers like Bach and Mozart.",
+  "Performance art combines various artistic mediums to create live experiences that engage audiences directly and emotionally.",
+  "Digital art uses computer technology to create new forms of artistic expression in the modern technological age.",
+  "Art therapy helps people express emotions and heal through creative activities guided by trained mental health professionals.",
+  "Cultural traditions influence artistic styles and techniques passed down through generations within specific communities and regions.",
+  "Art criticism analyzes and interprets artworks to help audiences understand deeper meanings and cultural significance.",
+  "Public art installations transform urban spaces and make art accessible to diverse audiences in everyday settings.",
+  "Mixed media artwork combines different materials and techniques to create unique textures and visual effects innovatively.",
+];
+
+const ARTS_HARD = [
+  "Postmodern art challenges traditional boundaries and hierarchies, embracing pastiche, irony, and cultural critique as central themes.",
+  "The avant-garde movements of the early 20th century revolutionized artistic expression through radical experimentation and rejection of conventions.",
+  "Synesthesia in artistic creation involves the deliberate crossing of sensory modalities to produce multidimensional aesthetic experiences.",
+  "Conceptual art prioritizes ideas and concepts over traditional aesthetic concerns, often using unconventional materials and presentation methods.",
+  "The democratization of art through digital platforms has transformed how artists create, distribute, and monetize their creative works.",
+  "Feminist art theory examines how gender influences artistic production, representation, and reception within patriarchal cultural systems.",
+  "Neo-expressionism emerged in the 1980s as a reaction against minimalism, emphasizing emotional content and traditional painting techniques.",
+  "Installation art creates immersive environments that transform spaces and engage viewers through multisensory experiences and interactions.",
+  "The art market's financialization has turned artworks into investment commodities, affecting artistic production and cultural value systems.",
+  "Deconstructivism in architecture challenges traditional notions of harmony and stability through fragmented and unconventional structural approaches.",
+];
+
+// Nature texts for different difficulties
+const NATURE_EASY = [
+  "Trees produce oxygen and help clean the air we breathe.",
+  "Bees pollinate flowers helping plants reproduce and grow successfully.",
+  "Rain provides water that plants and animals need to survive.",
+  "The sun gives energy and warmth to all living things.",
+  "Mountains form over millions of years through geological processes slowly.",
+  "Oceans cover most of the Earth and contain countless species.",
+  "Forests provide homes for many different animals and plants.",
+  "Rivers flow from mountains to seas carrying water downstream.",
+  "Seasons change as Earth orbits around the sun annually.",
+  "Animals adapt to their environments to survive and thrive.",
+];
+
+const NATURE_MEDIUM = [
+  "Ecosystems are complex networks of interactions between living organisms and their physical environment components.",
+  "Biodiversity refers to the variety of life forms on Earth, including genetic, species, and ecosystem diversity.",
+  "Photosynthesis allows plants to convert sunlight into energy while producing oxygen as a beneficial byproduct for animals.",
+  "Food chains and food webs demonstrate how energy flows through ecosystems from producers to various consumer levels.",
+  "Climate change affects weather patterns, sea levels, and species distributions across the globe significantly and permanently.",
+  "Conservation efforts aim to protect endangered species and preserve natural habitats for future generations to enjoy.",
+  "Natural selection drives evolution as organisms with advantageous traits are more likely to survive and reproduce successfully.",
+  "Watersheds collect and channel rainwater, providing fresh water for human communities and natural ecosystems alike.",
+  "Symbiotic relationships between species can be mutually beneficial, harmful, or neutral depending on the specific interaction.",
+  "Geological processes like erosion, volcanism, and plate tectonics continuously reshape the Earth's surface over time.",
+];
+
+const NATURE_HARD = [
+  "Keystone species have disproportionately large effects on ecosystem structure and function relative to their numerical abundance.",
+  "Biogeochemical cycles including carbon, nitrogen, and phosphorus cycles regulate nutrient availability in natural systems globally.",
+  "Phenotypic plasticity allows organisms to modify their characteristics in response to environmental conditions without genetic changes.",
+  "Trophic cascades occur when changes in predator populations affect multiple levels of the food web through indirect effects.",
+  "Metapopulations consist of spatially separated populations connected by migration, affecting long-term species persistence patterns.",
+  "Ecological succession describes predictable changes in species composition following disturbances or in newly available habitats.",
+  "Coevolution results from reciprocal evolutionary changes between interacting species over extended periods of geological time.",
+  "Adaptive radiation occurs when species rapidly diversify to fill available ecological niches in new or changing environments.",
+  "Ecosystem services including pollination, water purification, and climate regulation provide essential benefits to human societies.",
+  "Fragmentation of natural habitats reduces biodiversity through edge effects, reduced population sizes, and disrupted ecological processes.",
+];
+
+// Mathematics texts for different difficulties
+const MATHEMATICS_EASY = [
+  "Addition and subtraction are basic arithmetic operations everyone should learn.",
+  "Multiplication is repeated addition of the same number multiple times.",
+  "Division splits numbers into equal groups or parts efficiently.",
+  "Fractions represent parts of a whole number or quantity.",
+  "Geometry studies shapes lines angles and their properties systematically.",
+  "Even numbers can be divided by two with no remainder.",
+  "Odd numbers leave a remainder of one when divided by two.",
+  "Percentages express fractions as parts of one hundred total.",
+  "Measuring length width and height helps describe object dimensions.",
+  "Patterns in numbers help us predict what comes next.",
+];
+
+const MATHEMATICS_MEDIUM = [
+  "Algebra uses variables and equations to solve problems involving unknown quantities and mathematical relationships.",
+  "The Pythagorean theorem states that in right triangles, the square of the hypotenuse equals the sum of squares.",
+  "Probability measures the likelihood of events occurring, expressed as fractions, decimals, or percentages between zero and one.",
+  "Functions describe relationships between input and output values, forming the foundation of advanced mathematical analysis.",
+  "Statistics involves collecting, analyzing, and interpreting data to make informed decisions and draw meaningful conclusions.",
+  "Trigonometry studies relationships between angles and sides in triangles, with applications in engineering and physics.",
+  "The quadratic formula solves second-degree polynomial equations and has wide applications in science and mathematics.",
+  "Coordinate geometry combines algebra and geometry to describe points, lines, and curves using numerical coordinates.",
+  "Exponential growth occurs when quantities increase by a constant percentage over equal time intervals repeatedly.",
+  "Prime numbers have exactly two factors: one and themselves, playing crucial roles in number theory and cryptography.",
+];
+
+const MATHEMATICS_HARD = [
+  "Calculus studies rates of change and accumulation through derivatives and integrals, revolutionizing science and engineering applications.",
+  "Complex numbers extend the real number system to include imaginary units, enabling solutions to previously unsolvable polynomial equations.",
+  "Linear algebra examines vector spaces and linear transformations, providing essential tools for modern data science and machine learning.",
+  "Group theory abstracts common algebraic structures, revealing deep connections between seemingly unrelated mathematical and physical phenomena.",
+  "Differential equations describe relationships between functions and their derivatives, modeling dynamic systems in science and engineering.",
+  "Topology studies properties preserved under continuous deformations, bridging geometry and analysis in profound mathematical ways.",
+  "Number theory investigates properties of integers and has surprising applications in cryptography and computer science security systems.",
+  "Real analysis rigorously examines limits, continuity, and convergence, providing the logical foundation for calculus and mathematical analysis.",
+  "Abstract algebra generalizes familiar algebraic structures like groups, rings, and fields to study mathematical systems axiomatically.",
+  "Mathematical logic formalizes reasoning and proof techniques, exploring the foundations and limitations of mathematical knowledge itself.",
+];
+
 export function getTextByDifficulty(options: TextOptions, targetLength?: number): string {
   const { difficulty, category = 'general' } = options;
   
   let textPool: string[] = [];
   
-  if (category === 'programming') {
-    switch (difficulty) {
-      case 'easy':
-        textPool = PROGRAMMING_EASY;
-        break;
-      case 'medium':
-        textPool = PROGRAMMING_MEDIUM;
-        break;
-      case 'hard':
-        textPool = PROGRAMMING_HARD;
-        break;
-    }
-  } else if (category === 'quotes') {
-    switch (difficulty) {
-      case 'easy':
-        textPool = QUOTES_EASY;
-        break;
-      case 'medium':
-        textPool = QUOTES_MEDIUM;
-        break;
-      case 'hard':
-        textPool = QUOTES_HARD;
-        break;
-    }
-  } else {
-    // General category
-    switch (difficulty) {
-      case 'easy':
-        textPool = EASY_TEXTS;
-        break;
-      case 'medium':
-        textPool = MEDIUM_TEXTS;
-        break;
-      case 'hard':
-        textPool = HARD_TEXTS;
-        break;
-    }
+  switch (category) {
+    case 'programming':
+      switch (difficulty) {
+        case 'easy':
+          textPool = PROGRAMMING_EASY;
+          break;
+        case 'medium':
+          textPool = PROGRAMMING_MEDIUM;
+          break;
+        case 'hard':
+          textPool = PROGRAMMING_HARD;
+          break;
+      }
+      break;
+    case 'quotes':
+      switch (difficulty) {
+        case 'easy':
+          textPool = QUOTES_EASY;
+          break;
+        case 'medium':
+          textPool = QUOTES_MEDIUM;
+          break;
+        case 'hard':
+          textPool = QUOTES_HARD;
+          break;
+      }
+      break;
+    case 'science':
+      switch (difficulty) {
+        case 'easy':
+          textPool = SCIENCE_EASY;
+          break;
+        case 'medium':
+          textPool = SCIENCE_MEDIUM;
+          break;
+        case 'hard':
+          textPool = SCIENCE_HARD;
+          break;
+      }
+      break;
+    case 'literature':
+      switch (difficulty) {
+        case 'easy':
+          textPool = LITERATURE_EASY;
+          break;
+        case 'medium':
+          textPool = LITERATURE_MEDIUM;
+          break;
+        case 'hard':
+          textPool = LITERATURE_HARD;
+          break;
+      }
+      break;
+    case 'history':
+      switch (difficulty) {
+        case 'easy':
+          textPool = HISTORY_EASY;
+          break;
+        case 'medium':
+          textPool = HISTORY_MEDIUM;
+          break;
+        case 'hard':
+          textPool = HISTORY_HARD;
+          break;
+      }
+      break;
+    case 'business':
+      switch (difficulty) {
+        case 'easy':
+          textPool = BUSINESS_EASY;
+          break;
+        case 'medium':
+          textPool = BUSINESS_MEDIUM;
+          break;
+        case 'hard':
+          textPool = BUSINESS_HARD;
+          break;
+      }
+      break;
+    case 'health':
+      switch (difficulty) {
+        case 'easy':
+          textPool = HEALTH_EASY;
+          break;
+        case 'medium':
+          textPool = HEALTH_MEDIUM;
+          break;
+        case 'hard':
+          textPool = HEALTH_HARD;
+          break;
+      }
+      break;
+    case 'sports':
+      switch (difficulty) {
+        case 'easy':
+          textPool = SPORTS_EASY;
+          break;
+        case 'medium':
+          textPool = SPORTS_MEDIUM;
+          break;
+        case 'hard':
+          textPool = SPORTS_HARD;
+          break;
+      }
+      break;
+    case 'food':
+      switch (difficulty) {
+        case 'easy':
+          textPool = FOOD_EASY;
+          break;
+        case 'medium':
+          textPool = FOOD_MEDIUM;
+          break;
+        case 'hard':
+          textPool = FOOD_HARD;
+          break;
+      }
+      break;
+    case 'arts':
+      switch (difficulty) {
+        case 'easy':
+          textPool = ARTS_EASY;
+          break;
+        case 'medium':
+          textPool = ARTS_MEDIUM;
+          break;
+        case 'hard':
+          textPool = ARTS_HARD;
+          break;
+      }
+      break;
+    case 'nature':
+      switch (difficulty) {
+        case 'easy':
+          textPool = NATURE_EASY;
+          break;
+        case 'medium':
+          textPool = NATURE_MEDIUM;
+          break;
+        case 'hard':
+          textPool = NATURE_HARD;
+          break;
+      }
+      break;
+    case 'mathematics':
+      switch (difficulty) {
+        case 'easy':
+          textPool = MATHEMATICS_EASY;
+          break;
+        case 'medium':
+          textPool = MATHEMATICS_MEDIUM;
+          break;
+        case 'hard':
+          textPool = MATHEMATICS_HARD;
+          break;
+      }
+      break;
+    default:
+      // General category
+      switch (difficulty) {
+        case 'easy':
+          textPool = EASY_TEXTS;
+          break;
+        case 'medium':
+          textPool = MEDIUM_TEXTS;
+          break;
+        case 'hard':
+          textPool = HARD_TEXTS;
+          break;
+      }
+      break;
   }
   
   // If no target length specified, return a single random text

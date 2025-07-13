@@ -1,8 +1,17 @@
 import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGameStore, Player } from '../store/gameStore';
+import { useGameStore } from '../store/gameStore';
 import ReactConfetti from 'react-confetti';
 import { useNavigate } from 'react-router-dom';
+import LiveLeaderboard from '../components/game/LiveLeaderboard';
+import WaitingForOthersOverlay from '../components/game/WaitingForOthersOverlay';
+import TimeUpOverlay from '../components/game/TimeUpOverlay';
+import ResultsModal from '../components/game/ResultsModal';
+import HighlightedText from '../components/game/HighlightedText';
+import { useGameTimer } from '../hooks/useGameTimer';
+import { useGameState } from '../hooks/useGameState';
+import { TIME_UP_RESULTS_DELAY, CONFETTI_DURATION, STATS_SYNC_THROTTLE, GAME_STATE_SYNC_DELAY } from '../utils/constants';
+
 
 const CapybaraIcon = ({ avatar, color, size = 32 }: { avatar?: string; color?: string; size?: number }) => (
   <img
@@ -14,830 +23,6 @@ const CapybaraIcon = ({ avatar, color, size = 32 }: { avatar?: string; color?: s
     }}
   />
 );
-
-const PodiumPlayer = ({ player, position, height }: { 
-  player: any; 
-  position: number; 
-  height: number; 
-}) => {
-  const getMedalColor = (pos: number) => {
-    switch(pos) {
-      case 1: return '#fbbf24'; // Gold
-      case 2: return '#9ca3af'; // Silver  
-      case 3: return '#f59e0b'; // Bronze
-      default: return '#6366f1';
-    }
-  };
-
-  const getMedalEmoji = (pos: number) => {
-    switch(pos) {
-      case 1: return '🥇';
-      case 2: return '🥈';
-      case 3: return '🥉';
-      default: return '🏆';
-    }
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 * position, type: "spring", stiffness: 200 }}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        position: 'relative'
-      }}
-    >
-      {/* Player Card */}
-      <div style={{
-        background: 'rgba(255, 255, 255, 0.95)',
-        border: `3px solid ${getMedalColor(position)}`,
-        borderRadius: 20,
-        padding: 16,
-        textAlign: 'center',
-        boxShadow: '0 8px 25px rgba(0,0,0,0.2)',
-        marginBottom: 8,
-        position: 'relative',
-        minWidth: 140
-      }}>
-        {/* Medal */}
-        <div style={{
-          position: 'absolute',
-          top: -8,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          fontSize: 28,
-          lineHeight: 1,
-          zIndex: 10
-        }}>
-          {getMedalEmoji(position)}
-        </div>
-        
-        <div style={{ marginTop: 20 }}>
-          <CapybaraIcon avatar={player.avatar} color={player.color} size={48} />
-          <h4 style={{
-            fontWeight: 700,
-            color: '#232323',
-            fontSize: 14,
-            margin: '8px 0 4px 0',
-            wordBreak: 'break-word'
-          }}>
-            {player.nickname}
-          </h4>
-          <div style={{
-            background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-            color: '#fff',
-            padding: '4px 8px',
-            borderRadius: 12,
-            fontWeight: 800,
-            fontSize: 12
-          }}>
-            {player.points} pts
-          </div>
-        </div>
-      </div>
-      
-      {/* Podium Base */}
-      <div style={{
-        width: 100,
-        height: height,
-        background: `linear-gradient(135deg, ${getMedalColor(position)}, ${getMedalColor(position)}dd)`,
-        borderRadius: '8px 8px 0 0',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: '#fff',
-        fontWeight: 800,
-        fontSize: 24,
-        boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-        position: 'relative'
-      }}>
-        {position}
-        <div style={{
-          position: 'absolute',
-          bottom: -2,
-          left: 0,
-          right: 0,
-          height: 4,
-          background: 'rgba(0,0,0,0.2)'
-        }} />
-      </div>
-    </motion.div>
-  );
-};
-
-/*
-const CheckeredFlag = () => (
-  <div className="w-8 h-8 flex">
-    {[...Array(4)].map((_, i) => (
-      <div key={i} className="w-2 h-8 flex flex-col">
-        {[...Array(4)].map((_, j) => (
-          <div
-            key={j}
-            className={`w-2 h-2 ${(i + j) % 2 === 0 ? 'bg-black' : 'bg-white'}`}
-          />
-        ))}
-      </div>
-    ))}
-  </div>
-);
-*/
-
-const WaitingForOthersOverlay = ({ 
-  position, 
-  timeLeft, 
-  finishedPlayers, 
-  totalPlayers 
-}: { 
-  position: number | null; 
-  timeLeft: number | null; 
-  finishedPlayers: number; 
-  totalPlayers: number; 
-}) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.8)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 45,
-      backdropFilter: 'blur(8px)'
-    }}
-  >
-    <motion.div
-      initial={{ scale: 0.5, y: 100 }}
-      animate={{ scale: 1, y: 0 }}
-      transition={{ duration: 0.6, type: "spring", stiffness: 120 }}
-      style={{
-        background: 'rgba(235, 228, 200, 0.98)',
-        borderRadius: 24,
-        padding: 40,
-        textAlign: 'center',
-        border: '3px solid #b6a77a',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-        maxWidth: '90vw',
-        minWidth: 400
-      }}
-    >
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-        style={{
-          fontSize: '4rem',
-          marginBottom: 20
-        }}
-      >
-        🎉
-      </motion.div>
-      
-      <motion.h2
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4, duration: 0.8 }}
-        style={{
-          fontSize: '2.5rem',
-          fontWeight: 800,
-          color: '#16a34a',
-          marginBottom: 16,
-          textShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}
-      >
-        Great Job!
-      </motion.h2>
-      
-      {position && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.6, duration: 0.6 }}
-          style={{
-            background: position <= 3 ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-            color: '#fff',
-            padding: '12px 24px',
-            borderRadius: 20,
-            fontSize: '1.5rem',
-            fontWeight: 800,
-            marginBottom: 24,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
-            display: 'inline-block'
-          }}
-        >
-          {position === 1 ? '🥇 1st Place!' : 
-           position === 2 ? '🥈 2nd Place!' : 
-           position === 3 ? '🥉 3rd Place!' : 
-           `🏆 ${position}${position === 21 || position === 31 ? 'st' : 
-                  position === 22 || position === 32 ? 'nd' : 
-                  position === 23 || position === 33 ? 'rd' : 'th'} Place!`}
-        </motion.div>
-      )}
-      
-      <motion.p
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8, duration: 0.6 }}
-        style={{
-          fontSize: '1.3rem',
-          color: '#374151',
-          fontWeight: 600,
-          marginBottom: 20
-        }}
-      >
-        Waiting for other players to finish...
-      </motion.p>
-      
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.0, duration: 0.6 }}
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 16
-        }}
-      >
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          fontSize: '1.1rem',
-          color: '#6b7280'
-        }}>
-          <span>⏱️ Time left: <strong>{timeLeft}s</strong></span>
-          <span>👥 {finishedPlayers}/{totalPlayers} finished</span>
-        </div>
-        
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          style={{
-            width: 32,
-            height: 32,
-            border: '4px solid #e5e7eb',
-            borderTop: '4px solid #6366f1',
-            borderRadius: '50%'
-          }}
-        />
-      </motion.div>
-    </motion.div>
-  </motion.div>
-);
-
-const TimeUpOverlay = ({ onAnimationComplete }: { 
-  onAnimationComplete: () => void;
-}) => (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    transition={{ duration: 1.5 }}
-    onAnimationComplete={onAnimationComplete}
-    style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      background: 'rgba(0, 0, 0, 0.9)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 50,
-      backdropFilter: 'blur(12px)'
-    }}
-  >
-    <motion.div
-      initial={{ scale: 0.3, y: -100, rotateX: -90 }}
-      animate={{ scale: 1, y: 0, rotateX: 0 }}
-      transition={{ duration: 2.0, type: "spring", stiffness: 60, damping: 15 }}
-      style={{
-        background: 'rgba(235, 228, 200, 0.98)',
-        borderRadius: 24,
-        padding: 48,
-        textAlign: 'center',
-        border: '3px solid #b6a77a',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
-        maxWidth: '90vw'
-      }}
-    >
-      <motion.h2
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ 
-          scale: [0.5, 1.1, 1], 
-          opacity: 1,
-          rotateZ: [0, -2, 2, 0] 
-        }}
-        transition={{ duration: 2.5, repeat: 1, ease: "easeInOut" }}
-        style={{
-          fontSize: '4rem',
-          fontWeight: 800,
-          color: '#e11d48',
-          marginBottom: 16,
-          textShadow: '0 4px 8px rgba(0,0,0,0.3)'
-        }}
-      >
-        ⏰ TIME'S UP! ⏰
-      </motion.h2>
-      <motion.p 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.0, duration: 1.2 }}
-        style={{
-          fontSize: '1.5rem',
-          color: '#374151',
-          fontWeight: 600,
-          marginBottom: 24
-        }}
-      >
-        🏁 Calculating final results...
-      </motion.p>
-      <motion.div
-        initial={{ opacity: 0, scale: 0 }}
-        animate={{ 
-          opacity: 1, 
-          scale: 1,
-          rotate: 360 
-        }}
-        transition={{ 
-          delay: 1.5,
-          duration: 2.5, 
-          repeat: Infinity, 
-          ease: "linear" 
-        }}
-        style={{
-          width: 48,
-          height: 48,
-          border: '5px solid #e5e7eb',
-          borderTop: '5px solid #6366f1',
-          borderRadius: '50%',
-          margin: '0 auto'
-        }}
-      />
-    </motion.div>
-  </motion.div>
-);
-
-const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: { 
-  players: Player[];
-  onReturnToLobby: () => void;
-  onBackToLogin: () => void;
-}) => {
-  // Helper function for medal colors
-  const getMedalColor = (position: number) => {
-    switch(position) {
-      case 1: return '#fbbf24'; // Gold (1st place)
-      case 2: return '#9ca3af'; // Silver (2nd place)
-      case 3: return '#f59e0b'; // Bronze (3rd place)
-      default: return '#6366f1'; // Default blue
-    }
-  };
-
-  // Calculate points for each player (WPM * 10 - errors * 5 + progress bonus)
-  const playersWithPoints = players.map(player => ({
-    ...player,
-    points: Math.max(0, (player.wpm || 0) * 10 - (player.errors || 0) * 5 + Math.round((player.progress || 0) / 10))
-  })).sort((a, b) => {
-    // Sort by points first, then by progress, then by WPM
-    if (b.points !== a.points) return b.points - a.points;
-    if (b.progress !== a.progress) return (b.progress || 0) - (a.progress || 0);
-    return (b.wpm || 0) - (a.wpm || 0);
-  });
-
-  const playerCount = playersWithPoints.length;
-  
-  // Calculate adaptive sizing
-  const getPlayerCardSize = (index: number) => {
-    if (index < 3) return { // Top 3 - reduced by 35%
-      minWidth: 130,
-      maxWidth: 155,
-      avatarSize: 42,
-      fontSize: 15,
-      padding: 16
-    };
-    
-    // Scale down for more players - reduced by 35%
-    if (playerCount <= 6) return {
-      minWidth: 110,
-      maxWidth: 130,
-      avatarSize: 32,
-      fontSize: 14,
-      padding: 14
-    };
-    
-    if (playerCount <= 12) return {
-      minWidth: 90,
-      maxWidth: 110,
-      avatarSize: 26,
-      fontSize: 12,
-      padding: 12
-    };
-    
-    return { // Many players - smallest size - reduced by 35%
-      minWidth: 80,
-      maxWidth: 90,
-      avatarSize: 22,
-      fontSize: 10,
-      padding: 8
-    };
-  };
-
-  const getGridColumns = () => {
-    if (playerCount <= 3) return 'repeat(3, 1fr)';
-    if (playerCount <= 6) return 'repeat(3, 1fr)';
-    if (playerCount <= 9) return 'repeat(3, 1fr)';
-    if (playerCount <= 12) return 'repeat(4, 1fr)';
-    return 'repeat(5, 1fr)';
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.7)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 50,
-        backdropFilter: 'blur(6px)',
-        padding: 16
-      }}
-    >
-      <motion.div
-        initial={{ scale: 0.8, y: 50 }}
-        animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.8, y: 50, opacity: 0 }}
-        transition={{ duration: 0.4 }}
-        style={{
-          background: 'rgba(235, 228, 200, 0.98)',
-          borderRadius: 24,
-          padding: window.innerWidth < 768 ? 16 : 32,
-          maxWidth: Math.min(900, playerCount > 6 ? 750 : 600),
-          width: '95%',
-          minWidth: 320,
-          maxHeight: '95vh',
-          overflowY: 'auto',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-          border: '3px solid #b6a77a',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center'
-        }}
-      >
-        {/* Title with animation */}
-        <motion.h2 
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-          style={{
-            fontSize: '3rem',
-            fontWeight: 800,
-            color: '#232323',
-            marginBottom: 40,
-            textAlign: 'center',
-            letterSpacing: '1.5px',
-            textShadow: '0 2px 8px rgba(0,0,0,0.1)',
-            background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}
-        >
-          🏁 RACE RESULTS 🏁
-        </motion.h2>
-        
-        {/* Podium for top 3 - Special highlighting */}
-        {playersWithPoints.length >= 3 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'end',
-              gap: 20,
-              marginBottom: 40,
-              flexWrap: 'wrap'
-            }}
-          >
-            {/* 2nd Place */}
-            {playersWithPoints[1] && (
-              <PodiumPlayer player={playersWithPoints[1]} position={2} height={100} />
-            )}
-            {/* 1st Place */}
-            {playersWithPoints[0] && (
-              <PodiumPlayer player={playersWithPoints[0]} position={1} height={130} />
-            )}
-            {/* 3rd Place */}
-            {playersWithPoints[2] && (
-              <PodiumPlayer player={playersWithPoints[2]} position={3} height={80} />
-            )}
-          </motion.div>
-        )}
-        
-        {/* All Players Grid */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: getGridColumns(),
-            gap: playerCount > 9 ? 18 : 24,
-            marginBottom: 32,
-            width: '100%',
-            justifyItems: 'center'
-          }}
-        >
-          {playersWithPoints.map((player, index) => {
-            if (!player || typeof player !== 'object') return null;
-            const isCurrentUser = player.id === useGameStore.getState().socket?.id;
-            const size = getPlayerCardSize(index);
-            
-            return (
-              <motion.div
-                key={player.id || player.nickname}
-                initial={{ opacity: 0, scale: 0.5, y: 50 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ delay: 0.1 * index, type: "spring", stiffness: 150 }}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  padding: size.padding,
-                  borderRadius: 16,
-                  boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-                  minWidth: size.minWidth,
-                  width: '100%',
-                  maxWidth: size.maxWidth,
-                  background: isCurrentUser 
-                    ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)'
-                    : 'rgba(255, 255, 255, 0.95)',
-                  border: isCurrentUser 
-                    ? '3px solid #6366f1' 
-                    : index < 3 ? `3px solid ${getMedalColor(index + 1)}` : '2px solid #e5e7eb',
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}
-              >
-                {/* Position Badge */}
-                <div style={{
-                  position: 'absolute',
-                  top: -8,
-                  right: -8,
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  background: getMedalColor(index + 1),
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 800,
-                  fontSize: 14,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-                  border: '2px solid #fff',
-                  zIndex: 2
-                }}>
-                  {index + 1}
-                </div>
-                
-                {/* Medal Emoji for top 3 */}
-                {index < 3 && (
-                  <div style={{
-                    position: 'absolute',
-                    top: -12,
-                    left: -12,
-                    fontSize: 24,
-                    zIndex: 2
-                  }}>
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                  </div>
-                )}
-                
-                {/* Current User Crown */}
-                {isCurrentUser && (
-                  <div style={{
-                    position: 'absolute',
-                    top: -10,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    fontSize: 20,
-                    zIndex: 2
-                  }}>
-                    👑
-                  </div>
-                )}
-                
-                <CapybaraIcon avatar={player.avatar} color={player.color} size={size.avatarSize} />
-                
-                <h3 style={{
-                  fontWeight: 700,
-                  color: '#232323',
-                  marginTop: 8,
-                  fontSize: size.fontSize,
-                  textAlign: 'center',
-                  wordBreak: 'break-word',
-                  maxWidth: '100%',
-                  lineHeight: 1.2
-                }}>
-                  {typeof player.nickname === 'string' ? player.nickname : 'Player'}
-                </h3>
-                
-                {/* Points - Prominently displayed */}
-                <div style={{
-                  background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-                  color: '#fff',
-                  padding: '6px 12px',
-                  borderRadius: 20,
-                  fontWeight: 800,
-                  fontSize: size.fontSize,
-                  marginTop: 8,
-                  boxShadow: '0 2px 8px rgba(251, 191, 36, 0.3)',
-                  textAlign: 'center',
-                  minWidth: '60px'
-                }}>
-                  {player.points} pts
-                </div>
-                
-                {/* Stats Grid */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr',
-                  gap: 6,
-                  marginTop: 8,
-                  width: '100%'
-                }}>
-                  <div style={{
-                    background: 'rgba(16, 185, 129, 0.15)',
-                    padding: '4px 8px',
-                    borderRadius: 8,
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: Math.max(10, size.fontSize - 4), color: '#6b7280', fontWeight: 500 }}>WPM</div>
-                    <div style={{ fontSize: Math.max(12, size.fontSize - 2), color: '#059669', fontWeight: 700 }}>
-                      {Math.round(player.wpm || 0)}
-                    </div>
-                  </div>
-                  
-                  <div style={{
-                    background: player.errors > 0 ? 'rgba(220, 38, 38, 0.15)' : 'rgba(16, 185, 129, 0.15)',
-                    padding: '4px 8px',
-                    borderRadius: 8,
-                    border: `1px solid ${player.errors > 0 ? 'rgba(220, 38, 38, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: Math.max(10, size.fontSize - 4), color: '#6b7280', fontWeight: 500 }}>Errors</div>
-                    <div style={{ 
-                      fontSize: Math.max(12, size.fontSize - 2), 
-                      color: player.errors > 0 ? '#dc2626' : '#059669', 
-                      fontWeight: 700 
-                    }}>
-                      {player.errors || 0}
-                    </div>
-                  </div>
-                  
-                  <div style={{
-                    background: 'rgba(99, 102, 241, 0.15)',
-                    padding: '4px 8px',
-                    borderRadius: 8,
-                    border: '1px solid rgba(99, 102, 241, 0.3)',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: Math.max(10, size.fontSize - 4), color: '#6b7280', fontWeight: 500 }}>Progress</div>
-                    <div style={{ fontSize: Math.max(12, size.fontSize - 2), color: '#6366f1', fontWeight: 700 }}>
-                      {Math.round(player.progress || 0)}%
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-        
-        {/* Action Buttons */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'center',
-            gap: 16,
-            width: '100%',
-            flexWrap: 'wrap'
-          }}
-        >
-          <button
-            onClick={onReturnToLobby}
-            style={{
-              ...modernButtonStyle,
-              background: '#fff',
-              color: '#232323',
-              border: '2px solid #b6a77a',
-              fontSize: 16,
-              padding: '14px 28px'
-            }}
-          >
-            ← Back to Lobby
-          </button>
-          <button
-            onClick={onBackToLogin}
-            style={{
-              ...modernButtonStyle,
-              fontSize: 16,
-              padding: '14px 28px'
-            }}
-          >
-            ← Back to Login
-          </button>
-        </motion.div>
-      </motion.div>
-    </motion.div>
-  );
-};
-
-interface PlayerStats {
-  wpm: number;
-  errors: number;
-  position: number;
-  correctedErrors: number;
-}
-
-// Component to display text with highlighting
-const HighlightedText = ({ text, input, errorPositions }: { 
-  text: string; 
-  input: string; 
-  errorPositions: Set<number>;
-}) => {
-  return (
-    <div style={{
-      fontFamily: 'monospace',
-      fontSize: '1.2rem',
-      lineHeight: 1.7,
-      whiteSpace: 'pre-wrap',
-      position: 'relative',
-      wordBreak: 'break-word'
-    }}>
-      {text.split('').map((char, index) => {
-        const isTyped = index < input.length;
-        const isError = errorPositions.has(index);
-        const isCurrent = index === input.length;
-
-        const style: React.CSSProperties = {
-          transition: 'all 0.15s ease',
-          padding: '2px 1px',
-          borderRadius: 3,
-          position: 'relative'
-        };
-
-        if (isTyped) {
-          if (isError) {
-            style.color = '#dc2626'; // Red for errors
-            style.background = 'rgba(220, 38, 38, 0.15)';
-            style.textDecoration = 'underline';
-            style.textDecorationColor = '#ef4444';
-          } else {
-            style.color = '#10b981'; // Green for correct
-            style.background = 'rgba(16, 185, 129, 0.1)';
-          }
-        } else {
-          style.color = '#4b5563'; // Dark gray for untyped
-        }
-
-        if (isCurrent) {
-          style.boxShadow = '0 0 0 2px #6366f1'; // Caret/cursor
-          style.animation = 'pulse 1.2s infinite';
-        }
-
-        return (
-          <span key={index} style={style}>
-            {char === ' ' ? <span>&nbsp;</span> : char}
-          </span>
-        );
-      })}
-    </div>
-  );
-};
 
 // Modern, rounded, black button style
 const modernButtonStyle = {
@@ -857,27 +42,18 @@ const modernButtonStyle = {
 
 export default function Game() {
   const navigate = useNavigate();
-  const { text, updateProgress, players, gameState, roomClosed, clearRoomClosed } = useGameStore();
-  const [input, setInput] = useState('');
-  const [countdown, setCountdown] = useState<number | null>(3); // Start with countdown immediately
-  const [gameStarted, setGameStarted] = useState(false);
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const { text, players, gameState, roomClosed, clearRoomClosed } = useGameStore();
+  
+  const gameStarted = gameState === 'playing';
+  const { countdown, setCountdown, timeLeft, setTimeLeft } = useGameTimer(gameStarted, text);
+  const { state, dispatch, handleInputChange } = useGameState(text, gameStarted);
+  const { input, errorPositions, totalErrors, progress, wpm, startTime } = state;
+
   const [showConfetti, setShowConfetti] = useState(false);
   const [showTimeUp, setShowTimeUp] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [playerStats, setPlayerStats] = useState<PlayerStats>({
-    wpm: 0,
-    errors: 0,
-    position: 1,
-    correctedErrors: 0
-  });
-  const [progress, setProgress] = useState(0);
-  const [errorPositions, setErrorPositions] = useState(new Set<number>());
-  const [totalErrors, setTotalErrors] = useState(0);
   const [gameFinished, setGameFinished] = useState(false);
   const [timeUpTimer, setTimeUpTimer] = useState<number | null>(null);
-  const [hasStartedTyping, setHasStartedTyping] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [playerFinishedEarly, setPlayerFinishedEarly] = useState(false);
   const [currentPlayerPosition, setCurrentPlayerPosition] = useState<number | null>(null);
@@ -886,7 +62,7 @@ export default function Game() {
   // Get the current player's nickname from the store
   const currentPlayer = players.find(player => player.id === useGameStore.getState().socket?.id);
 
-  // Listen for player position updates
+  // Listen for player position updates and disconnections
   useEffect(() => {
     const socket = useGameStore.getState().socket;
     if (socket) {
@@ -899,13 +75,37 @@ export default function Game() {
         }
       };
 
+      const handlePlayerDisconnected = (data: { playerId: string; playerName: string }) => {
+        console.log('[Game] Player disconnected:', data);
+        
+        // Show notification about player leaving
+        if (gameStarted && !gameFinished) {
+          // You can add a toast notification here if you have a toast system
+          console.log(`${data.playerName} left the game`);
+          
+          // Update positions for remaining players
+          const remainingPlayers = players.filter(p => p.id !== data.playerId);
+          if (remainingPlayers.length > 0) {
+            // Recalculate positions based on remaining active players
+            const currentUserId = useGameStore.getState().socket?.id;
+            if (currentUserId) {
+              const currentUserProgress = players.find(p => p.id === currentUserId)?.progress || 0;
+              const betterPlayers = remainingPlayers.filter(p => (p.progress || 0) > currentUserProgress);
+              setCurrentPlayerPosition(betterPlayers.length + 1);
+            }
+          }
+        }
+      };
+
       socket.on('playerFinished', handlePlayerFinished);
+      socket.on('playerDisconnected', handlePlayerDisconnected);
       
       return () => {
         socket.off('playerFinished', handlePlayerFinished);
+        socket.off('playerDisconnected', handlePlayerDisconnected);
       };
     }
-  }, [players, playerFinishedEarly, gameFinished]);
+  }, [players, playerFinishedEarly, gameFinished, gameStarted]);
 
   // Handle room closure notifications
   useEffect(() => {
@@ -929,32 +129,6 @@ export default function Game() {
     }
   }, [roomClosed, clearRoomClosed, navigate]);
 
-  // Calculate initial timer based on text length (2 seconds per word)
-  useEffect(() => {
-    if (text) {
-      const wordCount = text.trim().split(/\s+/).length;
-      const totalTime = wordCount * 2;
-      setTimeLeft(totalTime);
-    }
-  }, [text]);
-
-  // Timer countdown
-  useEffect(() => {
-    if (gameStarted && timeLeft !== null && timeLeft > 0) {
-      const timer = setInterval(() => {
-        setTimeLeft(prev => {
-          if (prev === null || prev <= 0) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-  }, [gameStarted, timeLeft]);
-
   // Handle game over logic
   const handleGameOver = useCallback(() => {
     const finishTime = startTime ? (Date.now() - startTime) / 1000 : 0;
@@ -963,19 +137,19 @@ export default function Game() {
     if (socket) {
       socket.emit('playerFinished', {
         time: finishTime,
-        wpm: playerStats.wpm,
-        errors: playerStats.errors,
+        wpm: wpm,
+        errors: totalErrors,
         progress: progress
       });
       
       // Also update the player's stats in the store
       socket.emit('updatePlayerStats', {
-        wpm: playerStats.wpm,
-        errors: playerStats.errors,
+        wpm: wpm,
+        errors: totalErrors,
         progress: progress
       });
     }
-  }, [startTime, playerStats.wpm, playerStats.errors, progress]);
+  }, [startTime, wpm, totalErrors, progress]);
 
   // Handle time's up - ensure all final stats are synced
   useEffect(() => {
@@ -987,8 +161,8 @@ export default function Game() {
       const socket = useGameStore.getState().socket;
       if (socket) {
         const finalStats = {
-          wpm: playerStats.wpm,
-          errors: playerStats.errors,
+          wpm: wpm,
+          errors: totalErrors,
           progress: progress,
           time: startTime ? (Date.now() - startTime) / 1000 : 0
         };
@@ -1010,11 +184,11 @@ export default function Game() {
       const timer = setTimeout(() => {
         setShowTimeUp(false);
         setShowResults(true);
-      }, 5000); // Increased to 5 seconds for slower display and stats sync
+      }, TIME_UP_RESULTS_DELAY);
       
       setTimeUpTimer(timer);
     }
-  }, [timeLeft, playerStats.wpm, playerStats.errors, progress, startTime, gameFinished, handleGameOver]);
+  }, [timeLeft, wpm, totalErrors, progress, startTime, gameFinished, handleGameOver]);
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -1036,8 +210,8 @@ export default function Game() {
       const socket = useGameStore.getState().socket;
       if (socket) {
         const completionStats = {
-          wpm: playerStats.wpm,
-          errors: playerStats.errors,
+          wpm: wpm,
+          errors: totalErrors,
           progress: 100,
           time: startTime ? (Date.now() - startTime) / 1000 : 0
         };
@@ -1054,9 +228,9 @@ export default function Game() {
       // Hide confetti after 3 seconds but don't show results yet
       setTimeout(() => {
         setShowConfetti(false);
-      }, 3000);
+      }, CONFETTI_DURATION);
     }
-  }, [progress, gameFinished, playerStats.wpm, playerStats.errors, startTime, timeLeft, players]);
+  }, [progress, gameFinished, wpm, totalErrors, startTime, timeLeft, players]);
 
   // Show results modal when all players finish or time's up
   useEffect(() => {
@@ -1067,8 +241,8 @@ export default function Game() {
         const socket = useGameStore.getState().socket;
         if (socket) {
           const finalStats = {
-            wpm: playerStats.wpm,
-            errors: playerStats.errors,
+            wpm: wpm,
+            errors: totalErrors,
             progress: progress,
             time: startTime ? (Date.now() - startTime) / 1000 : 0
           };
@@ -1079,18 +253,14 @@ export default function Game() {
         setTimeout(() => {
           setShowResults(true);
         }, 500);
-      }, 1500); // Increased delay to ensure proper sync
+      }, GAME_STATE_SYNC_DELAY);
     }
-  }, [gameState, showResults, playerStats.wpm, playerStats.errors, progress, startTime]);
+  }, [gameState, showResults, wpm, totalErrors, progress, startTime]);
 
   // Calculate WPM and continuously update stats
   useEffect(() => {
-    if (gameStarted && startTime && hasStartedTyping) {
+    if (gameStarted && startTime && state.hasStartedTyping) {
       const timeElapsed = (Date.now() - startTime) / 1000 / 60; // in minutes
-      const wordsTyped = input.trim().split(/\s+/).length;
-      const wpm = Math.round(wordsTyped / timeElapsed);
-      setPlayerStats(prev => ({ ...prev, wpm }));
-      
       // Continuously update server with latest stats while game is active
       if (timeLeft !== null && timeLeft > 0) {
         const socket = useGameStore.getState().socket;
@@ -1105,109 +275,36 @@ export default function Game() {
           // Throttle updates to every 1 second for better sync
           const lastUpdate = (window as any).lastStatsUpdate || 0;
           const now = Date.now();
-          if (now - lastUpdate > 1000) {
+          if (now - lastUpdate > STATS_SYNC_THROTTLE) {
             socket.emit('updatePlayerStats', currentStats);
             (window as any).lastStatsUpdate = now;
           }
         }
       }
     }
-  }, [input, gameStarted, startTime, hasStartedTyping, totalErrors, progress, timeLeft]);
+  }, [input, gameStarted, startTime, state.hasStartedTyping, totalErrors, progress, timeLeft, wpm]);
 
   useEffect(() => {
-    setInput('');
-    setGameStarted(false);
-    setCountdown(3);
-    setErrorPositions(new Set());
-    setTotalErrors(0);
-    setProgress(0);
-    setShowConfetti(false);
+    dispatch({ type: 'RESET' });
     setGameFinished(false);
     setPlayerFinishedEarly(false);
     setCurrentPlayerPosition(null);
     setWaitingForOthers(false);
     setShowResults(false);
-  }, [text]);
+  }, [text, dispatch]);
 
   useEffect(() => {
     if (countdown === null && !startTime) {
-      setStartTime(Date.now());
+      dispatch({ type: 'START_GAME' });
     }
-  }, [countdown]);
-
-  useEffect(() => {
-    if (countdown === null) return;
-
-    const timer = setTimeout(() => {
-      if (countdown > 1) {
-        setCountdown(countdown - 1);
-      } else {
-        setCountdown(null);
-        setGameStarted(true);
-      }
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [countdown]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (!gameStarted || gameFinished || timeLeft === 0) return;
-    
-    const value = e.target.value;
-    
-    // Do not allow input to exceed text length
-    if (value.length > text.length) return;
-
-    setInput(value);
-
-    // Set hasStartedTyping to true when the player starts typing
-    if (!hasStartedTyping && value.length > 0) {
-      setHasStartedTyping(true);
-    }
-
-    // Check for errors and update progress
-    const newErrorPositions = new Set<number>();
-    let currentTotalErrors = totalErrors;
-    
-    // Check each character for errors
-    for (let i = 0; i < value.length; i++) {
-      if (value[i] !== text[i]) {
-        if (!errorPositions.has(i)) {
-          currentTotalErrors++;
-        }
-        newErrorPositions.add(i);
-      }
-    }
-
-    // Update error and corrected positions
-    setErrorPositions(newErrorPositions);
-    setTotalErrors(currentTotalErrors);
-    
-    // Update error stats with total errors (including corrected ones)
-    setPlayerStats(prev => ({ 
-      ...prev, 
-      errors: currentTotalErrors,
-    }));
-
-    // Calculate progress based on correct characters typed
-    const correctChars = value.length - newErrorPositions.size;
-    const newProgress = (correctChars / text.length) * 100;
-    
-    // Update progress state
-    setProgress(newProgress);
-    
-    // Update global progress regardless of errors
-    updateProgress(newProgress);
-  };
+  }, [countdown, startTime, dispatch]);
 
   // Reset error tracking when game starts
   useEffect(() => {
     if (gameStarted) {
-      setErrorPositions(new Set());
-      setTotalErrors(0);
-      setHasStartedTyping(false);
+      dispatch({ type: 'RESET' });
     }
-  }, [gameStarted]);
+  }, [gameStarted, dispatch]);
 
   const handlePause = () => {
     setIsPaused(!isPaused);
@@ -1248,6 +345,16 @@ export default function Game() {
 
   return (
     <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'url(/images/capybara_background_multiple.png) no-repeat center center fixed', backgroundSize: 'cover' }}>
+      
+      {/* Live Leaderboard - Show only during active gameplay */}
+      <LiveLeaderboard
+        players={players}
+        currentUserId={useGameStore.getState().socket?.id || ''}
+        isVisible={gameStarted && !gameFinished && !showResults && players.length > 1}
+        position="right"
+        compact={true}
+      />
+      
       <div
         style={{
           width: '100%',
@@ -1267,6 +374,19 @@ export default function Game() {
           position: 'relative',
         }}
       >
+        <style>{`
+          @media (max-width: 768px) {
+            .live-leaderboard {
+              top: auto !important;
+              bottom: 10px !important;
+              right: 10px !important;
+              left: 10px !important;
+              width: auto !important;
+              max-width: 100%;
+              transform: none !important;
+            }
+          }
+        `}</style>
         <AnimatePresence>
           {showTimeUp && (
             <TimeUpOverlay 
@@ -1488,22 +608,22 @@ export default function Game() {
                   boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
                   textShadow: '0 1px 2px rgba(0,0,0,0.3)'
                 }}>
-                  WPM: {playerStats.wpm}
+                  WPM: {wpm}
                 </span>
                 <span style={{ 
                   fontSize: 16, 
                   color: '#fff', 
                   fontWeight: 800,
-                  background: playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.9)' : 'rgba(16, 185, 129, 0.9)',
+                  background: totalErrors > 0 ? 'rgba(220, 38, 38, 0.9)' : 'rgba(16, 185, 129, 0.9)',
                   padding: '8px 16px',
                   borderRadius: 10,
-                  border: `2px solid ${playerStats.errors > 0 ? 'rgba(220, 38, 38, 1)' : 'rgba(16, 185, 129, 1)'}`,
+                  border: `2px solid ${totalErrors > 0 ? 'rgba(220, 38, 38, 1)' : 'rgba(16, 185, 129, 1)'}`,
                   minWidth: '90px',
                   textAlign: 'center',
-                  boxShadow: `0 2px 8px ${playerStats.errors > 0 ? 'rgba(220, 38, 38, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
+                  boxShadow: `0 2px 8px ${totalErrors > 0 ? 'rgba(220, 38, 38, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
                   textShadow: '0 1px 2px rgba(0,0,0,0.3)'
                 }}>
-                  Errors: {playerStats.errors}
+                  Errors: {totalErrors}
                 </span>
               </div>
             </div>

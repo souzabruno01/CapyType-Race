@@ -14,7 +14,6 @@ import { LobbyActions } from '../components/lobby/LobbyActions';
 import { TextGenerationModal } from '../components/lobby/TextGenerationModal';
 import { ConfirmationModal } from '../components/lobby/ConfirmationModal';
 import { Notification } from '../components/lobby/Notification';
-import { GameInfoModal } from '../components/lobby/GameInfoModal';
 
 // Hooks
 import { useSessionPersistence } from '../hooks/useSessionPersistence';
@@ -44,7 +43,6 @@ export default function Lobby() {
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState<string | null>(null);
   const [showTextModal, setShowTextModal] = useState(false);
-  const [showInfoModal, setShowInfoModal] = useState(false);
 
   // Custom hooks
   useSessionPersistence();
@@ -59,7 +57,9 @@ export default function Lobby() {
     setSelectedDifficulty,
     selectedCategory,
     setSelectedCategory,
-    generateRandomText
+    generatingText,
+    generateRandomText,
+    generateWithChatGPT
   } = useTextGeneration();
 
   // Get current player ID from socket
@@ -190,24 +190,8 @@ export default function Lobby() {
     }
   };
 
-  const handleStartQuickRace = async () => {
-    try {
-      // Generate random text for quick start
-      const result = await generateRandomText();
-      if (result.success && customText.trim()) {
-        // Use the generated text for quick start
-        useGameStore.getState().startGame(customText.trim());
-      } else {
-        // Fallback: Use a simple default text if generation fails
-        const defaultText = "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the English alphabet at least once, making it perfect for typing practice and testing keyboard layouts.";
-        useGameStore.getState().startGame(defaultText);
-      }
-    } catch (error) {
-      console.error('Quick start failed:', error);
-      // Use fallback text in case of any error
-      const defaultText = "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the English alphabet at least once, making it perfect for typing practice and testing keyboard layouts.";
-      useGameStore.getState().startGame(defaultText);
-    }
+  const handleStartQuickRace = () => {
+    useGameStore.getState().startGame('');
   };
 
   if (!roomId) {
@@ -217,53 +201,15 @@ export default function Lobby() {
   return (
     <div style={{
       minHeight: '100vh',
-      width: '100vw',
+      background: 'linear-gradient(135deg, #ebe4c8 0%, #d4c8a8 100%)',
       display: 'flex',
+      flexDirection: 'column',
       alignItems: 'center',
-      justifyContent: 'center',
-      background: 'url(/images/capybara_background_multiple.png) no-repeat center center fixed',
-      backgroundSize: 'cover',
-      position: 'relative'
+      padding: '20px 16px',
+      fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
-      {/* Matte transparent overlay */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.3)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 0
-      }} />
-      
-      {/* Main content modal */}
-      <div style={{
-        position: 'relative',
-        zIndex: 1,
-        width: '100%',
-        maxWidth: '95vw',
-        maxHeight: '95vh',
-        background: 'rgba(255, 255, 255, 0.15)',
-        backdropFilter: 'blur(20px)',
-        borderRadius: 24,
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-        border: '1px solid rgba(255, 255, 255, 0.2)',
-        padding: '20px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        overflow: 'hidden'
-      }}>
-      {/* Header Section */}
-      <div style={{ 
-        textAlign: 'center', 
-        marginBottom: 16,
-        width: '100%',
-        maxWidth: 600,
-        flexShrink: 0
-      }}>
+      {/* Header */}
+      <div style={{ textAlign: 'center', marginBottom: 30 }}>
         <h1 style={capyTitleStyle}>
           🏁 CapyType Race
         </h1>
@@ -272,7 +218,7 @@ export default function Lobby() {
           alignItems: 'center',
           justifyContent: 'center',
           gap: 8,
-          marginTop: 8
+          marginBottom: 16
         }}>
           <div
             style={{
@@ -283,7 +229,7 @@ export default function Lobby() {
                          connectionStatus === 'connecting' ? '#f59e0b' : '#ef4444'
             }}
           />
-          <span style={{ fontSize: 12, color: '#374151', fontWeight: 500 }}>
+          <span style={{ fontSize: 12, color: '#6b7280', fontWeight: 500 }}>
             {connectionStatus === 'connected' ? 'Connected' : 
              connectionStatus === 'connecting' ? 'Connecting...' : 
              'Disconnected'}
@@ -291,89 +237,40 @@ export default function Lobby() {
         </div>
       </div>
 
-      {/* Room Info Section */}
-      <div style={{ 
-        marginBottom: 16,
-        width: '100%',
-        maxWidth: 600,
-        flexShrink: 0
-      }}>
-        <RoomInfo
-          roomId={roomId}
-          roomName={roomName}
-          showFullId={showFullId}
-          setShowFullId={setShowFullId}
-          copied={copied}
-          setCopied={setCopied}
-        />
-      </div>
+      {/* Room Info */}
+      <RoomInfo
+        roomId={roomId}
+        roomName={roomName}
+        showFullId={showFullId}
+        setShowFullId={setShowFullId}
+        copied={copied}
+        setCopied={setCopied}
+      />
 
       {/* Players Grid */}
-      <div style={{ 
-        flex: 1, 
-        width: '100%', 
-        minHeight: 0,
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        <PlayerGrid
-          players={players}
-          currentPlayerId={currentPlayerId}
-          showColorPicker={showColorPicker}
-          setShowColorPicker={setShowColorPicker}
-          onColorChange={handleColorChange}
-        />
-      </div>
+      <PlayerGrid
+        players={players}
+        currentPlayerId={currentPlayerId}
+        isCurrentPlayerAdmin={isAdmin}
+        showColorPicker={showColorPicker}
+        setShowColorPicker={setShowColorPicker}
+        onColorChange={handleColorChange}
+      />
 
       {/* Lobby Actions */}
-      <div style={{ flexShrink: 0, width: '100%' }}>
-        <LobbyActions
-          isAdmin={isAdmin}
-          players={players}
-          playAlone={playAlone}
-          setPlayAlone={setPlayAlone}
-          onShowTextModal={() => setShowTextModal(true)}
-          onStartGame={handleStartQuickRace}
-          onBackToLogin={handleBackToLogin}
-          connectionStatus={connectionStatus}
-        />
-      </div>
-
-      {/* Info Button */}
-      <button
-        onClick={() => setShowInfoModal(true)}
-        style={{
-          position: 'absolute',
-          bottom: '20px',
-          right: '20px',
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          background: 'rgba(255, 255, 255, 0.8)',
-          border: '1px solid rgba(0, 0, 0, 0.1)',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '24px',
-          color: '#333',
-          zIndex: 10,
-        }}
-        title="Game Rules"
-      >
-        ℹ️
-      </button>
+      <LobbyActions
+        isAdmin={isAdmin}
+        players={players}
+        playAlone={playAlone}
+        setPlayAlone={setPlayAlone}
+        onShowTextModal={() => setShowTextModal(true)}
+        onStartGame={handleStartQuickRace}
+        onBackToLogin={handleBackToLogin}
+        connectionStatus={connectionStatus}
+      />
 
       {/* Modals */}
       <AnimatePresence>
-        {showInfoModal && (
-          <GameInfoModal
-            isOpen={showInfoModal}
-            onClose={() => setShowInfoModal(false)}
-          />
-        )}
-
         {showTextModal && (
           <TextGenerationModal
             isOpen={showTextModal}
@@ -383,6 +280,8 @@ export default function Lobby() {
             characterLimit={characterLimit}
             setCharacterLimit={setCharacterLimit}
             onGenerateRandom={generateRandomText}
+            onGenerateWithChatGPT={generateWithChatGPT}
+            generatingText={generatingText}
             onStartGame={handleStartWithCustomText}
             selectedDifficulty={selectedDifficulty}
             setSelectedDifficulty={setSelectedDifficulty}
@@ -413,7 +312,6 @@ export default function Lobby() {
         show={showNotification}
         message={notificationMessage}
       />
-      </div>
     </div>
   );
 }

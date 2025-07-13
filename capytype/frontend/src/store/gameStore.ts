@@ -10,6 +10,7 @@ export interface Player {
   position: number;
   avatar: string; // Required field
   color: string; // Required field
+  isHost?: boolean;
 }
 
 interface PlayerResult {
@@ -26,6 +27,7 @@ interface PlayerResult {
 interface GameState {
   socket: Socket | null;
   roomId: string | null;
+  hostId: string | null;
   players: Player[];
   text: string;
   progress: number;
@@ -42,6 +44,7 @@ interface GameState {
 interface GameStore extends GameState {
   setSocket: (socket: Socket | null) => void;
   setRoomId: (roomId: string) => void;
+  setHostId: (hostId: string) => void;
   setPlayers: (players: Player[]) => void;
   setText: (text: string) => void;
   updateProgress: (progress: number) => void;
@@ -62,6 +65,7 @@ const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3
 export const useGameStore = create<GameStore>((set, get) => ({
   socket: null,
   roomId: null,
+  hostId: null,
   players: [],
   text: '',
   progress: 0,
@@ -76,6 +80,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   setSocket: (socket) => set({ socket }),
   setRoomId: (roomId) => set({ roomId }),
+  setHostId: (hostId) => set({ hostId }),
   setPlayers: (players) => set({ players }),
   setText: (text) => set({ text }),
   updateProgress: (progress) => set({ progress }),
@@ -116,6 +121,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   resetGame: () => set({ 
     socket: null,
     roomId: null,
+    hostId: null,
     players: [],
     text: '',
     progress: 0,
@@ -129,7 +135,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     roomClosed: null
   }),
   connect: () => {
-    const { socket: existingSocket, setConnectionStatus, setError } = get();
+    const { socket: existingSocket, setConnectionStatus, setError, setHostId } = get();
     if (existingSocket?.connected) {
       console.log('[Store] Already connected');
       return;
@@ -151,6 +157,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       setSocket(newSocket);
       setConnectionStatus('connected');
       setError(null);
+
+      // When a new connection is made, the player is not yet in a room, so they can't be host.
+      // However, if they create or join a room, the 'roomJoined' event will update their admin status.
+      // We can also listen for an event that explicitly sets the host.
+      newSocket.on('hostAssigned', (hostId) => {
+        setHostId(hostId);
+        set((state) => ({
+          players: state.players.map((p) => ({ ...p, isHost: p.id === hostId })),
+          isAdmin: state.socket?.id === hostId,
+        }));
+      });
     });
 
     newSocket.on('disconnect', () => {
@@ -172,16 +189,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ roomId });
     });
 
-    newSocket.on('roomJoined', ({ roomId, isAdmin }) => {
-      set({ roomId, isAdmin });
+    newSocket.on('roomJoined', ({ roomId, isAdmin, hostId }) => {
+      set({ roomId, isAdmin, hostId });
     });
 
-    newSocket.on('playerJoined', (players) => {
-      set({ players });
+    newSocket.on('playerJoined', (players: Player[]) => {
+      const { hostId } = get();
+      // Trust the incoming player list, but ensure isHost is correctly set from the store's hostId
+      const updatedPlayers = players.map(p => ({ ...p, isHost: p.id === hostId }));
+      set({ players: updatedPlayers });
     });
 
-    newSocket.on('playerLeft', (players) => {
-      set({ players });
+    newSocket.on('playerLeft', (players: Player[]) => {
+      const { hostId } = get();
+      // Trust the incoming player list, but ensure isHost is correctly set from the store's hostId
+      const updatedPlayers = players.map(p => ({ ...p, isHost: p.id === hostId }));
+      set({ players: updatedPlayers });
     });
 
     newSocket.on('gameStarting', ({ text }) => {
