@@ -91,10 +91,15 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
             <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(winner.nickname) }} />
           </div>
           <div style={{
-            fontSize: 10,
-            color: "#b6a77a",
-            fontWeight: 600,
+            background: "rgba(0, 0, 0, 0.7)",
+            borderRadius: 12,
+            padding: "4px 10px",
+            fontSize: 11,
+            color: "#fff",
+            fontWeight: 700,
             marginBottom: 6,
+            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.3)",
+            border: `1px solid ${winnerStyle.color}40`,
           }}>
             {winner.points} pts
           </div>
@@ -194,10 +199,15 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
               <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(player.nickname) }} />
             </div>
             <div style={{
-              fontSize: 9,
-              color: "#b6a77a",
-              fontWeight: 600,
+              background: "rgba(0, 0, 0, 0.7)",
+              borderRadius: 10,
+              padding: "3px 8px",
+              fontSize: 10,
+              color: "#fff",
+              fontWeight: 700,
               marginBottom: 6,
+              boxShadow: "0 2px 6px rgba(0, 0, 0, 0.3)",
+              border: `1px solid ${style.color}40`,
             }}>
               {player.points} pts
             </div>

@@ -19,6 +19,28 @@ const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPositi
     return color;
   };
 
+  // Calculate 30% size reduction for 4th place and beyond
+  const isSmallCard = player.position >= 4;
+  const scaleFactor = isSmallCard ? 0.7 : 1.0; // 30% smaller for 4th+
+  
+  // Scale all dimensions
+  const scaledDimensions = {
+    padding: `${Math.round(16 * scaleFactor)}px ${Math.round(20 * scaleFactor)}px`,
+    minWidth: Math.round(180 * scaleFactor),
+    maxWidth: Math.round(200 * scaleFactor),
+    borderRadius: Math.round(16 * scaleFactor),
+    avatar: Math.round(56 * scaleFactor),
+    marginBottom: Math.round(12 * scaleFactor),
+    marginTop: Math.round(8 * scaleFactor),
+    // Font sizes
+    nameSize: Math.round(16 * scaleFactor),
+    statsSize: Math.round(13 * scaleFactor),
+    pointsSize: Math.round(16 * scaleFactor),
+    positionSize: Math.round(12 * scaleFactor),
+    trophySize: Math.round(20 * scaleFactor),
+    gap: Math.round(4 * scaleFactor),
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -27,18 +49,18 @@ const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPositi
       style={{
         // CHANGED: Use transparent player color instead of white background
         background: makeColorTransparent(player.color || "#b6a77a", 0.15),
-        borderRadius: 16,
+        borderRadius: scaledDimensions.borderRadius,
         border: `3px solid ${player.color || "#b6a77a"}`,
         boxShadow: `0 4px 12px ${player.color ? `${player.color}40` : "rgba(182, 167, 122, 0.2)"}`,
-        // CHANGED: Reduce padding for lobby-style size
-        padding: "16px 20px", // Reduced from 20px 24px
-        // CHANGED: Reduce width to match lobby cards
-        minWidth: 180, // Reduced from 200px
-        maxWidth: 200, // Reduced from 240px
+        // CHANGED: Use scaled padding for size reduction
+        padding: scaledDimensions.padding,
+        // CHANGED: Use scaled width for size reduction
+        minWidth: scaledDimensions.minWidth,
+        maxWidth: scaledDimensions.maxWidth,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        marginBottom: 12,
+        marginBottom: scaledDimensions.marginBottom,
         position: "relative",
       }}
     >
@@ -47,7 +69,7 @@ const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPositi
       position: "absolute",
       top: 8,
       right: 8,
-      fontSize: 20,
+      fontSize: scaledDimensions.trophySize,
     }}>
       🏆
     </div>
@@ -61,7 +83,7 @@ const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPositi
       color: "#fff",
       borderRadius: 12,
       padding: "4px 8px",
-      fontSize: 12,
+      fontSize: scaledDimensions.positionSize,
       fontWeight: 700,
     }}>
       #{player.position}
@@ -71,20 +93,20 @@ const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPositi
       src={player.avatar ? `/images/${player.avatar}` : "/images/Capy-progress-bar-icon.svg"}
       alt="avatar"
       style={{
-        width: 56,
-        height: 56,
+        width: scaledDimensions.avatar,
+        height: scaledDimensions.avatar,
         borderRadius: "50%",
         border: `4px solid ${player.color || "#b6a77a"}`,
         background: "#fff",
         objectFit: "cover",
-        marginBottom: 12,
-        marginTop: 8,
+        marginBottom: scaledDimensions.marginBottom,
+        marginTop: scaledDimensions.marginTop,
       }}
     />
     
     <div style={{
       fontWeight: 700,
-      fontSize: 16,
+      fontSize: scaledDimensions.nameSize,
       color: "#232323",
       marginBottom: 8,
       textAlign: "center",
@@ -98,14 +120,14 @@ const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPositi
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
-      gap: 4,
+      gap: scaledDimensions.gap,
       width: "100%",
     }}>
       <div style={{
         display: "flex",
         justifyContent: "space-between",
         width: "100%",
-        fontSize: 13,
+        fontSize: scaledDimensions.statsSize,
         color: "#666",
       }}>
         <span>WPM: <strong>{player.wpm || 0}</strong></span>
@@ -113,12 +135,18 @@ const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPositi
       </div>
       
       <div style={{
-        fontSize: 16,
-        color: player.color || "#b6a77a",
+        background: `linear-gradient(135deg, ${player.color || "#b6a77a"}, ${player.color || "#b6a77a"}dd)`,
+        borderRadius: Math.round(16 * scaleFactor),
+        padding: `${Math.round(6 * scaleFactor)}px ${Math.round(12 * scaleFactor)}px`,
+        fontSize: scaledDimensions.pointsSize,
+        color: "#fff",
         fontWeight: 700,
         marginTop: 4,
+        boxShadow: `0 2px 8px ${player.color || "#b6a77a"}40`,
+        textShadow: "0 1px 2px rgba(0, 0, 0, 0.3)",
+        border: "1px solid rgba(255, 255, 255, 0.2)",
       }}>
-        {player.points} points
+        {player.points} pts
       </div>
     </div>
   </motion.div>
