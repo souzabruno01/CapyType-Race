@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import DOMPurify from 'dompurify';
 import { useGameStore } from '../store/gameStore';
 import ReactConfetti from 'react-confetti';
 import { useNavigate } from 'react-router-dom';
@@ -584,7 +585,7 @@ export default function Game() {
                 minWidth: 100,
                 textShadow: '0 1px 2px #6366f140'
               }}>
-                {currentPlayer.nickname}
+                <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(currentPlayer.nickname) }} />
               </span>
               
               {/* Enhanced Progress Bar with Avatar Integration */}

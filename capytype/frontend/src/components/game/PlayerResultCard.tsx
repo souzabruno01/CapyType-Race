@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import DOMPurify from 'dompurify';
 import { Player } from "../../store/gameStore";
 
 interface PlayerWithPointsAndPosition extends Player {
@@ -74,7 +75,7 @@ const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPositi
       textAlign: "center",
       lineHeight: 1.2,
     }}>
-      {player.nickname}
+      <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(player.nickname) }} />
     </div>
     
     {/* Stats section */}

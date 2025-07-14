@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import DOMPurify from 'dompurify';
 import { Player } from '../../store/gameStore';
 import { getAvatarByFile, CAPYBARA_AVATARS } from '../../utils/avatars';
 
@@ -110,7 +111,7 @@ export const PlayerCard = ({
       }}>
         <img
           src={`/images/${player.avatar}`}
-          alt={`${player.nickname}'s avatar`}
+          alt={`${DOMPurify.sanitize(player.nickname)}'s avatar`}
           style={{
             width: cardConfig.avatarSize,
             height: cardConfig.avatarSize,
@@ -170,7 +171,7 @@ export const PlayerCard = ({
             wordBreak: 'break-word',
             lineHeight: 1.2
           }}>
-            {player.nickname}
+            <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(player.nickname) }} />
           </div>
           {isPlayerHost && (
             <div style={{

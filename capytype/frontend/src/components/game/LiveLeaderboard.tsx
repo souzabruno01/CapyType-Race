@@ -1,5 +1,6 @@
 import React, { useState, useLayoutEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import DOMPurify from 'dompurify';
 import { Player } from '../../store/gameStore';
 
 interface LiveLeaderboardProps {
@@ -293,7 +294,7 @@ export const LiveLeaderboard: React.FC<LiveLeaderboardProps> = ({
                       textOverflow: 'ellipsis',
                       maxWidth: compact ? 80 : 120
                     }}>
-                      {player.nickname}
+                      <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(player.nickname) }} />
                       {isCurrentUser && ' 👑'}
                     </div>
                     

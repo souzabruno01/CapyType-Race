@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import DOMPurify from 'dompurify';
 import { Player } from "../../store/gameStore";
 import { FaTachometerAlt, FaExclamationTriangle, FaFlagCheckered } from 'react-icons/fa';
 
@@ -87,7 +88,7 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
           }}>
-            {winner.nickname}
+            <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(winner.nickname) }} />
           </div>
           <div style={{
             fontSize: 10,
@@ -190,7 +191,7 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
             }}>
-              {player.nickname}
+              <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(player.nickname) }} />
             </div>
             <div style={{
               fontSize: 9,
