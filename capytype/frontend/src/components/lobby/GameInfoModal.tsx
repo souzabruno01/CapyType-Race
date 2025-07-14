@@ -28,98 +28,155 @@ export const GameInfoModal = ({ isOpen, onClose }: GameInfoModalProps) => {
           onClick={onClose}
         >
           <motion.div
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.9, y: 20 }}
+            initial={{ 
+              scale: 0, 
+              x: '25vw', 
+              y: '25vh',
+              originX: 1,
+              originY: 1
+            }}
+            animate={{ 
+              scale: 1, 
+              x: 0, 
+              y: 0 
+            }}
+            exit={{ 
+              scale: 0, 
+              x: '25vw', 
+              y: '25vh',
+              originX: 1,
+              originY: 1
+            }}
+            transition={{
+              type: "spring",
+              stiffness: 300,
+              damping: 25
+            }}
             style={{
-              background: 'white',
-              padding: '24px',
+              background: 'rgba(235, 228, 200, 0.98)',
+              backdropFilter: 'blur(10px)',
+              padding: '20px',
               borderRadius: '16px',
-              boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+              boxShadow: '0 10px 30px rgba(182, 167, 122, 0.4)',
+              border: '2px solid #b6a77a',
               width: '90%',
-              maxWidth: '600px',
-              maxHeight: '90vh',
+              maxWidth: '420px',
+              maxHeight: '85vh',
               overflowY: 'auto',
               position: 'relative',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 style={{ marginTop: 0, textAlign: 'center', color: '#333' }}>
-              🏁 How to Play CapyType Race 🐾
+            <h2 style={{ 
+              marginTop: 0, 
+              marginBottom: '16px',
+              textAlign: 'center', 
+              color: '#232323',
+              fontSize: '1.5rem',
+              fontWeight: 700
+            }}>
+              🏁 Quick Guide 🐾
             </h2>
-            <div style={{ color: '#555', lineHeight: 1.6 }}>
-              <p>
-                <strong>🎯 Objective:</strong> Race your adorable capybara to the finish line by typing as fast and accurately as possible!
-              </p>
+            <div style={{ color: '#444', lineHeight: 1.5, fontSize: '14px' }}>
               
-              <h3 style={{ color: '#f59e0b', marginTop: '20px', marginBottom: '10px' }}>🚀 How to Race:</h3>
-              <ul>
-                <li>
-                  <strong>🏁 Start the Race:</strong> The room host clicks "Start Game" when everyone is ready
-                </li>
-                <li>
-                  <strong>⏱️ Get Ready:</strong> A 3-second countdown gives you time to prepare
-                </li>
-                <li>
-                  <strong>💨 Type Fast:</strong> Type the displayed text exactly as shown - your capy advances with each correct word!
-                </li>
-                <li>
-                  <strong>🎯 Stay Accurate:</strong> Mistakes slow you down! Fix errors by backspacing
-                </li>
-                <li>
-                  <strong>⏰ Race Against Time:</strong> Complete the text before time runs out
-                </li>
-              </ul>
+              <div style={{ 
+                background: 'rgba(182, 167, 122, 0.15)', 
+                padding: '12px', 
+                borderRadius: '8px', 
+                marginBottom: '12px',
+                border: '1px solid rgba(182, 167, 122, 0.3)'
+              }}>
+                <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', color: '#232323', fontSize: '15px' }}>
+                  🎯 <strong>Goal:</strong> Type fast & accurately to win!
+                </p>
+                <p style={{ margin: 0, fontSize: '13px' }}>
+                  Race your capybara by typing the text correctly before time runs out.
+                </p>
+              </div>
 
-              <h3 style={{ color: '#f59e0b', marginTop: '20px', marginBottom: '10px' }}>🏆 Scoring System:</h3>
-              <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '8px', border: '2px solid #e9ecef' }}>
-                <p style={{ margin: '0 0 10px 0', fontWeight: 'bold', color: '#333' }}>Points = (WPM × 10) - (Errors × 5) + (Progress ÷ 10)</p>
-                <ul style={{ margin: 0 }}>
-                  <li><strong>+10 points</strong> per WPM (Words Per Minute)</li>
-                  <li><strong>-5 points</strong> per typing error</li>
-                  <li><strong>+1 point</strong> per 10% progress completed</li>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '8px', 
+                marginBottom: '12px' 
+              }}>
+                <div style={{ 
+                  background: 'rgba(99, 102, 241, 0.1)', 
+                  padding: '8px', 
+                  borderRadius: '6px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '16px', marginBottom: '2px' }}>⚡</div>
+                  <div style={{ fontSize: '12px', fontWeight: 'bold' }}>Speed</div>
+                  <div style={{ fontSize: '11px' }}>+10 pts/WPM</div>
+                </div>
+                <div style={{ 
+                  background: 'rgba(16, 185, 129, 0.1)', 
+                  padding: '8px', 
+                  borderRadius: '6px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '16px', marginBottom: '2px' }}>🎯</div>
+                  <div style={{ fontSize: '12px', fontWeight: 'bold' }}>Accuracy</div>
+                  <div style={{ fontSize: '11px' }}>-5 pts/error</div>
+                </div>
+              </div>
+
+              <div style={{ 
+                background: 'rgba(245, 158, 11, 0.1)', 
+                padding: '10px', 
+                borderRadius: '6px', 
+                marginBottom: '12px' 
+              }}>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#232323' }}>🏃‍♂️ How to Play:</h4>
+                <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px' }}>
+                  <li>Host clicks "Start Game" when ready</li>
+                  <li>Type the text exactly as shown</li>
+                  <li>Watch your capy advance in real-time</li>
+                  <li>First to finish or highest score wins!</li>
                 </ul>
               </div>
 
-              <h3 style={{ color: '#f59e0b', marginTop: '20px', marginBottom: '10px' }}>🎉 Fun Features:</h3>
-              <ul>
-                <li><strong>🥇 Live Leaderboard:</strong> Watch your capy race in real-time!</li>
-                <li><strong>🎨 Custom Capybaras:</strong> Choose your favorite capy avatar and color</li>
-                <li><strong>🏅 Podium Ceremony:</strong> Top 3 finishers get medals and glory</li>
-                <li><strong>📊 Detailed Stats:</strong> See your WPM, accuracy, and ranking</li>
-                <li><strong>👥 Multiplayer Fun:</strong> Race up to 32 players simultaneously</li>
-              </ul>
+              <div style={{ 
+                background: 'rgba(168, 85, 247, 0.1)', 
+                padding: '10px', 
+                borderRadius: '6px' 
+              }}>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#232323' }}>🎉 Features:</h4>
+                <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px' }}>
+                  <li>🥇 Live leaderboard & podium ceremony</li>
+                  <li>🎨 Custom capybara avatars & colors</li>
+                  <li>👥 Up to 32 players per race</li>
+                </ul>
+              </div>
 
-              <p style={{ textAlign: 'center', marginTop: '20px', fontStyle: 'italic', color: '#666' }}>
-                🐾 Ready to become the ultimate CapyType champion? Let's race! 🏃‍♂️💨
-              </p>
             </div>
             <button
               onClick={onClose}
               style={{
-                marginTop: '20px',
+                marginTop: '16px',
                 width: '100%',
-                padding: '12px',
-                borderRadius: '12px',
+                padding: '10px',
+                borderRadius: '10px',
                 border: 'none',
-                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                background: 'linear-gradient(135deg, #b6a77a, #a69574)',
                 color: 'white',
-                fontSize: '16px',
+                fontSize: '14px',
                 fontWeight: 'bold',
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+                boxShadow: '0 3px 8px rgba(182, 167, 122, 0.3)',
                 transition: 'all 0.2s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 6px 16px rgba(245, 158, 11, 0.4)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(182, 167, 122, 0.4)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.3)';
+                e.currentTarget.style.boxShadow = '0 3px 8px rgba(182, 167, 122, 0.3)';
               }}
             >
-              🏁 Ready to Race! 🐾
+              🏁 Got it! Let's Race! 🐾
             </button>
           </motion.div>
         </motion.div>

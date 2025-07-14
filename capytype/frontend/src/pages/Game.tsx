@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../store/gameStore';
 import ReactConfetti from 'react-confetti';
@@ -48,6 +48,7 @@ export default function Game() {
   const { countdown, setCountdown, timeLeft, setTimeLeft } = useGameTimer();
   const { state, dispatch, handleInputChange } = useGameState(text, gameStarted, countdown);
   const { input, errorPositions, totalErrors, progress, wpm, startTime } = state;
+  const gameAreaRef = useRef<HTMLDivElement>(null); // NEW: Ref for the game area
 
   const [showConfetti, setShowConfetti] = useState(false);
   const [showTimeUp, setShowTimeUp] = useState(false);
@@ -55,6 +56,7 @@ export default function Game() {
   const [gameFinished, setGameFinished] = useState(false);
   const [timeUpTimer, setTimeUpTimer] = useState<number | null>(null);
   const [showResults, setShowResults] = useState(false);
+  const resultsShownRef = useRef(false);
   const [playerFinishedEarly, setPlayerFinishedEarly] = useState(false);
   const [currentPlayerPosition, setCurrentPlayerPosition] = useState<number | null>(null);
   const [waitingForOthers, setWaitingForOthers] = useState(false);
@@ -186,7 +188,10 @@ export default function Game() {
         setShowTimeUp(false);
         // Set game state to finished and show results
         useGameStore.setState({ gameState: 'finished' });
-        setShowResults(true);
+        if (!resultsShownRef.current) {
+          resultsShownRef.current = true;
+          setShowResults(true);
+        }
       }, TIME_UP_RESULTS_DELAY);
       
       setTimeUpTimer(timer);
@@ -234,7 +239,10 @@ export default function Game() {
         setTimeout(() => {
           setWaitingForOthers(false);
           useGameStore.setState({ gameState: 'finished' });
-          setShowResults(true);
+          if (!resultsShownRef.current) {
+            resultsShownRef.current = true;
+            setShowResults(true);
+          }
         }, 2000); // Brief delay to show the congratulations
       }
       
@@ -254,7 +262,10 @@ export default function Game() {
             // Time's up while waiting - end the game
             setWaitingForOthers(false);
             useGameStore.setState({ gameState: 'finished' });
-            setShowResults(true);
+            if (!resultsShownRef.current) {
+              resultsShownRef.current = true;
+              setShowResults(true);
+            }
             return 0;
           }
           return prev - 1;
@@ -271,7 +282,10 @@ export default function Game() {
       setTimeout(() => {
         setWaitingForOthers(false);
         useGameStore.setState({ gameState: 'finished' });
-        setShowResults(true);
+        if (!resultsShownRef.current) {
+          resultsShownRef.current = true;
+          setShowResults(true);
+        }
       }, 1500); // Short delay to show "all players finished" message
     }
   }, [waitingForOthers, players]);
@@ -295,7 +309,10 @@ export default function Game() {
         
         // Show results after a brief delay for final sync
         setTimeout(() => {
-          setShowResults(true);
+          if (!resultsShownRef.current) {
+            resultsShownRef.current = true;
+            setShowResults(true);
+          }
         }, 500);
       }, GAME_STATE_SYNC_DELAY);
     }
@@ -335,6 +352,7 @@ export default function Game() {
     setCurrentPlayerPosition(null);
     setWaitingForOthers(false);
     setShowResults(false);
+    resultsShownRef.current = false;
   }, [text, dispatch]);
 
   useEffect(() => {
@@ -408,11 +426,15 @@ export default function Game() {
         players={players}
         currentUserId={useGameStore.getState().socket?.id || ''}
         isVisible={gameStarted && !gameFinished && !showResults && players.length > 1}
-        position="right"
+        position="auto"
         compact={true}
+        hasActiveOverlay={showTimeUp || waitingForOthers || showResults}
+        forcePosition={false}
+        gameAreaRef={gameAreaRef} // NEW: Pass the ref
       />
       
       <div
+        ref={gameAreaRef} // NEW: Attach the ref
         style={{
           width: '100%',
           maxWidth: 900,

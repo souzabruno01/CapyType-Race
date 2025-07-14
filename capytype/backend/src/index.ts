@@ -39,6 +39,17 @@ const io = new Server(httpServer, {
 const rooms = new Map();
 const raceTimers = new Map(); // Store race timers for each room
 
+// NEW: Centralized point calculation function
+const calculatePoints = (player: any): number => {
+  const basePoints = (player.wpm || 0) * 10;
+  const errorPenalty = (player.errors || 0) * 3;
+  const progressBonus = Math.round((player.progress || 0) / 5);
+  const speedBonus = (player.wpm || 0) > 60 ? ((player.wpm || 0) - 60) * 2 : 0;
+  const accuracyBonus = (player.errors || 0) === 0 && (player.progress || 0) > 10 ? 50 : 0;
+  
+  return Math.max(0, basePoints - errorPenalty + progressBonus + speedBonus + accuracyBonus);
+};
+
 // Race timer management
 function startRaceTimer(roomId: string, duration: number) {
   const timer = setInterval(() => {
@@ -287,6 +298,7 @@ io.on('connection', (socket) => {
       progress: 0,
       wpm: 0,
       errors: 0,
+      points: 0, // NEW: Initialize points
       position: 1,
       avatar,
       color,
@@ -381,6 +393,7 @@ io.on('connection', (socket) => {
       progress: 0,
       wpm: 0,
       errors: 0,
+      points: 0, // NEW: Initialize points
       position: room.players.size + 1,
       avatar,
       color,
@@ -541,85 +554,72 @@ io.on('connection', (socket) => {
   });
 
   // Update player stats (WPM, errors, etc.) - separate from progress
-  socket.on('updatePlayerStats', ({ wpm, errors, progress, time }) => {
-    // Find the room this player is in
+  socket.on('updatePlayerStats', (stats) => {
     for (const [roomId, room] of rooms.entries()) {
-      if (room.players.has(socket.id) && room.gameState === 'playing') {
+      if (room.players.has(socket.id)) {
         const player = room.players.get(socket.id);
         if (player) {
-          // Update all stats
-          player.wpm = wpm || 0;
-          player.errors = errors || 0;
-          player.progress = progress || player.progress;
-          
-          // Broadcast updated stats to all players in the room
-          io.to(roomId).emit('playerStatsUpdated', {
-            playerId: socket.id,
-            nickname: player.nickname,
-            wpm: player.wpm,
-            errors: player.errors,
-            progress: player.progress
-          });
+          player.wpm = stats.wpm;
+          player.errors = stats.errors;
+          player.progress = stats.progress;
+          // NEW: Recalculate points on the server
+          player.points = calculatePoints(player);
+
+          // Broadcast the updated list of all players to the room
+          const updatedPlayers = Array.from(room.players.values());
+          io.to(roomId).emit('playersUpdated', updatedPlayers);
         }
         break;
       }
     }
   });
 
-  // Handle explicit player finished event (when they complete the text)
-  socket.on('playerFinished', ({ wpm, errors, progress, time }) => {
-    // Find the room this player is in
+  // Handle player finishing the race
+  socket.on('playerFinished', (stats) => {
+    logWithInfo(`finished race with stats: ${JSON.stringify(stats)}`);
     for (const [roomId, room] of rooms.entries()) {
       if (room.players.has(socket.id)) {
         const player = room.players.get(socket.id);
         if (player) {
-          // Update final stats
-          player.wpm = wpm || player.wpm;
-          player.errors = errors || player.errors;
-          player.progress = progress || player.progress;
+          // Update final stats from the payload
+          player.wpm = stats.wpm || player.wpm;
+          player.errors = stats.errors || player.errors;
+          player.progress = stats.progress || player.progress;
           
+          // Recalculate final points
+          player.points = calculatePoints(player);
+
           console.log(`[Backend] Player ${player.nickname} finished with stats:`, {
             wpm: player.wpm,
             errors: player.errors,
             progress: player.progress,
-            time
+            points: player.points,
+            time: stats.time
           });
           
-          // Broadcast that this player finished
-          const timeTaken = time || ((Date.now() - room.startTime) / 1000);
+          // Broadcast that this player finished and include the full updated player list
+          const timeTaken = stats.time || ((Date.now() - room.startTime) / 1000);
           const minimumRaceTime = 30; // Minimum race duration in seconds
           const adjustedTime = Math.max(timeTaken, minimumRaceTime);
           
-          io.to(roomId).emit('playerFinished', {
-            playerId: socket.id,
-            nickname: player.nickname,
-            wpm: player.wpm,
-            errors: player.errors,
-            progress: player.progress,
-            time: adjustedTime
+          io.to(roomId).emit('playerFinished', { 
+            playerId: socket.id, 
+            time: adjustedTime,
+            players: Array.from(room.players.values()) // Send updated list
           });
 
           // Check if all players have finished
-          const activePlayers = Array.from(room.players.values()).filter((p: any) => !p.disconnected);
-          const finishedPlayers = activePlayers.filter((p: any) => p.progress >= 100);
-          
-          if (finishedPlayers.length === activePlayers.length && activePlayers.length > 0) {
-            // All players have finished - end the race immediately
-            console.log(`[Backend] All ${activePlayers.length} players finished in room ${roomId}`);
-            
-            // Clear the race timer if it exists
-            const timer = raceTimers.get(roomId);
-            if (timer) {
-              clearInterval(timer);
+          const allFinished = Array.from(room.players.values()).every((p: any) => p.progress >= 100);
+          if (allFinished) {
+            // If all finished, end the race for everyone
+            const raceTimer = raceTimers.get(roomId);
+            if (raceTimer) {
+              clearInterval(raceTimer);
               raceTimers.delete(roomId);
             }
-            
-            // Update room state
             room.gameState = 'finished';
-            
-            // Notify all players that race is completed
             io.to(roomId).emit('raceFinished', { 
-              reason: 'allPlayersFinished', 
+              reason: 'allPlayersFinished',
               serverTime: Date.now() 
             });
           }

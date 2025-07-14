@@ -7,6 +7,7 @@ export interface Player {
   progress: number;
   wpm: number;
   errors: number;
+  points: number; // NEW: Add points field
   position: number;
   avatar: string; // Required field
   color: string; // Required field
@@ -319,6 +320,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
     newSocket.on('error', (error) => {
       console.error('Socket Error:', error);
       // Handle error display to the user
+    });
+
+    // NEW: Listen for updated player data from the server
+    newSocket.on('playersUpdated', (updatedPlayers: Player[]) => {
+      console.log('[GameStore] Received playersUpdated:', updatedPlayers);
+      useGameStore.setState({ players: updatedPlayers });
+    });
+
+    // Listen for when a single player finishes
+    newSocket.on('playerFinished', (data: { playerId: string, time: number, players: Player[] }) => {
+      console.log('[GameStore] Received playerFinished:', data);
+      // When a player finishes, the server sends the FULL updated player list
+      // This ensures all clients are in sync
+      useGameStore.setState({ players: data.players });
+    });
+
+    // Listen for when the entire race is finished (e.g., time's up)
+    newSocket.on('raceFinished', (data: { reason: string, serverTime: number }) => {
+      console.log('[Store] Race finished:', data.reason, 'at server time:', data.serverTime);
+      set({ gameState: 'finished' });
     });
   },
   createRoom: (nickname, avatar, color) => {

@@ -21,39 +21,39 @@ export const PlayerGrid = ({
   const getGridConfig = (playerCount: number) => {
     if (playerCount <= 4) {
       return {
-        minCardWidth: 160,
-        maxWidth: '100%',
-        gap: 16,
-        columns: 'repeat(auto-fit, minmax(160px, 1fr))'
-      };
-    } else if (playerCount <= 8) {
-      return {
         minCardWidth: 140,
         maxWidth: '100%',
         gap: 14,
         columns: 'repeat(auto-fit, minmax(140px, 1fr))'
       };
-    } else if (playerCount <= 16) {
+    } else if (playerCount <= 8) {
       return {
         minCardWidth: 120,
         maxWidth: '100%',
         gap: 12,
         columns: 'repeat(auto-fit, minmax(120px, 1fr))'
       };
-    } else if (playerCount <= 24) {
+    } else if (playerCount <= 16) {
       return {
         minCardWidth: 100,
         maxWidth: '100%',
         gap: 10,
         columns: 'repeat(auto-fit, minmax(100px, 1fr))'
       };
+    } else if (playerCount <= 24) {
+      return {
+        minCardWidth: 85,
+        maxWidth: '100%',
+        gap: 8,
+        columns: 'repeat(auto-fit, minmax(85px, 1fr))'
+      };
     } else {
       // 25-32 players
       return {
-        minCardWidth: 80,
+        minCardWidth: 70,
         maxWidth: '100%',
-        gap: 8,
-        columns: 'repeat(auto-fit, minmax(80px, 1fr))'
+        gap: 6,
+        columns: 'repeat(auto-fit, minmax(70px, 1fr))'
       };
     }
   };

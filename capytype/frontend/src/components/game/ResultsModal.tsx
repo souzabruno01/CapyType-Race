@@ -17,7 +17,7 @@ const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: {
     })).sort((a, b) => {
       // Sort by completion first (100% progress vs incomplete)
       if ((a.progress >= 100) !== (b.progress >= 100)) {
-        return (b.progress >= 100 ? 1 : 0) - (a.progress >= 100 ? 1 : 0);
+        return (a.progress >= 100 ? 1 : 0) - (b.progress >= 100 ? 1 : 0);
       }
       // Then by points
       if (b.points !== a.points) return b.points - a.points;
