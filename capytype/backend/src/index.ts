@@ -229,6 +229,14 @@ app.get('/', (req, res) => {
   });
 });
 
+// Rate limiting middleware
+app.use(rateLimit);
+
+// Redeploy trigger
+app.get('/', (req, res) => {
+  res.send('CapyType-Race Backend says Hello!');
+});
+
 // Handle OPTIONS preflight requests for room-info
 app.options('/api/room-info', (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
