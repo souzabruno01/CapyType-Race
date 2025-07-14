@@ -98,8 +98,8 @@ const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: {
         <div style={{
           display: 'grid',
           gridTemplateColumns: window.innerWidth < 768 
-            ? 'repeat(auto-fit, minmax(180px, 1fr))' 
-            : 'repeat(auto-fit, minmax(200px, 1fr))',
+            ? 'repeat(auto-fit, minmax(126px, 1fr))' 
+            : 'repeat(auto-fit, minmax(140px, 1fr))',
           gap: 12,
           margin: '20px 0',
           width: '100%',

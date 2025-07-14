@@ -409,7 +409,9 @@ export default function Lobby() {
         ℹ️
       </button>
 
-      {/* Modals */}
+      </div>
+
+      {/* Modals - Moved outside main container to prevent clipping */}
       <AnimatePresence>
         {showInfoModal && (
           <GameInfoModal
@@ -457,7 +459,6 @@ export default function Lobby() {
         show={showNotification}
         message={notificationMessage}
       />
-      </div>
     </div>
   );
 }

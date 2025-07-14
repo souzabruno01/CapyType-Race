@@ -253,7 +253,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ gameState: 'playing' });
     });
 
-    // REMOVED: This duplicate handler was causing race completion bugs
+    newSocket.on('raceFinished', ({ reason, serverTime }) => {
+      console.log('[Store] Race finished:', reason, 'at server time:', serverTime);
+      set({ gameState: 'finished' });
+    });
 
     // Handle game state changes from backend (e.g., when returning to lobby)
     newSocket.on('gameStateChanged', ({ gameState, reason }) => {
@@ -293,7 +296,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }));
     });
 
-    // REMOVED: This duplicate handler was causing player finish bugs
+
 
     newSocket.on('roomClosed', (data: { reason: string; message: string }) => {
       console.log('Room closed:', data);
@@ -328,7 +331,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // NEW: Listen for updated player data from the server
     newSocket.on('playersUpdated', (updatedPlayers: Player[]) => {
       console.log('[GameStore] Received playersUpdated:', updatedPlayers);
-      useGameStore.setState({ players: updatedPlayers });
+      const { hostId } = get();
+      // Preserve host information when updating players
+      const playersWithHost = updatedPlayers.map(p => ({
+        ...p,
+        isHost: p.id === hostId
+      }));
+      useGameStore.setState({ players: playersWithHost });
     });
 
     // Listen for player color changes
@@ -350,18 +359,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Listen for when a single player finishes
     newSocket.on('playerFinished', (data: { playerId: string, time: number, players: Player[] }) => {
       console.log('[GameStore] Received playerFinished:', data);
+      const { hostId } = get();
       // When a player finishes, the server sends the FULL updated player list
-      // This ensures all clients are in sync
-      useGameStore.setState({ players: data.players });
+      // Preserve host information when updating players
+      const playersWithHost = data.players.map(p => ({
+        ...p,
+        isHost: p.id === hostId
+      }));
+      useGameStore.setState({ players: playersWithHost });
     });
 
-    // Listen for when the entire race is finished (e.g., time's up or all players finished)
-    newSocket.on('raceFinished', (data: { reason: string, serverTime: number, players?: Player[] }) => {
+    // Listen for when the entire race is finished (e.g., time's up)
+    newSocket.on('raceFinished', (data: { reason: string, serverTime: number }) => {
       console.log('[Store] Race finished:', data.reason, 'at server time:', data.serverTime);
-      set({ 
-        gameState: 'finished',
-        players: data.players || get().players // Use server's final sorted data if provided
-      });
+      set({ gameState: 'finished' });
     });
     
     newSocket.on('disconnect', () => {

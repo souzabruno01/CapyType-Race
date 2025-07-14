@@ -82,26 +82,29 @@ export const LiveLeaderboard: React.FC<LiveLeaderboardProps> = ({
 
       let bestPosition: 'left' | 'right' | 'top' | 'bottom' = position === 'auto' ? 'right' : position;
 
-      // Overriding logic for small screens or when overlays are active
-      if (windowWidth <= 768 || hasActiveOverlay) {
+      // Improved logic for small screens or critical overlays
+      if (windowWidth <= 768 || (hasActiveOverlay && windowWidth <= 1024)) {
+        // Bottom-first positioning for smaller screens and overlays
         if (spaceBottom >= leaderboardHeight) {
           bestPosition = 'bottom';
         } else if (spaceRight >= leaderboardWidth) {
           bestPosition = 'right';
-        } else {
+        } else if (spaceLeft >= leaderboardWidth) {
           bestPosition = 'left';
+        } else {
+          bestPosition = 'bottom'; // Fallback to bottom for mobile
         }
       } else {
-        // Standard logic for larger screens
+        // Bottom-first logic for larger screens
         if (position === 'auto') {
-          if (spaceRight >= leaderboardWidth) {
+          if (spaceBottom >= leaderboardHeight) {
+            bestPosition = 'bottom';
+          } else if (spaceRight >= leaderboardWidth) {
             bestPosition = 'right';
           } else if (spaceLeft >= leaderboardWidth) {
             bestPosition = 'left';
-          } else if (spaceBottom >= leaderboardHeight) {
-            bestPosition = 'bottom';
           } else {
-            bestPosition = 'right'; // Fallback
+            bestPosition = 'bottom'; // Fallback to bottom
           }
         }
       }
@@ -133,7 +136,7 @@ export const LiveLeaderboard: React.FC<LiveLeaderboardProps> = ({
       setPositionStyles({
         position: 'fixed',
         ...styles,
-        zIndex: bestPosition === 'bottom' ? 25 : 35,
+        zIndex: hasActiveOverlay ? 45 : (bestPosition === 'bottom' ? 25 : 35),
         pointerEvents: 'auto',
       });
     };

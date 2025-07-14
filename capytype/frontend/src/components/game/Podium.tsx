@@ -90,17 +90,21 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
           }}>
             <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(winner.nickname) }} />
           </div>
-          <div style={{
-            background: "rgba(0, 0, 0, 0.7)",
-            borderRadius: 12,
-            padding: "4px 10px",
-            fontSize: 11,
-            color: "#fff",
-            fontWeight: 700,
-            marginBottom: 6,
-            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.3)",
-            border: `1px solid ${winnerStyle.color}40`,
-          }}>
+          <div 
+            style={{
+              background: "rgba(0, 0, 0, 0.7)",
+              borderRadius: 12,
+              padding: "4px 10px",
+              fontSize: 11,
+              color: "#fff",
+              fontWeight: 700,
+              marginBottom: 6,
+              boxShadow: "0 2px 6px rgba(0, 0, 0, 0.3)",
+              border: `1px solid ${winnerStyle.color}40`,
+              cursor: 'help'
+            }}
+            title={`Points Breakdown:\nBase: ${winner.wpm || 0} WPM × 10 = ${(winner.wpm || 0) * 10}\nPenalty: ${winner.errors || 0} errors × 3 = -${(winner.errors || 0) * 3}\nProgress: ${Math.round(winner.progress || 0)}% ÷ 5 = +${Math.round((winner.progress || 0) / 5)}\nSpeed Bonus: ${(winner.wpm || 0) > 60 ? '+50' : '0'} (WPM > 60)\nAccuracy Bonus: ${(winner.errors || 0) === 0 ? '+50' : '0'} (0 errors)\nTotal: ${winner.points} pts`}
+          >
             {winner.points} pts
           </div>
           <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around', gap: 8, marginTop: 8, marginBottom: 8, width: '100%' }}>
@@ -198,17 +202,21 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
             }}>
               <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(player.nickname) }} />
             </div>
-            <div style={{
-              background: "rgba(0, 0, 0, 0.7)",
-              borderRadius: 10,
-              padding: "3px 8px",
-              fontSize: 10,
-              color: "#fff",
-              fontWeight: 700,
-              marginBottom: 6,
-              boxShadow: "0 2px 6px rgba(0, 0, 0, 0.3)",
-              border: `1px solid ${style.color}40`,
-            }}>
+            <div 
+              style={{
+                background: "rgba(0, 0, 0, 0.7)",
+                borderRadius: 10,
+                padding: "3px 8px",
+                fontSize: 10,
+                color: "#fff",
+                fontWeight: 700,
+                marginBottom: 6,
+                boxShadow: "0 2px 6px rgba(0, 0, 0, 0.3)",
+                border: `1px solid ${style.color}40`,
+                cursor: 'help'
+              }}
+              title={`Points Breakdown:\nBase: ${player.wpm || 0} WPM × 10 = ${(player.wpm || 0) * 10}\nPenalty: ${player.errors || 0} errors × 3 = -${(player.errors || 0) * 3}\nProgress: ${Math.round(player.progress || 0)}% ÷ 5 = +${Math.round((player.progress || 0) / 5)}\nSpeed Bonus: ${(player.wpm || 0) > 60 ? '+50' : '0'} (WPM > 60)\nAccuracy Bonus: ${(player.errors || 0) === 0 ? '+50' : '0'} (0 errors)\nTotal: ${player.points} pts`}
+            >
               {player.points} pts
             </div>
             <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', gap: 4, marginTop: 6, marginBottom: 8, width: '100%' }}>

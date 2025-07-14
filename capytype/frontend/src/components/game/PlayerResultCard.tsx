@@ -134,18 +134,22 @@ const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPositi
         <span>Errors: <strong>{player.errors || 0}</strong></span>
       </div>
       
-      <div style={{
-        background: `linear-gradient(135deg, ${player.color || "#b6a77a"}, ${player.color || "#b6a77a"}dd)`,
-        borderRadius: Math.round(16 * scaleFactor),
-        padding: `${Math.round(6 * scaleFactor)}px ${Math.round(12 * scaleFactor)}px`,
-        fontSize: scaledDimensions.pointsSize,
-        color: "#fff",
-        fontWeight: 700,
-        marginTop: 4,
-        boxShadow: `0 2px 8px ${player.color || "#b6a77a"}40`,
-        textShadow: "0 1px 2px rgba(0, 0, 0, 0.3)",
-        border: "1px solid rgba(255, 255, 255, 0.2)",
-      }}>
+      <div 
+        style={{
+          background: `linear-gradient(135deg, ${player.color || "#b6a77a"}, ${player.color || "#b6a77a"}dd)`,
+          borderRadius: Math.round(16 * scaleFactor),
+          padding: `${Math.round(6 * scaleFactor)}px ${Math.round(12 * scaleFactor)}px`,
+          fontSize: scaledDimensions.pointsSize,
+          color: "#fff",
+          fontWeight: 700,
+          marginTop: 4,
+          boxShadow: `0 2px 8px ${player.color || "#b6a77a"}40`,
+          textShadow: "0 1px 2px rgba(0, 0, 0, 0.3)",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          cursor: 'help'
+        }}
+        title={`Points Breakdown:\nBase: ${player.wpm || 0} WPM × 10 = ${(player.wpm || 0) * 10}\nPenalty: ${player.errors || 0} errors × 3 = -${(player.errors || 0) * 3}\nProgress: ${Math.round(player.progress || 0)}% ÷ 5 = +${Math.round((player.progress || 0) / 5)}\nSpeed Bonus: ${(player.wpm || 0) > 60 ? '+50' : '0'} (WPM > 60)\nAccuracy Bonus: ${(player.errors || 0) === 0 ? '+50' : '0'} (0 errors)\nTotal: ${player.points} pts`}
+      >
         {player.points} pts
       </div>
     </div>

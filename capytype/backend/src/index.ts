@@ -97,7 +97,7 @@ const calculatePoints = (player: any): number => {
   const basePoints = (player.wpm || 0) * 10;
   const errorPenalty = (player.errors || 0) * 3;
   const progressBonus = Math.round((player.progress || 0) / 5);
-  const speedBonus = (player.wpm || 0) > 60 ? ((player.wpm || 0) - 60) * 2 : 0;
+  const speedBonus = (player.wpm || 0) > 60 ? 50 : 0;  // Fixed: flat 50 bonus, not variable
   const accuracyBonus = (player.errors || 0) === 0 && (player.progress || 0) > 10 ? 50 : 0;
   
   return Math.max(0, basePoints - errorPenalty + progressBonus + speedBonus + accuracyBonus);

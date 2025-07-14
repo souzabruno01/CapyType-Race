@@ -50,6 +50,7 @@ export default function Game() {
   const { state, dispatch, handleInputChange } = useGameState(text, gameStarted, countdown);
   const { input, errorPositions, totalErrors, progress, wpm, startTime } = state;
   const gameAreaRef = useRef<HTMLDivElement>(null); // NEW: Ref for the game area
+  const textareaRef = useRef<HTMLTextAreaElement>(null); // NEW: Ref for the textarea
 
   const [showConfetti, setShowConfetti] = useState(false);
   const [showTimeUp, setShowTimeUp] = useState(false);
@@ -62,6 +63,9 @@ export default function Game() {
   const [currentPlayerPosition, setCurrentPlayerPosition] = useState<number | null>(null);
   const [waitingForOthers, setWaitingForOthers] = useState(false);
   const [waitingTimeLeft, setWaitingTimeLeft] = useState<number | null>(null);
+  
+  // NEW: Separate race completion state from individual player completion
+  const [raceCompleted, setRaceCompleted] = useState(false);
   
   // Get the current player's nickname from the store
   const currentPlayer = players.find(player => player.id === useGameStore.getState().socket?.id);
@@ -77,6 +81,21 @@ export default function Game() {
           const finishedCount = players.filter(p => p.progress >= 100 || p.id === data.playerId).length;
           setCurrentPlayerPosition(finishedCount);
         }
+      };
+
+      const handleRaceFinished = (data: any) => {
+        console.log('[Game] Race finished:', data);
+        // Race is officially completed - hide leaderboard now
+        setRaceCompleted(true);
+        setGameFinished(true);
+        setWaitingForOthers(false);
+        
+        setTimeout(() => {
+          if (!resultsShownRef.current) {
+            resultsShownRef.current = true;
+            setShowResults(true);
+          }
+        }, 1000);
       };
 
       const handlePlayerDisconnected = (data: { playerId: string; playerName: string }) => {
@@ -102,14 +121,28 @@ export default function Game() {
       };
 
       socket.on('playerFinished', handlePlayerFinished);
+      socket.on('raceFinished', handleRaceFinished);
       socket.on('playerDisconnected', handlePlayerDisconnected);
       
       return () => {
         socket.off('playerFinished', handlePlayerFinished);
+        socket.off('raceFinished', handleRaceFinished);
         socket.off('playerDisconnected', handlePlayerDisconnected);
       };
     }
-  }, [players, playerFinishedEarly, gameFinished, gameStarted]);
+  }, [players, playerFinishedEarly, gameFinished, gameStarted, setRaceCompleted]);
+
+  // Auto-focus textarea when countdown ends and game is ready
+  useEffect(() => {
+    if (countdown === null && gameStarted && !gameFinished && textareaRef.current) {
+      // Small delay to ensure the textarea is fully rendered and enabled
+      const focusTimeout = setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+      
+      return () => clearTimeout(focusTimeout);
+    }
+  }, [countdown, gameStarted, gameFinished]);
 
   // Handle room closure notifications
   useEffect(() => {
@@ -147,7 +180,9 @@ export default function Game() {
       });
       
       // Also update the player's stats in the store
-      socket.emit('updatePlayerStats', {
+      // Only emit playerFinished - this will handle both completion and stats update
+      socket.emit('playerFinished', {
+        time: finishTime,
         wpm: wpm,
         errors: totalErrors,
         progress: progress
@@ -155,7 +190,7 @@ export default function Game() {
     }
   }, [startTime, wpm, totalErrors, progress]);
 
-  // Handle time's up - ensure all final stats are synced
+  // Handle time's up - ensure all final stats are synced but DON'T immediately hide leaderboard
   useEffect(() => {
     if (timeLeft === 0 && !gameFinished) {
       setGameFinished(true); // Freeze typing area immediately
@@ -172,8 +207,8 @@ export default function Game() {
         };
         
         console.log('[Game] Sending final stats on time up:', finalStats);
+        // Only emit playerFinished - this will handle both completion and stats update
         socket.emit('playerFinished', finalStats);
-        socket.emit('updatePlayerStats', finalStats);
       }
       
       handleGameOver();
@@ -183,21 +218,23 @@ export default function Game() {
         setShowTimeUp(true);
       }, 200); // Small delay to let page freeze first
       
-      // Set a longer timer to show results after slower animation
-      // This gives time for all players' final stats to sync
+      // Wait for backend to send raceFinished event instead of auto-hiding
+      // The raceFinished handler will manage hiding leaderboard and showing results
       const timer = setTimeout(() => {
         setShowTimeUp(false);
-        // Set game state to finished and show results
-        useGameStore.setState({ gameState: 'finished' });
-        if (!resultsShownRef.current) {
-          resultsShownRef.current = true;
-          setShowResults(true);
+        // Only auto-show results if backend hasn't sent raceFinished yet
+        if (!raceCompleted) {
+          setRaceCompleted(true);
+          if (!resultsShownRef.current) {
+            resultsShownRef.current = true;
+            setShowResults(true);
+          }
         }
       }, TIME_UP_RESULTS_DELAY);
       
       setTimeUpTimer(timer);
     }
-  }, [timeLeft, wpm, totalErrors, progress, startTime, gameFinished, handleGameOver]);
+  }, [timeLeft, wpm, totalErrors, progress, startTime, gameFinished, handleGameOver, raceCompleted]);
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -227,18 +264,20 @@ export default function Game() {
         };
         
         console.log('[Game] Player finished early, sending completion stats:', completionStats);
+        // Only emit playerFinished - this will handle both completion and stats update
         socket.emit('playerFinished', completionStats);
-        socket.emit('updatePlayerStats', completionStats);
         
         // Calculate current position based on how many players finished before you
         const playersFinishedBefore = players.filter(p => p.progress >= 100 && p.id !== useGameStore.getState().socket?.id).length;
         setCurrentPlayerPosition(playersFinishedBefore + 1);
       }
       
-      // If playing alone or all players finished, end the game immediately
+      // Individual player completed - keep leaderboard visible for multiplayer races
       if (players.length === 1 || players.every(p => p.progress >= 100)) {
+        // Only if ALL players finished or single player - end race immediately
         setTimeout(() => {
           setWaitingForOthers(false);
+          setRaceCompleted(true);
           useGameStore.setState({ gameState: 'finished' });
           if (!resultsShownRef.current) {
             resultsShownRef.current = true;
@@ -321,7 +360,7 @@ export default function Game() {
 
   // Calculate WPM and continuously update stats
   useEffect(() => {
-    if (gameStarted && startTime && state.hasStartedTyping) {
+    if (gameStarted && startTime && state.hasStartedTyping && !gameFinished && !raceCompleted) {
       const timeElapsed = (Date.now() - startTime) / 1000 / 60; // in minutes
       // Continuously update server with latest stats while game is active
       if (timeLeft !== null && timeLeft > 0) {
@@ -344,11 +383,12 @@ export default function Game() {
         }
       }
     }
-  }, [input, gameStarted, startTime, state.hasStartedTyping, totalErrors, progress, timeLeft, wpm]);
+  }, [input, gameStarted, startTime, state.hasStartedTyping, totalErrors, progress, timeLeft, wpm, gameFinished, raceCompleted]);
 
   useEffect(() => {
     dispatch({ type: 'RESET' });
     setGameFinished(false);
+    setRaceCompleted(false); // Reset race completion state
     setPlayerFinishedEarly(false);
     setCurrentPlayerPosition(null);
     setWaitingForOthers(false);
@@ -422,16 +462,16 @@ export default function Game() {
   return (
     <div style={{ minHeight: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'url(/images/capybara_background_multiple.png) no-repeat center center fixed', backgroundSize: 'cover' }}>
       
-      {/* Live Leaderboard - Show only during active gameplay */}
+      {/* Live Leaderboard - Fixed visibility logic for 4-player races */}
       <LiveLeaderboard
         players={players}
         currentUserId={useGameStore.getState().socket?.id || ''}
-        isVisible={gameStarted && !gameFinished && !showResults && players.length > 1}
+        isVisible={gameStarted && !raceCompleted && !showResults && players.length > 1}
         position="auto"
         compact={true}
-        hasActiveOverlay={showTimeUp || waitingForOthers || showResults}
+        hasActiveOverlay={showTimeUp || (waitingForOthers && showConfetti)}
+        gameAreaRef={gameAreaRef}
         forcePosition={false}
-        gameAreaRef={gameAreaRef} // NEW: Pass the ref
       />
       
       <div
@@ -713,6 +753,7 @@ export default function Game() {
         {gameStarted && !gameFinished && (
           <div style={{ width: '100%', maxWidth: 700, margin: '18px auto 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <textarea
+              ref={textareaRef} // Attach ref to textarea
               value={input}
               onChange={handleInputChange}
               className="w-full max-w-2xl h-32 p-4 border-2 border-indigo-200 rounded-lg focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 font-mono text-lg shadow"

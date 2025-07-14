@@ -12,7 +12,8 @@ const HighlightedText = ({ text, input, errorPositions }: {
       lineHeight: 1.7,
       whiteSpace: 'pre-wrap',
       position: 'relative',
-      wordBreak: 'break-word'
+      wordBreak: 'keep-all',
+      overflowWrap: 'break-word'
     }}>
       {text.split('').map((char, index) => {
         const isTyped = index < input.length;
