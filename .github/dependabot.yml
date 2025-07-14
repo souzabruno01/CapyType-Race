@@ -1,0 +1,64 @@
+# Dependabot configuration for CapyType-Race
+# This file configures automated dependency updates and vulnerability scanning
+
+version: 2
+updates:
+  # Frontend dependencies (React/TypeScript/Vite)
+  - package-ecosystem: "npm"
+    directory: "/capytype/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "souzabruno01"
+    assignees:
+      - "souzabruno01"
+    commit-message:
+      prefix: "frontend"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "frontend"
+      - "security"
+
+  # Backend dependencies (Node.js/Express/Socket.IO)
+  - package-ecosystem: "npm"
+    directory: "/capytype/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "souzabruno01"
+    assignees:
+      - "souzabruno01"
+    commit-message:
+      prefix: "backend"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "backend"
+      - "security"
+
+  # Root workspace dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "souzabruno01"
+    assignees:
+      - "souzabruno01"
+    commit-message:
+      prefix: "workspace"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "workspace"
+      - "security"
