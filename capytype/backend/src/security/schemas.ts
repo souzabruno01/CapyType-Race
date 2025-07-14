@@ -3,7 +3,7 @@ import { z } from 'zod';
 // Schema for creating a room or joining with a new player
 export const PlayerSchema = z.object({
   nickname: z.string().trim().min(1, { message: "Nickname cannot be empty." }).max(20, { message: "Nickname cannot be longer than 20 characters." }),
-  avatar: z.string().startsWith('/images/'),
+  avatar: z.string().regex(/^Capy-face-\w+\.png$/, { message: "Invalid avatar format." }),
   color: z.string().regex(/^#[0-9a-f]{6}$/i),
 });
 
