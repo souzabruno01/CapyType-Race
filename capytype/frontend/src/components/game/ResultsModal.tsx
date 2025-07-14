@@ -4,6 +4,7 @@ import { Player } from '../../store/gameStore';
 import Podium from './Podium';
 import PlayerResultCard from './PlayerResultCard';
 
+
 const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: { 
   players: Player[];
   onReturnToLobby: () => void;
@@ -11,24 +12,19 @@ const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: {
 }) => {
   // Calculate points and sort, then assign correct positions
   const playersWithPoints = useMemo(() => {
-    const playersWithScores = players.map(player => ({
-      ...player,
-      points: Math.max(0, (player.wpm || 0) * 10 - (player.errors || 0) * 5 + Math.round((player.progress || 0) / 10))
-    })).sort((a, b) => {
-      // Sort by completion first (100% progress vs incomplete)
-      if ((a.progress >= 100) !== (b.progress >= 100)) {
-        return (a.progress >= 100 ? 1 : 0) - (b.progress >= 100 ? 1 : 0);
-      }
-      // Then by points
+    const sortedPlayers = [...players].sort((a, b) => {
+      // Sort by points first
       if (b.points !== a.points) return b.points - a.points;
       // Then by progress
       if (b.progress !== a.progress) return (b.progress || 0) - (a.progress || 0);
-      // Finally by WPM
-      return (b.wpm || 0) - (a.wpm || 0);
+      // Then by WPM
+      if (b.wpm !== a.wpm) return (b.wpm || 0) - (a.wpm || 0);
+      // Finally by errors (fewer is better)
+      return (a.errors || 0) - (b.errors || 0);
     });
 
     // Assign correct positions (1st, 2nd, 3rd, etc.)
-    return playersWithScores.map((player, index) => ({
+    return sortedPlayers.map((player, index) => ({
       ...player,
       position: index + 1
     }));
@@ -66,7 +62,7 @@ const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: {
           maxWidth: window.innerWidth < 768 ? '100%' : 1200,
           width: '95%',
           minWidth: 320,
-          maxHeight: '95vh',
+          maxHeight: '98vh', // Increased modal height
           overflowY: 'auto',
           boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
           border: '3px solid #b6a77a',

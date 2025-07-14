@@ -1,6 +1,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Player } from "../../store/gameStore";
+import { FaTachometerAlt, FaExclamationTriangle, FaFlagCheckered } from 'react-icons/fa';
 
 interface PlayerWithPoints extends Player {
   points: number;
@@ -20,6 +21,14 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
     { height: 45, color: "#cd7f32", shadow: "rgba(205, 127, 50, 0.4)", position: 3 }, // 3rd
   ];
 
+  const StatIcon = ({ icon, value, label }: { icon: React.ReactNode, value: any, label: string }) => (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, color: '#555' }}>
+      {icon}
+      <span style={{ fontSize: 11, fontWeight: 700 }}>{value}</span>
+      <span style={{ fontSize: 8, fontWeight: 500, textTransform: 'uppercase', color: '#888' }}>{label}</span>
+    </div>
+  );
+
   // If no players, don't render anything
   if (players.length === 0) return null;
 
@@ -37,7 +46,7 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
           marginBottom: 24,
           marginTop: 32,
           width: "100%",
-          height: 140,
+          height: 220, // Increased height
         }}
       >
         <motion.div
@@ -49,7 +58,7 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "flex-end",
-            width: 120,
+            width: 140, // Increased width
           }}
         >
           <div style={{ fontSize: 20, marginBottom: 4 }}>🥇</div>
@@ -88,6 +97,11 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
           }}>
             {winner.points} pts
           </div>
+          <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around', gap: 8, marginTop: 8, marginBottom: 8, width: '100%' }}>
+            <StatIcon icon={<FaTachometerAlt size={12} />} value={`${winner.wpm}`} label="WPM" />
+            <StatIcon icon={<FaExclamationTriangle size={12} />} value={winner.errors} label="Errors" />
+            <StatIcon icon={<FaFlagCheckered size={12} />} value={`${Math.round(winner.progress || 0)}%`} label="Progress" />
+          </div>
           <div style={{
             width: "100%",
             height: winnerStyle.height,
@@ -120,7 +134,7 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
         marginBottom: 24,
         marginTop: 32,
         width: "100%",
-        height: 140,
+        height: 220, // Increased height
       }}
     >
       {podiumPlayers.map((player, i) => {
@@ -185,6 +199,11 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
               marginBottom: 6,
             }}>
               {player.points} pts
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center', gap: 4, marginTop: 6, marginBottom: 8, width: '100%' }}>
+              <StatIcon icon={<FaTachometerAlt size={10} />} value={`${player.wpm}`} label="WPM" />
+              <StatIcon icon={<FaExclamationTriangle size={10} />} value={player.errors} label="Errors" />
+              <StatIcon icon={<FaFlagCheckered size={10} />} value={`${Math.round(player.progress || 0)}%`} label="Progress" />
             </div>
             <div style={{
               width: "100%",
