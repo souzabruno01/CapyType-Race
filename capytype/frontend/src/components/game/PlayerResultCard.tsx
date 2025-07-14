@@ -7,27 +7,42 @@ interface PlayerWithPointsAndPosition extends Player {
   position: number;
 }
 
-const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPosition; index: number }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: index * 0.1 }}
-    style={{
-      background: "#fff",
-      borderRadius: 16,
-      border: `3px solid ${player.color || "#b6a77a"}`,
-      boxShadow: `0 4px 12px ${player.color ? `${player.color}40` : "rgba(182, 167, 122, 0.2)"}`,
-      padding: "20px 24px",
-      minWidth: 200,
-      maxWidth: 240,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      marginBottom: 12,
-      position: "relative",
-    }}
-  >
-    {/* Trophy for non-podium finishers */}
+const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPosition; index: number }) => {
+  // Helper function to make player color transparent
+  const makeColorTransparent = (color: string, opacity: number = 0.15) => {
+    if (color.startsWith('#')) {
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+    return color;
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 1 + index * 0.1 }} // Delay after podium animations
+      style={{
+        // CHANGED: Use transparent player color instead of white background
+        background: makeColorTransparent(player.color || "#b6a77a", 0.15),
+        borderRadius: 16,
+        border: `3px solid ${player.color || "#b6a77a"}`,
+        boxShadow: `0 4px 12px ${player.color ? `${player.color}40` : "rgba(182, 167, 122, 0.2)"}`,
+        // CHANGED: Reduce padding for lobby-style size
+        padding: "16px 20px", // Reduced from 20px 24px
+        // CHANGED: Reduce width to match lobby cards
+        minWidth: 180, // Reduced from 200px
+        maxWidth: 200, // Reduced from 240px
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        marginBottom: 12,
+        position: "relative",
+      }}
+    >
+      {/* Trophy for non-podium finishers */}
     <div style={{
       position: "absolute",
       top: 8,
@@ -107,6 +122,7 @@ const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPositi
       </div>
     </div>
   </motion.div>
-);
+  );
+};
 
 export default PlayerResultCard;

@@ -738,8 +738,12 @@ io.on('connection', (socket) => {
                 raceTimers.delete(roomId);
               }
               room.gameState = 'finished';
+              
+              // Send final sorted player data with race completion
+              const finalPlayers = Array.from(room.players.values()).sort((a, b) => b.points - a.points);
               io.to(roomId).emit('raceFinished', { 
                 reason: 'allPlayersFinished',
+                players: finalPlayers,
                 serverTime: Date.now() 
               });
             }

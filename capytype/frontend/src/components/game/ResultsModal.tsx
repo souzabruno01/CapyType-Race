@@ -11,9 +11,10 @@ const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: {
   onBackToLogin: () => void;
 }) => {
   // Calculate points and sort, then assign correct positions
+  // Memoized to prevent re-sorting and animation re-triggering
   const playersWithPoints = useMemo(() => {
     const sortedPlayers = [...players].sort((a, b) => {
-      // Sort by points first
+      // Sort by points first (DESCENDING - higher points = better position)
       if (b.points !== a.points) return b.points - a.points;
       // Then by progress
       if (b.progress !== a.progress) return (b.progress || 0) - (a.progress || 0);

@@ -253,10 +253,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ gameState: 'playing' });
     });
 
-    newSocket.on('raceFinished', ({ reason, serverTime }) => {
-      console.log('[Store] Race finished:', reason, 'at server time:', serverTime);
-      set({ gameState: 'finished' });
-    });
+    // REMOVED: This duplicate handler was causing race completion bugs
 
     // Handle game state changes from backend (e.g., when returning to lobby)
     newSocket.on('gameStateChanged', ({ gameState, reason }) => {
@@ -296,22 +293,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }));
     });
 
-    newSocket.on('playerFinished', (data) => {
-      // Handle player finish logic and update their final stats
-      console.log('Player finished:', data);
-      if (data.playerId && data.wpm !== undefined && data.errors !== undefined) {
-        set((state) => ({
-          players: state.players.map((p) => 
-            p.id === data.playerId ? { 
-              ...p, 
-              wpm: data.wpm, 
-              errors: data.errors, 
-              progress: data.progress || p.progress 
-            } : p
-          ),
-        }));
-      }
-    });
+    // REMOVED: This duplicate handler was causing player finish bugs
 
     newSocket.on('roomClosed', (data: { reason: string; message: string }) => {
       console.log('Room closed:', data);
@@ -373,10 +355,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
       useGameStore.setState({ players: data.players });
     });
 
-    // Listen for when the entire race is finished (e.g., time's up)
-    newSocket.on('raceFinished', (data: { reason: string, serverTime: number }) => {
+    // Listen for when the entire race is finished (e.g., time's up or all players finished)
+    newSocket.on('raceFinished', (data: { reason: string, serverTime: number, players?: Player[] }) => {
       console.log('[Store] Race finished:', data.reason, 'at server time:', data.serverTime);
-      set({ gameState: 'finished' });
+      set({ 
+        gameState: 'finished',
+        players: data.players || get().players // Use server's final sorted data if provided
+      });
     });
     
     newSocket.on('disconnect', () => {
