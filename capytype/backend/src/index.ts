@@ -37,6 +37,9 @@ console.log(`   - XSS Protection: Enabled (Helmet)`);
 
 const app = express();
 
+// Trust proxy for Railway deployment
+app.set('trust proxy', 1);
+
 // --- Security Middlewares ---
 // 1. Helmet for essential security headers
 app.use(helmet());
@@ -227,14 +230,6 @@ app.get('/', (req, res) => {
     version: '1.0.0',
     status: 'Running'
   });
-});
-
-// Rate limiting middleware
-app.use(rateLimit);
-
-// Redeploy trigger
-app.get('/', (req, res) => {
-  res.send('CapyType-Race Backend says Hello!');
 });
 
 // Handle OPTIONS preflight requests for room-info
