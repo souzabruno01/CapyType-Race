@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameStore } from '../store/gameStore';
-import { CAPYBARA_AVATARS } from '../utils/avatars';
 
 /**
  * Custom hook to handle socket event listeners
@@ -14,24 +13,6 @@ export const useSocketEvents = (
 
   useEffect(() => {
     const socket = useGameStore.getState().socket;
-    
-    const handlePlayerColorChanged = ({ playerId, color, avatar }: { playerId: string; color: string; avatar?: string }) => {
-      // Find matching avatar for the color if not provided
-      const matchingAvatar = avatar || CAPYBARA_AVATARS.find(av => av.color === color)?.file;
-      
-      // Update players in store
-      useGameStore.setState((state) => ({
-        players: state.players.map((player) =>
-          player.id === playerId 
-            ? { 
-                ...player, 
-                color, 
-                avatar: matchingAvatar || player.avatar 
-              } 
-            : player
-        ),
-      }));
-    };
 
     const handleRoomJoined = ({ roomId: joinedRoomId, isAdmin: joinedIsAdmin, nickname }: { roomId: string; isAdmin: boolean; nickname: string }) => {
       console.log('[useSocketEvents] Room joined successfully:', { roomId: joinedRoomId, isAdmin: joinedIsAdmin, nickname });
@@ -83,13 +64,11 @@ export const useSocketEvents = (
     };
 
     if (socket) {
-      socket.on('playerColorChanged', handlePlayerColorChanged);
       socket.on('roomJoined', handleRoomJoined);
       socket.on('roomError', handleRoomError);
       socket.on('roomClosed', handleRoomClosed);
       
       return () => {
-        socket.off('playerColorChanged', handlePlayerColorChanged);
         socket.off('roomJoined', handleRoomJoined);
         socket.off('roomError', handleRoomError);
         socket.off('roomClosed', handleRoomClosed);

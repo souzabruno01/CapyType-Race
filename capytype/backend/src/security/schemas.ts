@@ -43,5 +43,5 @@ export const PlayerFinishedSchema = z.object({
 export const ChangePlayerDetailsSchema = z.object({
   playerId: z.string(),
   color: z.string().regex(/^#[0-9a-f]{6}$/i),
-  avatar: z.string().startsWith('/images/').optional(),
+  avatar: z.string().regex(/^Capy-face-\w+\.png$/).optional(), // Match the same format as PlayerSchema
 });

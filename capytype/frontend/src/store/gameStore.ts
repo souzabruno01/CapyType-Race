@@ -349,6 +349,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
       useGameStore.setState({ players: updatedPlayers });
     });
 
+    // Listen for player color changes
+    newSocket.on('playerColorChanged', ({ playerId, color, avatar }: { playerId: string; color: string; avatar?: string }) => {
+      console.log('[GameStore] Received playerColorChanged:', { playerId, color, avatar });
+      set((state) => ({
+        players: state.players.map((player) =>
+          player.id === playerId 
+            ? { 
+                ...player, 
+                color, 
+                avatar: avatar || player.avatar 
+              } 
+            : player
+        ),
+      }));
+    });
+
     // Listen for when a single player finishes
     newSocket.on('playerFinished', (data: { playerId: string, time: number, players: Player[] }) => {
       console.log('[GameStore] Received playerFinished:', data);
