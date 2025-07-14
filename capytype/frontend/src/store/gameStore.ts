@@ -40,6 +40,7 @@ interface GameState {
   connectionStatus: 'disconnected' | 'connecting' | 'connected' | 'error';
   lastError: string | null;
   roomClosed: { reason: string; message: string } | null;
+  actionQueue: (() => void)[]; // Queue for actions to run on connect
 }
 
 interface GameStore extends GameState {
@@ -59,9 +60,13 @@ interface GameStore extends GameState {
   setConnectionStatus: (status: 'disconnected' | 'connecting' | 'connected' | 'error') => void;
   setError: (error: string | null) => void;
   clearRoomClosed: () => void;
+  executeOrQueueAction: (action: () => void) => void;
+  initializeSocket: () => Socket;
 }
 
 const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+
+console.log('[Store] VITE_BACKEND_URL:', VITE_BACKEND_URL);
 
 export const useGameStore = create<GameStore>((set, get) => ({
   socket: null,
@@ -78,6 +83,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   connectionStatus: 'disconnected',
   lastError: null,
   roomClosed: null,
+  actionQueue: [], // Initialize the action queue
 
   setSocket: (socket) => set({ socket }),
   setRoomId: (roomId) => set({ roomId }),
@@ -133,16 +139,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
     gameStarted: false,
     connectionStatus: 'disconnected',
     lastError: null,
-    roomClosed: null
+    roomClosed: null,
+    actionQueue: [] // Fix: Reset the action queue
   }),
   connect: () => {
-    const { socket: existingSocket, setConnectionStatus, setError, setHostId } = get();
-    if (existingSocket?.connected) {
-      console.log('[Store] Already connected');
-      return;
+    const { socket, initializeSocket } = get();
+    if (!socket || !socket.connected) {
+      console.log('[Store] Socket not connected. Initializing...');
+      initializeSocket();
+    }
+  },
+  initializeSocket: () => {
+    const { socket: existingSocket } = get();
+    
+    if (existingSocket) {
+      // If a socket object exists, we just need to ensure it's connected.
+      // The 'connect' event listener below will handle executing the queue.
+      if (!existingSocket.connected) {
+        existingSocket.connect();
+      }
+      return existingSocket;
     }
 
-    console.log('[Store] Connecting to backend:', VITE_BACKEND_URL);
+    console.log('[Store] Creating new socket connection to:', VITE_BACKEND_URL);
+    const { setConnectionStatus, setError } = get();
     setConnectionStatus('connecting');
     setError(null);
 
@@ -152,37 +172,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
       reconnectionDelay: 1000,
     });
 
+    set({ socket: newSocket });
+
     newSocket.on('connect', () => {
       console.log('[Store] Socket connected:', newSocket.id);
-      const { setSocket, setConnectionStatus, setError } = get();
-      setSocket(newSocket);
+      const { setConnectionStatus, setError, actionQueue } = get();
       setConnectionStatus('connected');
       setError(null);
 
-      // When a new connection is made, the player is not yet in a room, so they can't be host.
-      // However, if they create or join a room, the 'roomJoined' event will update their admin status.
-      // We can also listen for an event that explicitly sets the host.
-      newSocket.on('hostAssigned', (hostId) => {
-        setHostId(hostId);
-        set((state) => ({
-          players: state.players.map((p) => ({ ...p, isHost: p.id === hostId })),
-          isAdmin: state.socket?.id === hostId,
-        }));
+      // Execute any queued actions
+      console.log(`[Store] Executing ${actionQueue.length} queued actions.`);
+      actionQueue.forEach(action => {
+        try {
+          action();
+        } catch (error) {
+          console.error('[Store] Error executing queued action:', error);
+        }
       });
-    });
-
-    newSocket.on('disconnect', () => {
-      console.log('[Store] Socket disconnected');
-      const { setSocket, setConnectionStatus } = get();
-      setSocket(null);
-      setConnectionStatus('disconnected');
-    });
-
-    newSocket.on('connect_error', (error) => {
-      console.error('[Store] Connection error:', error);
-      const { setConnectionStatus, setError } = get();
-      setConnectionStatus('error');
-      setError(`Connection failed: ${error.message}`);
+      set({ actionQueue: [] }); // Clear the queue
     });
 
     // Centralized event listeners
@@ -314,12 +321,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     newSocket.on('roomError', (error) => {
       console.error('Room Error:', error.message);
-      // Handle error display to the user
+      setError(error.message || 'Room error occurred');
     });
 
     newSocket.on('error', (error) => {
       console.error('Socket Error:', error);
-      // Handle error display to the user
+      setError(typeof error === 'string' ? error : 'Socket error occurred');
+    });
+
+    // Handle validation errors from the backend
+    newSocket.on('validationError', (error) => {
+      console.error('Validation Error:', error);
+      const message = error.message || 'Invalid data provided';
+      setError(message);
+    });
+
+    // Handle server errors from the backend
+    newSocket.on('serverError', (error) => {
+      console.error('Server Error:', error);
+      const message = error.message || 'Server error occurred';
+      setError(message);
     });
 
     // NEW: Listen for updated player data from the server
@@ -341,45 +362,61 @@ export const useGameStore = create<GameStore>((set, get) => ({
       console.log('[Store] Race finished:', data.reason, 'at server time:', data.serverTime);
       set({ gameState: 'finished' });
     });
+    
+    newSocket.on('disconnect', () => {
+      console.log('[Store] Socket disconnected');
+      const { setSocket, setConnectionStatus } = get();
+      setSocket(null);
+      setConnectionStatus('disconnected');
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('[Store] Connection error:', error);
+      const { setConnectionStatus, setError } = get();
+      setConnectionStatus('error');
+      setError(`Connection failed: ${error.message}`);
+    });
+
+    return newSocket;
+  },
+  // New helper function to manage actions
+  executeOrQueueAction: (action) => {
+    const { socket, initializeSocket, actionQueue } = get();
+    console.log('[Store] executeOrQueueAction called, socket state:', { 
+      socketExists: !!socket, 
+      socketConnected: socket?.connected,
+      queueLength: actionQueue.length 
+    });
+    
+    if (socket && socket.connected) {
+      console.log('[Store] Socket is connected, executing action immediately');
+      action();
+    } else {
+      console.log('[Store] Socket not connected, queueing action and initializing socket');
+      set({ actionQueue: [...actionQueue, action] });
+      // Ensure a socket exists and is trying to connect
+      initializeSocket();
+    }
   },
   createRoom: (nickname, avatar, color) => {
-    const { socket, connect } = get();
-    if (!socket || !socket.connected) {
-      console.log('Socket not connected, attempting to connect first...');
-      connect();
-      // Wait a short time for connection and retry
-      setTimeout(() => {
-        const { socket: newSocket } = get();
-        if (newSocket && newSocket.connected) {
-          console.log('Socket connected, creating room...');
-          newSocket.emit('createRoom', { nickname, avatar, color });
-        } else {
-          console.error('Failed to connect socket for room creation');
-        }
-      }, 1000);
-    } else {
-      console.log('Socket already connected, creating room...');
-      socket.emit('createRoom', { nickname, avatar, color });
-    }
+    console.log('[Store] createRoom called with:', { nickname, avatar, color });
+    get().executeOrQueueAction(() => {
+      const { socket } = get();
+      console.log('[Store] Socket connected, creating room...');
+      console.log('[Store] Socket state:', { id: socket?.id, connected: socket?.connected });
+      // Use the avatar filename, not the full path
+      const avatarFile = avatar.split('/').pop() || avatar;
+      console.log('[Store] Emitting createRoom with:', { nickname, avatar: avatarFile, color });
+      socket?.emit('createRoom', { nickname, avatar: avatarFile, color });
+    });
   },
   joinRoom: (roomId, nickname, avatar, color) => {
-    const { socket, connect } = get();
-    if (!socket || !socket.connected) {
-      console.log('Socket not connected, attempting to connect first...');
-      connect();
-      // Wait a short time for connection and retry
-      setTimeout(() => {
-        const { socket: newSocket } = get();
-        if (newSocket && newSocket.connected) {
-          console.log('Socket connected, joining room...');
-          newSocket.emit('joinRoom', { roomId, nickname, avatar, color });
-        } else {
-          console.error('Failed to connect socket for joining room');
-        }
-      }, 1000);
-    } else {
-      console.log('Socket already connected, joining room...');
-      socket.emit('joinRoom', { roomId, nickname, avatar, color });
-    }
+    get().executeOrQueueAction(() => {
+      const { socket } = get();
+      console.log('Socket connected, joining room...');
+      // Use the avatar filename, not the full path
+      const avatarFile = avatar.split('/').pop() || avatar;
+      socket?.emit('joinRoom', { roomId, nickname, avatar: avatarFile, color });
+    });
   },
 }));

@@ -15,7 +15,7 @@ export const JoinRoomSchema = PlayerSchema.extend({
 // Schema for starting a game
 export const StartGameSchema = z.object({
   roomId: z.string().uuid(),
-  text: z.string().min(50).max(1000), // Assuming a reasonable text length
+  text: z.string().min(10).max(2000), // Allow shorter text for testing: 10-2000 characters
 });
 
 // Schema for player progress updates

@@ -513,18 +513,24 @@ io.on('connection', (socket) => {
   // Start the game
   socket.on('startGame', ({ roomId, text }) => {
     try {
+      console.log(`[Backend] startGame received from ${socket.id}:`);
+      console.log(`  - roomId: ${roomId}`);
+      console.log(`  - text length: ${text?.length || 0}`);
+      console.log(`  - text preview: "${text?.substring(0, 100)}..."`);
+      
       const validatedData = schemas.StartGameSchema.parse({ roomId, text });
-      console.log(`[Backend] startGame received from ${socket.id} for room ${validatedData.roomId}`);
+      console.log(`[Backend] Validation passed for room ${validatedData.roomId}`);
+      
       const room = rooms.get(validatedData.roomId);
       
       if (!room) {
-        console.log(`[Backend] Room ${validatedData.roomId} not found`);
+        console.log(`[Backend] ERROR: Room ${validatedData.roomId} not found`);
         socket.emit('error', 'Room not found');
         return;
       }
       
       if (room.admin !== socket.id) {
-        console.log(`[Backend] Admin check failed. Room admin: ${room.admin}, Socket ID: ${socket.id}`);
+        console.log(`[Backend] ERROR: Admin check failed. Room admin: ${room.admin}, Socket ID: ${socket.id}`);
         socket.emit('error', 'Not authorized to start the game');
         return;
       }
@@ -543,12 +549,14 @@ io.on('connection', (socket) => {
       room.raceDuration = raceDuration;
       
       console.log(`[Backend] Race duration calculated: ${raceDuration}s for ${textLength} characters`);
+      console.log(`[Backend] Emitting gameStarting to room ${roomId}`);
       
       io.to(roomId).emit('gameStarting', { text: validatedData.text, raceDuration });
 
       // Server-controlled countdown with precise timing
       let countdown = 3;
       const countdownInterval = setInterval(() => {
+        console.log(`[Backend] Countdown: ${countdown} for room ${roomId}`);
         io.to(roomId).emit('countdown', { count: countdown, serverTime: Date.now() });
         countdown--;
 
@@ -557,6 +565,7 @@ io.on('connection', (socket) => {
           room.gameState = 'playing';
           room.startTime = Date.now();
           
+          console.log(`[Backend] Game started! Emitting gameStarted to room ${roomId}`);
           // Start the race timer
           startRaceTimer(roomId, raceDuration);
           
@@ -569,9 +578,11 @@ io.on('connection', (socket) => {
       }, 1000);
     } catch (error) {
       if (error instanceof ZodError) {
+        console.error(`[Backend] Validation error in startGame:`, error.errors);
         logWithInfo(`failed to start game due to validation error: ${error.message}`);
         socket.emit('validationError', { message: 'Invalid data provided.', details: error.flatten().fieldErrors });
       } else if (error instanceof Error) {
+        console.error(`[Backend] Unexpected error in startGame:`, error);
         logWithInfo(`failed to start game due to an unexpected error: ${error.message}`);
         socket.emit('serverError', { message: 'An unexpected error occurred.' });
       }

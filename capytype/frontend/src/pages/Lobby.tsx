@@ -183,30 +183,65 @@ export default function Lobby() {
   };
 
   const handleStartWithCustomText = () => {
-    if (customText.trim()) {
-      useGameStore.getState().startGame(customText.trim());
-      setShowTextModal(false);
-      setCustomText('');
+    console.log('[Lobby] handleStartWithCustomText called with text length:', customText.trim().length);
+    
+    if (!customText.trim()) {
+      setNotificationMessage('❌ Please enter some text before starting the race');
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 3000);
+      return;
     }
+    
+    const textLength = customText.trim().length;
+    if (textLength < 10) {
+      setNotificationMessage(`❌ Text too short (${textLength} chars). Minimum 10 characters required.`);
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 4000);
+      return;
+    }
+    
+    if (textLength > 2000) {
+      setNotificationMessage(`❌ Text too long (${textLength} chars). Maximum 2000 characters allowed.`);
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 4000);
+      return;
+    }
+    
+    // Check if we have a valid roomId for multiplayer mode
+    if (!playAlone && !roomId) {
+      setNotificationMessage('❌ No room found. Please rejoin the room.');
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 4000);
+      return;
+    }
+    
+    console.log('[Lobby] Starting game with custom text, practice mode:', playAlone, 'roomId:', roomId);
+    // Pass the playAlone flag to determine if this is practice mode
+    useGameStore.getState().startGame(customText.trim(), playAlone);
+    setShowTextModal(false);
+    setCustomText('');
   };
 
   const handleStartQuickRace = async () => {
+    console.log('[Lobby] handleStartQuickRace called');
     try {
       // Generate random text for quick start
       const result = await generateRandomText();
       if (result.success && customText.trim()) {
+        console.log('[Lobby] Using generated text for quick start, length:', customText.trim().length);
         // Use the generated text for quick start
-        useGameStore.getState().startGame(customText.trim());
+        useGameStore.getState().startGame(customText.trim(), playAlone);
       } else {
+        console.log('[Lobby] Generation failed or no text, using fallback');
         // Fallback: Use a simple default text if generation fails
         const defaultText = "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the English alphabet at least once, making it perfect for typing practice and testing keyboard layouts.";
-        useGameStore.getState().startGame(defaultText);
+        useGameStore.getState().startGame(defaultText, playAlone);
       }
     } catch (error) {
-      console.error('Quick start failed:', error);
+      console.error('[Lobby] Quick start failed:', error);
       // Use fallback text in case of any error
       const defaultText = "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the English alphabet at least once, making it perfect for typing practice and testing keyboard layouts.";
-      useGameStore.getState().startGame(defaultText);
+      useGameStore.getState().startGame(defaultText, playAlone);
     }
   };
 
