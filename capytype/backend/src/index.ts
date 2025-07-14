@@ -671,7 +671,7 @@ io.on('connection', (socket) => {
     try {
       const validatedData = schemas.UpdatePlayerStatsSchema.parse(stats);
       for (const [roomId, room] of rooms.entries()) {
-        if (room.players.has(socket.id)) {
+        if (room.players.has(socket.id) && room.gameState === 'playing') {
           const player = room.players.get(socket.id);
           if (player) {
             player.wpm = validatedData.wpm;
@@ -680,9 +680,11 @@ io.on('connection', (socket) => {
             // NEW: Recalculate points on the server
             player.points = calculatePoints(player);
 
-            // Broadcast the updated list of all players to the room
-            const updatedPlayers = Array.from(room.players.values());
-            io.to(roomId).emit('playersUpdated', updatedPlayers);
+            // Only broadcast playersUpdated for intermediate stats, not final completion
+            if (validatedData.progress < 100) {
+              const updatedPlayers = Array.from(room.players.values());
+              io.to(roomId).emit('playersUpdated', updatedPlayers);
+            }
           }
           break;
         }
