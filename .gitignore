@@ -38,3 +38,13 @@ yarn-error.log*
 # Backup files
 *.backup
 *.backup-
+
+# Backup folders - exclude all backup directories
+*backup*/
+CapyType-Race-backup-*/
+*-backup-*/
+*backup*
+
+# Additional logs
+pglite-debug.log
+*.log

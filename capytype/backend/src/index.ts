@@ -154,8 +154,22 @@ function startRaceTimer(roomId: string, duration: number) {
       clearInterval(timer);
       raceTimers.delete(roomId);
       room.gameState = 'finished';
+      
+      // ✅ CRITICAL FIX: Sort and send players when timer expires (same as when all players finish)
+      const finalPlayers = Array.from(room.players.values()).sort((a: any, b: any) => {
+        // Sort by points first (DESCENDING - higher points = better position)
+        if (b.points !== a.points) return b.points - a.points;
+        // Then by progress (DESCENDING - more progress = better position)
+        if (b.progress !== a.progress) return (b.progress || 0) - (a.progress || 0);
+        // Then by WPM (DESCENDING - higher WPM = better position)
+        if (b.wpm !== a.wpm) return (b.wpm || 0) - (a.wpm || 0);
+        // Finally by errors (ASCENDING - fewer errors = better position)
+        return (a.errors || 0) - (b.errors || 0);
+      });
+      
       io.to(roomId).emit('raceFinished', { 
-        reason: 'timeUp', 
+        reason: 'timeUp',
+        players: finalPlayers,  // Now includes sorted players!
         serverTime: Date.now() 
       });
     }
