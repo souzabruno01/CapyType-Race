@@ -13,8 +13,20 @@ interface PodiumProps {
 }
 
 const Podium: React.FC<PodiumProps> = ({ players }) => {
-  const podiumOrder = [1, 0, 2]; // Order to render: 2nd, 1st, 3rd
-  const podiumPlayers = podiumOrder.map((index) => players[index]).filter((p) => p);
+  // ✅ CRITICAL FIX: Sort players by points to prevent host bias
+  const sortedPlayers = [...players].sort((a, b) => {
+    // Sort by points first (DESCENDING - higher points = better position)
+    if (b.points !== a.points) return b.points - a.points;
+    // Then by progress (DESCENDING)
+    if (b.progress !== a.progress) return (b.progress || 0) - (a.progress || 0);
+    // Then by WPM (DESCENDING)
+    if (b.wpm !== a.wpm) return (b.wpm || 0) - (a.wpm || 0);
+    // Finally by errors (ASCENDING - fewer errors = better position)
+    return (a.errors || 0) - (b.errors || 0);
+  });
+
+  const podiumOrder = [1, 0, 2]; // Order to render: 2nd, 1st, 3rd (now safe with sorted array)
+  const podiumPlayers = podiumOrder.map((index) => sortedPlayers[index]).filter((p) => p);
 
   const podiumStyles = [
     { height: 60, color: "#c0c0c0", shadow: "rgba(192, 192, 192, 0.4)", position: 2 }, // 2nd
@@ -31,11 +43,11 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
   );
 
   // If no players, don't render anything
-  if (players.length === 0) return null;
+  if (sortedPlayers.length === 0) return null;
 
   // If only one player, show only the winner centered
-  if (players.length === 1) {
-    const winner = players[0];
+  if (sortedPlayers.length === 1) {
+    const winner = sortedPlayers[0];
     const winnerStyle = podiumStyles[1]; // Gold style for winner
     
     return (

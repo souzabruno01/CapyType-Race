@@ -103,6 +103,32 @@ const calculatePoints = (player: any): number => {
   return Math.max(0, basePoints - errorPenalty + progressBonus + speedBonus + accuracyBonus);
 };
 
+// 🎯 NEW: Enhanced word-based scoring system (future implementation)
+const calculateWordBasedPoints = (player: any): number => {
+  // Points per correct letter typed
+  const POINTS_PER_CORRECT_LETTER = 5;
+  // Bonus points for completing entire words correctly
+  const POINTS_PER_COMPLETE_WORD = 10;
+  // Penalty for each error/mistake
+  const ERROR_PENALTY = -3;
+  // Speed multiplier for fast typers (>60 WPM gets 20% bonus)
+  const SPEED_MULTIPLIER = (player.wpm || 0) > 60 ? 1.2 : 1.0;
+  
+  // Calculate base score from typing accuracy
+  const correctLetters = player.correctLetters || 0;
+  const correctWords = player.correctWords || 0;
+  const errors = player.errors || 0;
+  
+  const baseScore = (correctLetters * POINTS_PER_CORRECT_LETTER) + 
+                   (correctWords * POINTS_PER_COMPLETE_WORD);
+  const penalties = errors * ERROR_PENALTY;
+  
+  // Apply speed multiplier and ensure non-negative
+  const finalScore = Math.max(0, (baseScore + penalties) * SPEED_MULTIPLIER);
+  
+  return Math.round(finalScore);
+};
+
 // Race timer management
 function startRaceTimer(roomId: string, duration: number) {
   const timer = setInterval(() => {
@@ -741,8 +767,17 @@ io.on('connection', (socket) => {
               }
               room.gameState = 'finished';
               
-              // Send final sorted player data with race completion
-              const finalPlayers = Array.from(room.players.values()).sort((a: any, b: any) => b.points - a.points);
+              // Send final sorted player data with race completion - comprehensive sorting
+              const finalPlayers = Array.from(room.players.values()).sort((a: any, b: any) => {
+                // Sort by points first (DESCENDING - higher points = better position)
+                if (b.points !== a.points) return b.points - a.points;
+                // Then by progress (DESCENDING - more progress = better position)
+                if (b.progress !== a.progress) return (b.progress || 0) - (a.progress || 0);
+                // Then by WPM (DESCENDING - higher WPM = better position)
+                if (b.wpm !== a.wpm) return (b.wpm || 0) - (a.wpm || 0);
+                // Finally by errors (ASCENDING - fewer errors = better position)
+                return (a.errors || 0) - (b.errors || 0);
+              });
               io.to(roomId).emit('raceFinished', { 
                 reason: 'allPlayersFinished',
                 players: finalPlayers,
