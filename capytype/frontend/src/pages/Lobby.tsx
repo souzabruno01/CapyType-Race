@@ -276,30 +276,27 @@ export default function Lobby() {
       <div style={{
         position: 'relative',
         zIndex: 1,
-        width: '100%',
-        maxWidth: '95vw',
-        maxHeight: '95vh',
+        width: '65vw',  // Increased slightly for better spacing (59vw → 65vw)
+        height: '62vh', // Increased slightly for better spacing (59vh → 62vh)
         background: 'rgba(255, 255, 255, 0.15)',
         backdropFilter: 'blur(20px)',
         borderRadius: 24,
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
         border: '1px solid rgba(255, 255, 255, 0.2)',
-        padding: '20px',
+        padding: '16px',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
         fontFamily: 'system-ui, -apple-system, sans-serif',
-        overflow: 'hidden'
+        overflow: 'hidden' // Prevent main modal scroll
       }}>
       {/* Header Section */}
       <div style={{ 
         textAlign: 'center', 
-        marginBottom: 16,
+        marginBottom: 12,
         width: '100%',
-        maxWidth: 600,
         flexShrink: 0
       }}>
-        <h1 style={capyTitleStyle}>
+        <h1 style={{...capyTitleStyle, fontSize: '1.8rem', marginBottom: 8}}>
           🏁 CapyType Race
         </h1>
         <div style={{
@@ -307,7 +304,7 @@ export default function Lobby() {
           alignItems: 'center',
           justifyContent: 'center',
           gap: 8,
-          marginTop: 8
+          marginTop: 4
         }}>
           <div
             style={{
@@ -328,9 +325,8 @@ export default function Lobby() {
 
       {/* Room Info Section */}
       <div style={{ 
-        marginBottom: 16,
+        marginBottom: 12,
         width: '100%',
-        maxWidth: 600,
         flexShrink: 0
       }}>
         <RoomInfo
@@ -343,13 +339,21 @@ export default function Lobby() {
         />
       </div>
 
-      {/* Players Grid */}
+      {/* Players Grid - Takes most of the space */}
       <div style={{ 
         flex: 1, 
         width: '100%', 
         minHeight: 0,
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        background: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: '16px',
+        padding: '16px', // Increased padding for better containment
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)',
+        position: 'relative',
+        overflow: 'hidden', // Prevent cutoff spillover
+        marginBottom: 12
       }}>
         <PlayerGrid
           players={players}
@@ -360,8 +364,15 @@ export default function Lobby() {
         />
       </div>
 
-      {/* Lobby Actions */}
-      <div style={{ flexShrink: 0, width: '100%' }}>
+      {/* Lobby Actions - Compact bottom section */}
+      <div style={{ 
+        flexShrink: 0, 
+        width: '100%',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        gap: 16
+      }}>
         <LobbyActions
           isAdmin={isAdmin}
           players={players}
@@ -374,27 +385,28 @@ export default function Lobby() {
         />
       </div>
 
-      {/* Info Button */}
+      {/* Info Button - Fixed positioning for better Windows compatibility */}
       <button
         onClick={() => setShowInfoModal(true)}
         style={{
           position: 'absolute',
-          bottom: '20px',
-          right: '20px',
-          width: '50px',
-          height: '50px',
+          bottom: '16px',
+          right: '16px',
+          width: '44px',
+          height: '44px',
           borderRadius: '50%',
           background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-          border: 'none',
+          border: '2px solid rgba(255, 255, 255, 0.2)',
           boxShadow: '0 4px 12px rgba(59, 130, 246, 0.3)',
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '20px',
+          fontSize: '16px',
           color: '#fff',
           zIndex: 10,
           transition: 'all 0.2s ease',
+          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'scale(1.1)';

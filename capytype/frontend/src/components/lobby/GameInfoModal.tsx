@@ -77,7 +77,7 @@ const ScoreExampleSection = () => {
       {!isExpanded && (
         <div style={{ 
           marginTop: '4px', 
-          fontSize: '10px', 
+          fontSize: '11px', 
           color: '#666', 
           fontStyle: 'italic',
           textAlign: 'center'
@@ -224,7 +224,7 @@ export const GameInfoModal = ({ isOpen, onClose }: GameInfoModalProps) => {
                   }}>
                     <div style={{ fontSize: '12px', marginBottom: '1px' }}>⚡</div>
                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Base Score</div>
-                    <div style={{ fontSize: '9px' }}>WPM × 10</div>
+                    <div style={{ fontSize: '11px' }}>WPM × 10</div>
                   </div>
                   <div style={{ 
                     background: 'rgba(239, 68, 68, 0.1)', 
@@ -234,7 +234,7 @@ export const GameInfoModal = ({ isOpen, onClose }: GameInfoModalProps) => {
                   }}>
                     <div style={{ fontSize: '12px', marginBottom: '1px' }}>❌</div>
                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Penalties</div>
-                    <div style={{ fontSize: '9px' }}>Errors × 3</div>
+                    <div style={{ fontSize: '11px' }}>Errors × 3</div>
                   </div>
                   <div style={{ 
                     background: 'rgba(16, 185, 129, 0.1)', 
@@ -244,7 +244,7 @@ export const GameInfoModal = ({ isOpen, onClose }: GameInfoModalProps) => {
                   }}>
                     <div style={{ fontSize: '12px', marginBottom: '1px' }}>📈</div>
                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Progress</div>
-                    <div style={{ fontSize: '9px' }}>% Complete ÷ 5</div>
+                    <div style={{ fontSize: '11px' }}>% Complete ÷ 5</div>
                   </div>
                   <div style={{ 
                     background: 'rgba(245, 158, 11, 0.1)', 
@@ -254,11 +254,11 @@ export const GameInfoModal = ({ isOpen, onClose }: GameInfoModalProps) => {
                   }}>
                     <div style={{ fontSize: '12px', marginBottom: '1px' }}>🎯</div>
                     <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Bonuses</div>
-                    <div style={{ fontSize: '9px' }}>+50 each</div>
+                    <div style={{ fontSize: '11px' }}>+50 each</div>
                   </div>
                 </div>
                 <div style={{ 
-                  fontSize: '9px', 
+                  fontSize: '11px', 
                   color: '#666', 
                   textAlign: 'center',
                   lineHeight: 1.2
@@ -267,31 +267,6 @@ export const GameInfoModal = ({ isOpen, onClose }: GameInfoModalProps) => {
                   <div>🎯 Perfect Bonus: +50 pts if 0 errors</div>
                 </div>
               </div>              <ScoreExampleSection />
-
-              {/* Future Word-Based Scoring Information */}
-              <div style={{ 
-                background: 'rgba(168, 85, 247, 0.08)', 
-                padding: '8px', 
-                borderRadius: '6px', 
-                marginBottom: '10px',
-                border: '1px solid rgba(168, 85, 247, 0.2)'
-              }}>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#232323', textAlign: 'center' }}>🔮 Future: Word-Based Scoring</h4>
-                <div style={{ fontSize: '10px', color: '#555', lineHeight: 1.3 }}>
-                  <div style={{ marginBottom: '3px' }}>
-                    <strong>Coming soon: Transparent letter/word-based scoring!</strong>
-                  </div>
-                  <div style={{ fontSize: '9px', color: '#666', paddingLeft: '6px' }}>
-                    <div>• Correct letters: × 5 points each</div>
-                    <div>• Complete words: × 10 bonus points</div>
-                    <div>• Errors: -3 points each</div>
-                    <div>• Speed bonus: +20% for &gt;60 WPM</div>
-                    <div style={{ marginTop: '2px', fontSize: '8px', color: '#7c3aed', fontStyle: 'italic' }}>
-                      This will make scoring more democratic and reward typing accuracy!
-                    </div>
-                  </div>
-                </div>
-              </div>
 
                 <div style={{ 
                   background: 'rgba(245, 158, 11, 0.1)', 

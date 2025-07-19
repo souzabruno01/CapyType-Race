@@ -10,10 +10,10 @@ const HighlightedText = ({ text, input, errorPositions }: {
       fontFamily: 'monospace',
       fontSize: '1.2rem',
       lineHeight: 1.7,
-      whiteSpace: 'pre-wrap',
+      whiteSpace: 'normal', // Allow text to wrap naturally
       position: 'relative',
-      wordBreak: 'keep-all',
-      overflowWrap: 'break-word'
+      wordBreak: 'break-word', // Break words when necessary to prevent overflow
+      overflowWrap: 'break-word' // Ensure long words break within container
     }}>
       {text.split('').map((char, index) => {
         const isTyped = index < input.length;

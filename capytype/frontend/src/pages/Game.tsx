@@ -589,7 +589,9 @@ export default function Game() {
                 fontFamily: 'monospace',
                 fontSize: '1.2rem',
                 lineHeight: 1.7,
-                whiteSpace: 'pre-wrap',
+                whiteSpace: 'normal', // Allow text to wrap naturally
+                wordWrap: 'break-word', // Break words when necessary
+                overflowWrap: 'break-word', // Break long words to prevent overflow
                 color: '#6b7280',
                 userSelect: 'none'
               }}>

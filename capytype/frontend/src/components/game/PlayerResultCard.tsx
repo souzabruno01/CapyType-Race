@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import DOMPurify from 'dompurify';
 import { Player } from "../../store/gameStore";
+import { PlayerName } from '../shared';
 
 interface PlayerWithPointsAndPosition extends Player {
   points: number;
@@ -104,16 +104,12 @@ const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPositi
       }}
     />
     
-    <div style={{
-      fontWeight: 700,
-      fontSize: scaledDimensions.nameSize,
-      color: "#232323",
-      marginBottom: 8,
-      textAlign: "center",
-      lineHeight: 1.2,
-    }}>
-      <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(player.nickname) }} />
-    </div>
+    <PlayerName
+      nickname={player.nickname}
+      fontSize={scaledDimensions.nameSize}
+      variant="results"
+      scaleFactor={scaleFactor}
+    />
     
     {/* Stats section */}
     <div style={{

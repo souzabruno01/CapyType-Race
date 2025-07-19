@@ -25,13 +25,13 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
     return (a.errors || 0) - (b.errors || 0);
   });
 
-  const podiumOrder = [1, 0, 2]; // Order to render: 2nd, 1st, 3rd (now safe with sorted array)
-  const podiumPlayers = podiumOrder.map((index) => sortedPlayers[index]).filter((p) => p);
+  // Keep players in semantic ranking order (1st, 2nd, 3rd) for better accessibility
+  const podiumPlayers = sortedPlayers.slice(0, 3);
 
   const podiumStyles = [
-    { height: 60, color: "#c0c0c0", shadow: "rgba(192, 192, 192, 0.4)", position: 2 }, // 2nd
-    { height: 80, color: "#ffd700", shadow: "rgba(255, 215, 0, 0.4)", position: 1 }, // 1st
-    { height: 45, color: "#cd7f32", shadow: "rgba(205, 127, 50, 0.4)", position: 3 }, // 3rd
+    { height: 80, color: "#ffd700", shadow: "rgba(255, 215, 0, 0.4)", position: 1, order: 2 }, // 1st - center
+    { height: 60, color: "#c0c0c0", shadow: "rgba(192, 192, 192, 0.4)", position: 2, order: 1 }, // 2nd - left  
+    { height: 45, color: "#cd7f32", shadow: "rgba(205, 127, 50, 0.4)", position: 3, order: 3 }, // 3rd - right
   ];
 
   const StatIcon = ({ icon, value, label }: { icon: React.ReactNode, value: any, label: string }) => (
@@ -48,7 +48,7 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
   // If only one player, show only the winner centered
   if (sortedPlayers.length === 1) {
     const winner = sortedPlayers[0];
-    const winnerStyle = podiumStyles[1]; // Gold style for winner
+    const winnerStyle = podiumStyles[0]; // Gold style for winner (1st place is at index 0)
     
     return (
       <div
@@ -160,8 +160,7 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
       }}
     >
       {podiumPlayers.map((player, i) => {
-        const podiumIndex = podiumOrder.indexOf(i);
-        const style = podiumStyles[podiumIndex];
+        const style = podiumStyles[i]; // Direct index mapping since players are in ranking order
         return (
           <motion.div
             key={player.id}
@@ -176,6 +175,7 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
               width: "33%",
               maxWidth: 120,
               minWidth: 80,
+              order: style.order, // Use CSS order property for visual positioning
             }}
           >
             <div style={{

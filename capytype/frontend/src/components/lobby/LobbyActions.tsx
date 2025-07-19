@@ -27,24 +27,47 @@ export const LobbyActions = ({
   return (
     <div style={{
       display: 'flex',
-      flexDirection: 'column',
       alignItems: 'center',
-      gap: 16,
+      justifyContent: 'space-between',
       width: '100%',
-      maxWidth: 400,
-      margin: '0 auto',
-      textAlign: 'center'
+      gap: 16
     }}>
+      {/* Back Button - Left side */}
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onBackToLogin}
+        style={{
+          ...modernButtonStyle,
+          background: '#fff',
+          color: '#232323',
+          border: '1.5px solid #b6a77a',
+          fontSize: 12,
+          padding: '8px 16px',
+          minWidth: 'auto'
+        }}
+      >
+        ← Back
+      </motion.button>
+
+      {/* Admin Controls - Center */}
       {isAdmin ? (
-        <>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          flex: 1,
+          justifyContent: 'center'
+        }}>
           {/* Practice Mode Toggle */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            padding: '8px 12px',
-            width: '100%'
+            gap: 6,
+            background: 'rgba(255, 255, 255, 0.1)',
+            padding: '6px 12px',
+            borderRadius: 8,
+            border: '1px solid rgba(255, 255, 255, 0.2)'
           }}>
             <input
               type="checkbox"
@@ -56,7 +79,7 @@ export const LobbyActions = ({
             <label
               htmlFor="practice-mode"
               style={{
-                fontSize: 13,
+                fontSize: 11,
                 fontWeight: 500,
                 color: '#2d3748',
                 cursor: 'pointer',
@@ -64,17 +87,14 @@ export const LobbyActions = ({
                 textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
               }}
             >
-              Practice Mode (Play Alone)
+              Practice Mode
             </label>
           </div>
 
-          {/* Admin Action Buttons */}
+          {/* Action Buttons */}
           <div style={{
             display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-            width: '100%',
-            alignItems: 'center'
+            gap: 8
           }}>
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -83,29 +103,14 @@ export const LobbyActions = ({
               style={{
                 ...modernButtonStyle,
                 background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                fontSize: 13,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                width: '100%',
-                padding: '12px 20px'
+                fontSize: 11,
+                padding: '8px 16px',
+                minWidth: 'auto'
               }}
-              title="Customize your typing text with category selection and difficulty options"
+              title="Customize your typing text"
             >
-              📝 Custom Text & Start Race
+              📝 Custom Text
             </motion.button>
-            <p style={{
-              fontSize: 11,
-              color: '#2d3748',
-              margin: '-8px 0 4px 0',
-              textAlign: 'center',
-              fontStyle: 'italic',
-              fontWeight: 500,
-              textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
-            }}>
-              Create or generate your own typing text
-            </p>
 
             <motion.button
               whileHover={{ scale: canStartGame ? 1.02 : 1 }}
@@ -119,103 +124,58 @@ export const LobbyActions = ({
                   : '#9ca3af',
                 cursor: canStartGame ? 'pointer' : 'not-allowed',
                 opacity: canStartGame ? 1 : 0.6,
-                fontSize: 13,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                width: '100%',
-                padding: '12px 20px'
+                fontSize: 11,
+                padding: '8px 16px',
+                minWidth: 'auto'
               }}
-              title="Start instantly with randomly generated typing text"
+              title="Start with auto-generated text"
             >
-              🚀 Quick Start Race
+              🚀 Quick Start
             </motion.button>
-            <p style={{
-              fontSize: 11,
-              color: '#2d3748',
-              margin: '-8px 0 8px 0',
-              textAlign: 'center',
-              fontStyle: 'italic',
-              fontWeight: 500,
-              textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
-            }}>
-              Start immediately with auto-generated text
-            </p>
           </div>
 
           {!canStartGame && (
             <div style={{
-              textAlign: 'center',
-              width: '100%'
+              position: 'absolute',
+              bottom: '-24px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              fontSize: 10,
+              color: '#ef4444',
+              whiteSpace: 'nowrap',
+              fontWeight: 500
             }}>
-              <p style={{
-                fontSize: 12,
-                color: '#ef4444',
-                textAlign: 'center',
-                margin: 0,
-                fontWeight: 500
-              }}>
-                {connectionStatus !== 'connected' 
-                  ? 'Waiting for connection...'
-                  : players.length < 2 && !playAlone 
-                    ? 'Need at least 2 players or enable Practice Mode'
-                    : 'Cannot start game'
-                }
-              </p>
+              {connectionStatus !== 'connected' 
+                ? 'Connecting...'
+                : players.length < 2 && !playAlone 
+                  ? 'Need 2+ players or Practice Mode'
+                  : 'Cannot start'
+              }
             </div>
           )}
-        </>
+        </div>
       ) : (
         <div style={{
+          flex: 1,
           textAlign: 'center',
-          padding: '20px',
+          padding: '12px 20px',
           background: 'rgba(99, 102, 241, 0.1)',
           border: '1px solid rgba(99, 102, 241, 0.2)',
-          borderRadius: 16,
-          color: '#4f46e5',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center'
+          borderRadius: 12,
+          color: '#4f46e5'
         }}>
           <p style={{
-            fontSize: 16,
-            fontWeight: 600,
-            marginBottom: 8,
-            textAlign: 'center'
-          }}>
-            ⏳ Waiting for the host to start the game...
-          </p>
-          <p style={{
             fontSize: 12,
-            margin: 0,
-            opacity: 0.8,
-            textAlign: 'center'
+            fontWeight: 600,
+            margin: 0
           }}>
-            The host will set up the race text and start the game
+            ⏳ Waiting for host to start the game...
           </p>
         </div>
       )}
 
-      {/* Back to Login Button */}
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-        onClick={onBackToLogin}
-        style={{
-          ...modernButtonStyle,
-          background: '#fff',
-          color: '#232323',
-          border: '1.5px solid #b6a77a',
-          fontSize: 12,
-          marginTop: 8,
-          alignSelf: 'center'
-        }}
-      >
-        ← Back to Login
-      </motion.button>
+      {/* Spacer for balance */}
+      <div style={{ minWidth: 80 }} />
     </div>
   );
 };

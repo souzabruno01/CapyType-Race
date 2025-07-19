@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import DOMPurify from 'dompurify';
 import { Player } from '../../store/gameStore';
-import { getAvatarByFile, CAPYBARA_AVATARS } from '../../utils/avatars';
+import { CAPYBARA_AVATARS } from '../../utils/avatars';
+import { PlayerName } from '../shared';
 
 interface PlayerCardProps {
   player: Player;
@@ -20,7 +21,6 @@ export const PlayerCard = ({
   onColorChange,
   totalPlayers = 1
 }: PlayerCardProps) => {
-  const avatar = getAvatarByFile(player.avatar);
   const capyColors = CAPYBARA_AVATARS.map(avatar => avatar.color);
   
   const isPlayerHost = player.isHost;
@@ -29,44 +29,44 @@ export const PlayerCard = ({
   const getCardConfig = (playerCount: number) => {
     if (playerCount <= 4) {
       return {
-        padding: 14,
-        avatarSize: 56,
-        fontSize: 13,
-        minWidth: 130,
-        maxWidth: 160
+        padding: 12,
+        avatarSize: 50,
+        fontSize: 14,
+        minWidth: 85,  // Reduced significantly
+        maxWidth: 100  // Reduced significantly
       };
     } else if (playerCount <= 8) {
       return {
-        padding: 12,
-        avatarSize: 48,
-        fontSize: 12,
-        minWidth: 120,
-        maxWidth: 140
+        padding: 10,
+        avatarSize: 42,
+        fontSize: 13,
+        minWidth: 80,  // Reduced significantly
+        maxWidth: 95   // Reduced significantly
       };
     } else if (playerCount <= 16) {
       return {
-        padding: 10,
-        avatarSize: 42,
-        fontSize: 11,
-        minWidth: 100,
-        maxWidth: 120
+        padding: 8,
+        avatarSize: 36,
+        fontSize: 12,
+        minWidth: 75,  // Reduced significantly
+        maxWidth: 90   // Reduced significantly
       };
     } else if (playerCount <= 24) {
       return {
-        padding: 8,
-        avatarSize: 36,
-        fontSize: 10,
-        minWidth: 85,
-        maxWidth: 100
+        padding: 7,
+        avatarSize: 32,
+        fontSize: 11,
+        minWidth: 70,  // Reduced significantly
+        maxWidth: 85   // Reduced significantly
       };
     } else {
       // 25-32 players
       return {
         padding: 6,
-        avatarSize: 32,
-        fontSize: 9,
-        minWidth: 70,
-        maxWidth: 80
+        avatarSize: 28,
+        fontSize: 10,
+        minWidth: 65,  // Reduced significantly
+        maxWidth: 80   // Reduced significantly
       };
     }
   };
@@ -93,6 +93,7 @@ export const PlayerCard = ({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        justifyContent: 'center', // Center content vertically
         padding: cardConfig.padding,
         background: `linear-gradient(135deg, ${getLightColorBackground(player.color)}, rgba(255, 255, 255, 0.8))`,
         borderRadius: 16,
@@ -100,8 +101,10 @@ export const PlayerCard = ({
         border: `2px solid ${player.color}`,
         backdropFilter: 'blur(10px)',
         position: 'relative',
-        minWidth: cardConfig.minWidth,
-        maxWidth: cardConfig.maxWidth,
+        width: '100%', // Take full width of grid cell
+        minWidth: cardConfig.minWidth, // Maintain minimum width
+        maxWidth: cardConfig.maxWidth, // Maintain maximum width
+        margin: '0 auto', // Center the card within the grid cell when it's smaller than cell
         transition: 'all 0.3s ease'
       }}
     >
@@ -164,15 +167,11 @@ export const PlayerCard = ({
           marginBottom: 4,
           minHeight: 38 /* Allocate space to prevent layout shifts */
         }}>
-          <div style={{
-            fontSize: cardConfig.fontSize,
-            fontWeight: 700,
-            color: '#232323',
-            wordBreak: 'break-word',
-            lineHeight: 1.2
-          }}>
-            <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(player.nickname) }} />
-          </div>
+          <PlayerName
+            nickname={player.nickname}
+            fontSize={cardConfig.fontSize}
+            variant="lobby"
+          />
           {isPlayerHost && (
             <div style={{
               marginTop: 4,
@@ -212,17 +211,6 @@ export const PlayerCard = ({
           />
           Ready
         </div>
-
-        {avatar && (
-          <div style={{
-            fontSize: 10,
-            color: '#9ca3af',
-            marginTop: 6,
-            fontStyle: 'italic'
-          }}>
-            {avatar.name}
-          </div>
-        )}
       </div>
 
       {/* Color Picker */}
@@ -246,7 +234,7 @@ export const PlayerCard = ({
             gridTemplateColumns: 'repeat(4, 1fr)',
             gap: 6,
             width: 'fit-content',
-            zIndex: 100
+            zIndex: 1000 // Increased z-index to ensure it appears above all elements
           }}
           data-color-picker
         >
