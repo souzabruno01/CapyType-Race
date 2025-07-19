@@ -1,7 +1,7 @@
 // Text generation utility with difficulty levels
 export interface TextOptions {
   difficulty: 'easy' | 'medium' | 'hard';
-  category?: 'general' | 'programming' | 'quotes' | 'science' | 'literature' | 'history' | 'business' | 'health' | 'sports' | 'food' | 'arts' | 'nature' | 'mathematics';
+  category?: 'general' | 'programming' | 'quotes' | 'science' | 'literature' | 'history' | 'business' | 'health' | 'sports' | 'food' | 'arts' | 'nature' | 'mathematics' | 'quickstart';
 }
 
 // Easy difficulty texts - short sentences, common words, minimal punctuation
@@ -541,6 +541,85 @@ const MATHEMATICS_HARD = [
   "Mathematical logic formalizes reasoning and proof techniques, exploring the foundations and limitations of mathematical knowledge itself.",
 ];
 
+// QuickStart texts - diverse, short texts perfect for 30-60 second races
+// Each category represents completely different topics to keep races interesting
+const QUICKSTART_TEXTS = [
+  // Space & Astronomy (30-45 seconds)
+  "The International Space Station orbits Earth every 90 minutes at a speed of 28,000 kilometers per hour. Astronauts experience 16 sunrises and sunsets each day while conducting scientific experiments in microgravity.",
+  
+  // Cooking & Food Science (35-50 seconds) 
+  "When baking bread, gluten proteins form elastic networks that trap carbon dioxide bubbles produced by yeast fermentation. The Maillard reaction creates the golden crust and complex flavors we associate with fresh-baked bread.",
+  
+  // Ocean Life & Marine Biology (40-55 seconds)
+  "Giant Pacific octopuses are incredibly intelligent creatures with three hearts, blue blood, and the ability to change both color and texture instantly. They can solve puzzles, open jars, and recognize individual humans who care for them.",
+  
+  // Music & Sound Physics (35-50 seconds)
+  "Sound waves travel through air by creating pressure variations that our ears detect as vibrations. Musical instruments produce specific frequencies that create harmony when mathematical ratios align perfectly together.",
+  
+  // Ancient Civilizations (45-60 seconds)
+  "The ancient Egyptians built the Great Pyramid of Giza using approximately 2.3 million stone blocks, each weighing between 2.5 and 15 tons. This architectural marvel remained the world's tallest human-made structure for over 3,800 years.",
+  
+  // Sports & Human Performance (40-55 seconds)
+  "Elite marathon runners maintain a pace of approximately 5 minutes per mile for 26.2 miles, requiring exceptional cardiovascular efficiency and mental endurance. Their hearts pump oxygen-rich blood at rates exceeding 180 beats per minute.",
+  
+  // Weather & Meteorology (35-50 seconds)
+  "Lightning bolts reach temperatures of 30,000 Kelvin, which is five times hotter than the surface of the Sun. Thunder is the sound created by rapidly expanding air heated by the electrical discharge.",
+  
+  // Animal Behavior & Biology (40-55 seconds)
+  "Honeybees communicate the location of flower patches through waggle dances that indicate both direction and distance. A single colony can contain up to 80,000 bees working together with remarkable coordination and efficiency.",
+  
+  // Technology & Innovation (45-60 seconds)
+  "Modern smartphones contain more computing power than the computers used for the Apollo moon missions. These pocket-sized devices process billions of calculations per second while maintaining wireless connections to global networks.",
+  
+  // Art & Cultural History (35-50 seconds)
+  "Leonardo da Vinci painted the Mona Lisa using sfumato, a technique involving subtle gradations of light and shadow without harsh outlines. This masterpiece took over four years to complete during the Renaissance period.",
+  
+  // Plant Biology & Ecology (40-55 seconds)
+  "Redwood trees can live for over 2,000 years and grow taller than 350 feet by efficiently transporting water from their roots to their crown through specialized vascular tissue. They create their own weather systems.",
+  
+  // Psychology & Human Behavior (45-60 seconds)
+  "The human brain contains approximately 86 billion neurons connected by trillions of synapses. These neural networks process information, store memories, and generate consciousness through electrochemical signals traveling at incredible speeds.",
+  
+  // Architecture & Engineering (40-55 seconds)
+  "The Golden Gate Bridge in San Francisco spans 1.7 miles and can sway up to 27 feet in strong winds. Its distinctive International Orange color was chosen to enhance visibility in frequent fog conditions.",
+  
+  // Transportation & Physics (35-50 seconds)
+  "Modern jet engines work by compressing air, mixing it with fuel, igniting the mixture, and expelling hot gases through a nozzle. This process generates thrust according to Newton's third law of motion.",
+  
+  // Geography & Earth Science (45-60 seconds)
+  "The Amazon rainforest produces approximately 20% of the world's oxygen and contains more than 40,000 plant species. This biodiversity hotspot influences global climate patterns and weather systems across multiple continents.",
+  
+  // Fashion & Textile Science (35-50 seconds)
+  "Silk fibers produced by silkworms are stronger than steel wire of the same thickness. The process of silk production, called sericulture, has remained largely unchanged for thousands of years.",
+  
+  // Medicine & Healthcare (40-55 seconds)
+  "The human immune system recognizes and fights millions of potential threats through specialized white blood cells. Vaccines work by training this system to recognize and respond quickly to specific pathogens.",
+  
+  // Communication & Language (35-50 seconds)
+  "There are approximately 7,000 spoken languages worldwide, with new dialects constantly evolving. Language shapes thought patterns and cultural perspectives in ways researchers are still discovering today.",
+  
+  // Energy & Sustainability (45-60 seconds)
+  "Solar panels convert sunlight directly into electricity through photovoltaic cells made from silicon semiconductors. Modern panels can convert over 22% of solar energy into usable electrical power with no moving parts required.",
+  
+  // Gaming & Virtual Reality (40-55 seconds)
+  "Virtual reality creates immersive experiences by tracking head movements and displaying stereoscopic images that fool the brain into perceiving three-dimensional environments. This technology has applications beyond entertainment in education and training.",
+  
+  // Archaeology & Discovery (45-60 seconds)
+  "Carbon dating allows scientists to determine the age of organic materials up to 50,000 years old by measuring radioactive carbon-14 decay rates. This technique has revolutionized our understanding of human history and prehistoric life.",
+  
+  // Mathematics in Nature (40-55 seconds)
+  "The Fibonacci sequence appears throughout nature in flower petals, pinecone spirals, and seashell patterns. This mathematical relationship creates the golden ratio, considered aesthetically pleasing across cultures and time periods.",
+  
+  // Transportation Innovation (35-50 seconds)
+  "Electric vehicles use regenerative braking to convert kinetic energy back into electrical energy, extending their range. Advanced battery management systems monitor thousands of individual cells to optimize performance and safety.",
+  
+  // Neuroscience & Learning (45-60 seconds)
+  "Neuroplasticity allows the brain to reorganize and form new neural connections throughout life. This adaptability enables learning, memory formation, and recovery from brain injuries through targeted rehabilitation and practice.",
+  
+  // Robotics & Automation (40-55 seconds)
+  "Modern industrial robots use computer vision and machine learning to perform complex assembly tasks with precision measured in micrometers. These systems can adapt to variations and learn from experience without explicit programming."
+];
+
 export function getTextByDifficulty(options: TextOptions, targetLength?: number): string {
   const { difficulty, category = 'general' } = options;
   
@@ -703,6 +782,10 @@ export function getTextByDifficulty(options: TextOptions, targetLength?: number)
           break;
       }
       break;
+    case 'quickstart':
+      // For quickstart, ignore difficulty and use diverse short texts
+      textPool = QUICKSTART_TEXTS;
+      break;
     default:
       // General category
       switch (difficulty) {
@@ -790,4 +873,9 @@ export function getTextByDifficulty(options: TextOptions, targetLength?: number)
 // Get a random text with default easy difficulty
 export function getRandomText(): string {
   return getTextByDifficulty({ difficulty: 'easy', category: 'general' });
+}
+
+// Get a quick start text - diverse, short texts perfect for 30-60 second races
+export function getQuickStartText(): string {
+  return getTextByDifficulty({ difficulty: 'easy', category: 'quickstart' });
 }

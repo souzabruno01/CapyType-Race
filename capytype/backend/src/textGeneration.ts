@@ -3,7 +3,7 @@ import { faker } from '@faker-js/faker';
 
 // Define types for better type safety
 type Difficulty = 'easy' | 'medium' | 'hard';
-type Category = 'quotes' | 'code' | 'facts' | 'stories' | 'technical' | 'literature';
+type Category = 'quotes' | 'code' | 'facts' | 'stories' | 'technical' | 'literature' | 'quick';
 
 type TextLibrary = {
   [key in Category]: {
@@ -133,6 +133,44 @@ const staticTexts: TextLibrary = {
       "When Gregor Samsa woke up one morning from unsettling dreams, he found himself changed in his bed into a monstrous vermin. He was lying on his back as hard as armor plate, and when he lifted his head a little, he saw his vaulted brown belly.",
     ],
   },
+  quick: {
+    easy: [
+      "Type fast and have fun!",
+      "Quick fingers win races.",
+      "Speed comes with practice.",
+      "Every keystroke counts.",
+      "Race your way to victory!",
+      "Fast typing, faster thinking.",
+      "The quick brown fox jumps.",
+      "Practice makes perfect typists.",
+      "Keyboard warriors unite!",
+      "Type to the rhythm of success."
+    ],
+    medium: [
+      "Pizza lovers unite! Tonight we feast on cheesy goodness with mushrooms, pepperoni, and extra sauce.",
+      "Mountain climbing requires courage, endurance, and proper equipment. Safety first, adventure second!",
+      "Coffee shops buzz with energy as students type papers and professionals attend virtual meetings.",
+      "Rainbow colors paint the sky after summer storms. Nature provides the most beautiful art displays.",
+      "Space exploration fascinates humanity. Mars missions, moon landings, and stellar discoveries inspire us daily.",
+      "Dancing requires rhythm, grace, and lots of practice. Every step tells a story of movement.",
+      "Ocean waves crash against rocky shores while seagulls call out to passing fishing boats.",
+      "Library silence broken only by turning pages and quiet whispers between study partners.",
+      "Cooking brings families together. Shared meals create lasting memories and strengthen bonds between generations.",
+      "Winter sports enthusiasts hit the slopes early. Fresh powder snow creates perfect skiing conditions."
+    ],
+    hard: [
+      "Technology revolutionizes communication instantly. Smartphones connect billions globally, enabling real-time conversations across continents while social media platforms reshape human interactions fundamentally.",
+      "Artificial intelligence algorithms analyze massive datasets efficiently. Machine learning models predict patterns, automate processes, and solve complex problems previously impossible for traditional computing methods.",
+      "Climate change affects ecosystems worldwide dramatically. Rising temperatures, melting glaciers, and extreme weather patterns threaten biodiversity while demanding immediate global action and sustainable solutions.",
+      "Quantum physics challenges conventional understanding completely. Particles exist in multiple states simultaneously, defying classical logic while opening possibilities for revolutionary technological breakthroughs.",
+      "Renewable energy sources transform power generation significantly. Solar panels, wind turbines, and hydroelectric systems reduce carbon emissions while creating sustainable electricity for future generations.",
+      "Genetic engineering advances medical treatments rapidly. CRISPR technology enables precise DNA modifications, potentially eliminating hereditary diseases while raising ethical questions about human enhancement.",
+      "Virtual reality immerses users in digital worlds entirely. Advanced headsets create convincing sensory experiences, transforming entertainment, education, and professional training across multiple industries.",
+      "Cryptocurrency disrupts traditional banking systems completely. Blockchain technology enables decentralized transactions, challenging governmental monetary control while introducing new economic possibilities and risks.",
+      "Space tourism opens new frontiers for civilians. Private companies develop reusable rockets, making orbital flights accessible while inspiring next-generation explorers to reach for the stars.",
+      "Biotechnology merges biology with engineering creatively. Scientists develop living materials, grow organs in laboratories, and create biological computers that process information using cellular mechanisms."
+    ],
+  },
 };
 
 /**
@@ -142,6 +180,10 @@ function generateDynamicText(category: Category, difficulty: Difficulty): string
   faker.seed(Date.now() + Math.floor(Math.random() * 1000)); // Ensure randomness
 
   switch (category) {
+    case 'quick':
+      // For quick category, always use static texts as they're pre-designed for short games
+      const quickTexts = staticTexts.quick[difficulty];
+      return quickTexts[Math.floor(Math.random() * quickTexts.length)];
     case 'stories':
       return generateStory(difficulty);
     case 'technical':
@@ -324,7 +366,7 @@ export async function fetchRandomQuote(): Promise<string> {
  */
 export function getRandomText(category?: Category, difficulty?: Difficulty): string {
   // Set defaults if not provided
-  const finalCategory = category || faker.helpers.arrayElement(['quotes', 'code', 'facts', 'stories', 'technical', 'literature']);
+  const finalCategory = category || faker.helpers.arrayElement(['quotes', 'code', 'facts', 'stories', 'technical', 'literature', 'quick']);
   const finalDifficulty = difficulty || faker.helpers.arrayElement(['easy', 'medium', 'hard']);
 
   // 70% chance to use static content, 30% chance for dynamic generation

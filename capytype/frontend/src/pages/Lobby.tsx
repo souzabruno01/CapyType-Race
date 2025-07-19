@@ -57,7 +57,8 @@ export default function Lobby() {
     setSelectedDifficulty,
     selectedCategory,
     setSelectedCategory,
-    generateRandomText
+    generateRandomText,
+    generateQuickStartText
   } = useTextGeneration();
 
   // Get current player ID from socket
@@ -223,14 +224,14 @@ export default function Lobby() {
   const handleStartQuickRace = async () => {
     console.log('[Lobby] handleStartQuickRace called');
     try {
-      // Generate random text for quick start
-      const result = await generateRandomText();
+      // Generate diverse quick start text optimized for 30-60 second races
+      const result = await generateQuickStartText();
       if (result.success && customText.trim()) {
-        console.log('[Lobby] Using generated text for quick start, length:', customText.trim().length);
-        // Use the generated text for quick start
+        console.log('[Lobby] Using generated QuickStart text for race, length:', customText.trim().length);
+        // Use the generated QuickStart text
         useGameStore.getState().startGame(customText.trim(), playAlone);
       } else {
-        console.log('[Lobby] Generation failed or no text, using fallback');
+        console.log('[Lobby] QuickStart generation failed, using fallback');
         // Fallback: Use a simple default text if generation fails
         const defaultText = "The quick brown fox jumps over the lazy dog. This pangram contains every letter of the English alphabet at least once, making it perfect for typing practice and testing keyboard layouts.";
         useGameStore.getState().startGame(defaultText, playAlone);

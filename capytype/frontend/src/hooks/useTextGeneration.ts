@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getTextByDifficulty, getRandomText } from '../utils/textGeneration';
+import { getTextByDifficulty, getRandomText, getQuickStartText } from '../utils/textGeneration';
 
 // Use the same backend URL pattern as gameStore
 const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
@@ -106,6 +106,36 @@ export const useTextGeneration = () => {
     }
   };
 
+  // Generate quick start text - diverse, short texts perfect for 30-60 second races
+  const generateQuickStartText = async (): Promise<{ success: boolean; message: string }> => {
+    setGeneratingText(true);
+    try {
+      // Use the dedicated quickstart text collection
+      const generatedText = getQuickStartText();
+      
+      if (generatedText && generatedText.length > 20) {
+        setCustomText(generatedText);
+        return {
+          success: true,
+          message: `🚀 Generated QuickStart text (${generatedText.length} chars) - Perfect for 30-60 second races!`
+        };
+      } else {
+        throw new Error('Generated quickstart text is too short');
+      }
+    } catch (error) {
+      console.error('QuickStart text generation failed:', error);
+      // Final fallback to simple random text
+      const fallbackText = getRandomText();
+      setCustomText(fallbackText);
+      return {
+        success: false,
+        message: '⚠️ Using basic fallback text due to generation error'
+      };
+    } finally {
+      setGeneratingText(false);
+    }
+  };
+
   return {
     customText,
     setCustomText,
@@ -115,6 +145,7 @@ export const useTextGeneration = () => {
     setSelectedCategory,
     generatingText,
     generateRandomText,
-    generateWithChatGPT
+    generateWithChatGPT,
+    generateQuickStartText
   };
 };

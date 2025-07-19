@@ -89,6 +89,240 @@ const ScoreExampleSection = () => {
   );
 };
 
+// Expandable Text Generation Section Component
+const TextGenerationSection = () => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div style={{ 
+      background: 'rgba(59, 130, 246, 0.1)', 
+      padding: '10px', 
+      borderRadius: '6px', 
+      marginBottom: '12px',
+      border: '2px solid rgba(59, 130, 246, 0.3)',
+      cursor: 'pointer'
+    }}
+    onClick={() => setIsExpanded(!isExpanded)}
+    >
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%'
+      }}>
+        <h4 style={{ margin: '0', fontSize: '13px', color: '#232323', fontWeight: 'bold' }}>
+          📝 Text Generation System
+        </h4>
+        <span style={{ 
+          fontSize: '16px', 
+          color: '#3b82f6', 
+          fontWeight: 'bold',
+          transition: 'transform 0.3s ease', 
+          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+          userSelect: 'none'
+        }}>
+          ▼
+        </span>
+      </div>
+      
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            style={{ overflow: 'hidden', marginTop: '8px' }}
+          >
+            <div style={{ fontSize: '12px', color: '#555', lineHeight: 1.5 }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr 1fr', 
+                gap: '6px', 
+                marginBottom: '8px' 
+              }}>
+                <div style={{ 
+                  background: 'rgba(34, 197, 94, 0.1)', 
+                  padding: '6px', 
+                  borderRadius: '4px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '14px', marginBottom: '2px' }}>🟢</div>
+                  <div style={{ fontSize: '11px', fontWeight: 'bold' }}>Easy</div>
+                  <div style={{ fontSize: '10px' }}>~200 chars</div>
+                </div>
+                <div style={{ 
+                  background: 'rgba(245, 158, 11, 0.1)', 
+                  padding: '6px', 
+                  borderRadius: '4px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '14px', marginBottom: '2px' }}>🟡</div>
+                  <div style={{ fontSize: '11px', fontWeight: 'bold' }}>Medium</div>
+                  <div style={{ fontSize: '10px' }}>~400 chars</div>
+                </div>
+                <div style={{ 
+                  background: 'rgba(239, 68, 68, 0.1)', 
+                  padding: '6px', 
+                  borderRadius: '4px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '14px', marginBottom: '2px' }}>🔴</div>
+                  <div style={{ fontSize: '11px', fontWeight: 'bold' }}>Hard</div>
+                  <div style={{ fontSize: '10px' }}>~800 chars</div>
+                </div>
+              </div>
+              <div style={{ fontSize: '11px', color: '#666', textAlign: 'center', lineHeight: 1.3 }}>
+                <div>📚 Categories: Quotes, Code, Facts, Stories, Technical, Literature</div>
+                <div>🎯 Dynamic content generation with enhanced backend system</div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Show hint when collapsed */}
+      {!isExpanded && (
+        <div style={{ 
+          marginTop: '4px', 
+          fontSize: '11px', 
+          color: '#666', 
+          fontStyle: 'italic',
+          textAlign: 'center'
+        }}>
+          Click to see text generation details ↑
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Expandable Points System Section Component
+const PointsSystemSection = () => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div style={{ 
+      background: 'rgba(99, 102, 241, 0.1)', 
+      padding: '10px', 
+      borderRadius: '6px', 
+      marginBottom: '12px',
+      border: '2px solid rgba(99, 102, 241, 0.3)',
+      cursor: 'pointer'
+    }}
+    onClick={() => setIsExpanded(!isExpanded)}
+    >
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%'
+      }}>
+        <h4 style={{ margin: '0', fontSize: '13px', color: '#232323', fontWeight: 'bold' }}>
+          🏆 Points System
+        </h4>
+        <span style={{ 
+          fontSize: '16px', 
+          color: '#6366f1', 
+          fontWeight: 'bold',
+          transition: 'transform 0.3s ease', 
+          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+          userSelect: 'none'
+        }}>
+          ▼
+        </span>
+      </div>
+      
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+            style={{ overflow: 'hidden', marginTop: '8px' }}
+          >
+            <div style={{ fontSize: '12px', color: '#555', lineHeight: 1.5 }}>
+              <div style={{ fontSize: '10px', color: '#555', marginBottom: '6px', textAlign: 'center' }}>
+                <strong>Current: WPM-based scoring | Future: Word-accuracy based scoring</strong>
+              </div>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: '1fr 1fr', 
+                gap: '4px', 
+                marginBottom: '6px' 
+              }}>
+                <div style={{ 
+                  background: 'rgba(99, 102, 241, 0.1)', 
+                  padding: '4px', 
+                  borderRadius: '3px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '12px', marginBottom: '1px' }}>⚡</div>
+                  <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Base Score</div>
+                  <div style={{ fontSize: '11px' }}>WPM × 10</div>
+                </div>
+                <div style={{ 
+                  background: 'rgba(239, 68, 68, 0.1)', 
+                  padding: '4px', 
+                  borderRadius: '3px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '12px', marginBottom: '1px' }}>❌</div>
+                  <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Penalties</div>
+                  <div style={{ fontSize: '11px' }}>Errors × 3</div>
+                </div>
+                <div style={{ 
+                  background: 'rgba(16, 185, 129, 0.1)', 
+                  padding: '4px', 
+                  borderRadius: '3px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '12px', marginBottom: '1px' }}>📈</div>
+                  <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Progress</div>
+                  <div style={{ fontSize: '11px' }}>% Complete ÷ 5</div>
+                </div>
+                <div style={{ 
+                  background: 'rgba(245, 158, 11, 0.1)', 
+                  padding: '4px', 
+                  borderRadius: '3px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '12px', marginBottom: '1px' }}>🎯</div>
+                  <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Bonuses</div>
+                  <div style={{ fontSize: '11px' }}>+50 each</div>
+                </div>
+              </div>
+              <div style={{ 
+                fontSize: '11px', 
+                color: '#666', 
+                textAlign: 'center',
+                lineHeight: 1.2
+              }}>
+                <div>🚀 Speed Bonus: +50 pts if WPM &gt; 60</div>
+                <div>🎯 Perfect Bonus: +50 pts if 0 errors</div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Show hint when collapsed */}
+      {!isExpanded && (
+        <div style={{ 
+          marginTop: '4px', 
+          fontSize: '11px', 
+          color: '#666', 
+          fontStyle: 'italic',
+          textAlign: 'center'
+        }}>
+          Click to see scoring system details ↑
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const GameInfoModal = ({ isOpen, onClose }: GameInfoModalProps) => {
   return (
     <AnimatePresence>
@@ -197,76 +431,15 @@ export const GameInfoModal = ({ isOpen, onClose }: GameInfoModalProps) => {
                     🎯 <strong>Goal:</strong> Type fast & accurately to win!
                   </p>
                   <p style={{ margin: 0, fontSize: '13px' }}>
-                    Race your capybara by typing the text correctly before time runs out.
+                    Race your capybara by typing the text correctly. Choose difficulty levels for different text lengths!
                   </p>
-                </div>              <div style={{ 
-                background: 'rgba(99, 102, 241, 0.08)', 
-                padding: '8px', 
-                borderRadius: '6px', 
-                marginBottom: '10px',
-                border: '1px solid rgba(99, 102, 241, 0.2)'
-              }}>
-                <h4 style={{ margin: '0 0 6px 0', fontSize: '12px', color: '#232323', textAlign: 'center' }}>🏆 Points System</h4>
-                <div style={{ fontSize: '10px', color: '#555', marginBottom: '6px', textAlign: 'center' }}>
-                  <strong>Current: WPM-based scoring | Future: Word-accuracy based scoring</strong>
                 </div>
-                <div style={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: '1fr 1fr', 
-                  gap: '4px', 
-                  marginBottom: '6px' 
-                }}>
-                  <div style={{ 
-                    background: 'rgba(99, 102, 241, 0.1)', 
-                    padding: '4px', 
-                    borderRadius: '3px',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: '12px', marginBottom: '1px' }}>⚡</div>
-                    <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Base Score</div>
-                    <div style={{ fontSize: '11px' }}>WPM × 10</div>
-                  </div>
-                  <div style={{ 
-                    background: 'rgba(239, 68, 68, 0.1)', 
-                    padding: '4px', 
-                    borderRadius: '3px',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: '12px', marginBottom: '1px' }}>❌</div>
-                    <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Penalties</div>
-                    <div style={{ fontSize: '11px' }}>Errors × 3</div>
-                  </div>
-                  <div style={{ 
-                    background: 'rgba(16, 185, 129, 0.1)', 
-                    padding: '4px', 
-                    borderRadius: '3px',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: '12px', marginBottom: '1px' }}>📈</div>
-                    <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Progress</div>
-                    <div style={{ fontSize: '11px' }}>% Complete ÷ 5</div>
-                  </div>
-                  <div style={{ 
-                    background: 'rgba(245, 158, 11, 0.1)', 
-                    padding: '4px', 
-                    borderRadius: '3px',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: '12px', marginBottom: '1px' }}>🎯</div>
-                    <div style={{ fontSize: '10px', fontWeight: 'bold' }}>Bonuses</div>
-                    <div style={{ fontSize: '11px' }}>+50 each</div>
-                  </div>
-                </div>
-                <div style={{ 
-                  fontSize: '11px', 
-                  color: '#666', 
-                  textAlign: 'center',
-                  lineHeight: 1.2
-                }}>
-                  <div>🚀 Speed Bonus: +50 pts if WPM &gt; 60</div>
-                  <div>🎯 Perfect Bonus: +50 pts if 0 errors</div>
-                </div>
-              </div>              <ScoreExampleSection />
+
+                <TextGenerationSection />
+                
+                <PointsSystemSection />
+
+              <ScoreExampleSection />
 
                 <div style={{ 
                   background: 'rgba(245, 158, 11, 0.1)', 
@@ -276,8 +449,9 @@ export const GameInfoModal = ({ isOpen, onClose }: GameInfoModalProps) => {
                 }}>
                   <h4 style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#232323' }}>🏃‍♂️ How to Play:</h4>
                   <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '12px' }}>
-                    <li>Host clicks "Start Game" when ready</li>
-                    <li>Type the text exactly as shown</li>
+                    <li>Admin generates text or clicks "Start Game" for random text</li>
+                    <li>Choose difficulty (Easy/Medium/Hard) and category for custom text</li>
+                    <li>Type the displayed text exactly as shown</li>
                     <li>Watch your capy advance in real-time</li>
                     <li>First to finish or highest score wins!</li>
                   </ul>
@@ -293,6 +467,9 @@ export const GameInfoModal = ({ isOpen, onClose }: GameInfoModalProps) => {
                     <li>🥇 Live leaderboard & podium ceremony</li>
                     <li>🎨 Custom capybara avatars & colors</li>
                     <li>👥 Up to 32 players per race</li>
+                    <li>🎯 Dynamic text generation system</li>
+                    <li>📊 Smart difficulty-based scoring system</li>
+                    <li>🔄 Automatic race completion detection</li>
                   </ul>
                 </div>
 

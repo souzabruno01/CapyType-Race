@@ -15,6 +15,9 @@ A real-time multiplayer typing game with a capybara theme where players race aga
 - **Smart Lobby Redirection** - Seamless navigation back to functional lobbies
 - **Automatic Race Completion** - Games end automatically when all players finish
 - **Server-Authoritative Room Management** - Reliable room state management
+- **🤖 Dynamic Text Generation** - Enhanced content creation with Railway backend integration
+- **📊 Difficulty-Based Text System** - Easy (200 chars), Medium (400 chars), Hard (800 chars)
+- **📚 Multiple Content Categories** - Quotes, Programming, Science, Stories, Technical, Literature
 
 ## 🛠️ Tech Stack
 
@@ -24,6 +27,7 @@ A real-time multiplayer typing game with a capybara theme where players race aga
 - **Styling**: Tailwind CSS + Custom Styles
 - **Animations**: Framer Motion
 - **Real-time Communication**: Socket.IO
+- **Text Generation**: Faker.js + Railway Backend Integration
 - **Hosting**: Firebase (Frontend) + Railway (Backend)
 
 ## 🏗️ Architecture & Game Flow
@@ -35,63 +39,87 @@ graph TB
         B --> C[Socket.IO Client]
         A --> D[Game Components]
         A --> E[Lobby Components]
-        A --> F[Avatar System]
-        F --> G[Color Picker]
-        D --> H[Results Modal]
-        H --> I[Back to Lobby Button]
+        E --> TGM[Text Generation Modal]
+        TGM --> F[Difficulty Selector]
+        TGM --> CG[Category Generator]
+        A --> G[Avatar System]
+        G --> H[Color Picker]
+        D --> I[Results Modal]
+        I --> J[Back to Lobby Button]
     end
     
     subgraph "Backend (Railway)"
-        J[Express Server] --> K[Socket.IO Server]
-        K --> L[Room Manager]
-        L --> M[Game Logic]
-        K --> N[Player Management]
-        N --> O[Avatar Color Sync]
-        L --> P[Race Completion Detection]
-        L --> Q[Room State Management]
+        K[Express Server] --> L[Socket.IO Server]
+        L --> M[Room Manager]
+        M --> N[Game Logic]
+        L --> O[Player Management]
+        O --> P[Avatar Color Sync]
+        M --> Q[Race Completion Detection]
+        M --> R[Room State Management]
+        K --> S[Text Generation API]
+        S --> T[Faker.js Engine]
+        T --> U[Category Processing]
+        U --> V[Difficulty-Based Length Control]
     end
     
     subgraph "Real-time Communication"
-        C <--> K
-        G <--> O
-        I <--> Q
-        P <--> H
+        C <--> L
+        H <--> P
+        J <--> R
+        Q <--> I
+        CG <--> S
     end
     
     subgraph "Enhanced Game Flow"
-        R[Login & Avatar Selection] --> S[Create/Join Room]
-        S --> T[Lobby with Player Cards]
-        T --> U[Game Start]
-        U --> V[Typing Race]
-        V --> W{All Players Finished?}
-        W -->|Yes| X[Auto Race End]
-        W -->|No| Y[Continue Racing]
-        Y --> Z{Time Up?}
-        Z -->|Yes| X
-        Z -->|No| Y
-        X --> AA[Results Modal]
-        AA --> BB[Back to Lobby]
-        BB --> CC[Room Reset to Waiting]
-        CC --> T
-        AA --> DD[Back to Login]
-        DD --> R
+        W[Login & Avatar Selection] --> X[Create/Join Room]
+        X --> Y[Lobby with Player Cards]
+        Y --> Z[Generate Text Modal]
+        Z --> AA{Custom Text?}
+        AA -->|Yes| BB[Select Difficulty & Category]
+        AA -->|No| CC[Quick Start]
+        BB --> DD[API Call to Railway Backend]
+        DD --> EE[AI-Generated Text]
+        CC --> FF[Random Default Text]
+        EE --> GG[Game Start]
+        FF --> GG
+        GG --> HH[Typing Race]
+        HH --> II{All Players Finished?}
+        II -->|Yes| JJ[Auto Race End]
+        II -->|No| KK[Continue Racing]
+        KK --> LL{Time Up?}
+        LL -->|Yes| JJ
+        LL -->|No| KK
+        JJ --> MM[Results Modal]
+        MM --> NN[Back to Lobby]
+        NN --> OO[Room Reset to Waiting]
+        OO --> Y
+        MM --> PP[Back to Login]
+        PP --> W
     end
     
-    subgraph "New Features 2024"
-        EE[Smart Lobby Returns]
-        FF[Auto Race Completion]
-        GG[Server Room Reset]
-        HH[Real-time State Sync]
+    subgraph "New Features 2025"
+        QQ[Smart Lobby Returns]
+        RR[Auto Race Completion]
+        SS[Server Room Reset]
+        TT[Real-time State Sync]
+        UU[Dynamic Text Generation]
+        VV[Difficulty-Based Limits]
+        WW[Category-Based Content]
+        XX[Railway Backend Integration]
     end
     
     style A fill:#e1f5fe
-    style J fill:#f3e5f5
+    style K fill:#f3e5f5
     style C fill:#fff3e0
-    style K fill:#fff3e0
-    style EE fill:#e8f5e8
-    style FF fill:#e8f5e8
-    style GG fill:#e8f5e8
-    style HH fill:#e8f5e8
+    style L fill:#fff3e0
+    style QQ fill:#e8f5e8
+    style RR fill:#e8f5e8
+    style SS fill:#e8f5e8
+    style TT fill:#e8f5e8
+    style UU fill:#e8f5e8
+    style VV fill:#e8f5e8
+    style WW fill:#e8f5e8
+    style XX fill:#e8f5e8
 ```
 
 ## 🔄 Lobby Redirection & Race Completion Flow
@@ -207,15 +235,38 @@ firebase deploy
 3. **Create a room** or **join an existing room** with a room ID
 4. **Wait in the lobby** for other players to join (you'll see colorful player cards)
 5. **Customize your color** anytime in the lobby using the edit button on your player card
-6. **Start the game** when ready (room admin only)
-7. **Type the displayed text** as fast and accurately as possible
-8. **View results** and compare your performance with others
+6. **Generate custom text** (optional):
+   - Click "Generate Text" button to open the text generation modal
+   - Choose difficulty: **Easy** (~200 chars), **Medium** (~400 chars), **Hard** (~800 chars)
+   - Select category: Quotes, Programming, Science, Stories, Technical, Literature, etc.
+   - Click "Generate Random Text" to create dynamic content via Railway backend
+7. **Start the game** when ready (room admin can use custom text or quick start with random text)
+8. **Type the displayed text** as fast and accurately as possible
+9. **View results** and compare your performance with others
 
-## 📊 Game Metrics
+## 📊 Game Metrics & Scoring
 
-- **WPM (Words Per Minute)**: Typing speed calculation
-- **Accuracy**: Percentage of correctly typed characters
+### Current Scoring System (WPM-Based)
+- **Base Points**: WPM × 10
+- **Error Penalty**: Errors × 3 (subtracted)
+- **Progress Bonus**: Completion % ÷ 5 (added)
+- **Speed Bonus**: +50 points if WPM > 60
+- **Perfect Bonus**: +50 points if 0 errors
+
+### Example Calculation
+If you finish at 65 WPM with 2 errors and 80% progress:
+- Base: 65 × 10 = 650 pts
+- Penalty: 2 × 3 = -6 pts  
+- Progress: 80 ÷ 5 = +16 pts
+- Speed bonus: +50 pts (WPM > 60)
+- Perfect bonus: 0 pts (had errors)
+- **Final Score: 710 points**
+
+### Metrics Tracked
+- **WPM (Words Per Minute)**: Real-time typing speed calculation
+- **Accuracy**: Percentage of correctly typed characters  
 - **Errors**: Number of mistakes made
+- **Progress**: Percentage of text completed
 - **Position**: Your rank among all players
 
 ## 🔧 Technical Implementation
@@ -241,6 +292,43 @@ socket.on('playerFinished', (data) => {
 
 // State synchronization
 socket.emit('gameStateChanged', { gameState, reason });
+```
+
+#### Text Generation API
+```javascript
+// New text generation endpoint
+app.post('/api/generate-text', (req, res) => {
+  const { category, difficulty } = req.body;
+  
+  // Validate input parameters
+  const validCategories = ['quotes', 'code', 'facts', 'stories', 'technical', 'literature'];
+  const validDifficulties = ['easy', 'medium', 'hard'];
+  
+  if (!validCategories.includes(category) || !validDifficulties.includes(difficulty)) {
+    return res.status(400).json({ error: 'Invalid category or difficulty' });
+  }
+  
+  // Generate text with difficulty-based length limits
+  const text = generateText({ category, difficulty });
+  res.json({ text, category, difficulty });
+});
+```
+
+#### Difficulty-Based Text Generation
+```javascript
+const DIFFICULTY_LIMITS = {
+  easy: 200,    // ~200 characters
+  medium: 400,  // ~400 characters  
+  hard: 800     // ~800 characters
+};
+
+function generateText({ category, difficulty }) {
+  const targetLength = DIFFICULTY_LIMITS[difficulty];
+  let text = getRandomText(category, difficulty);
+  
+  // Extend or trim to match difficulty requirements
+  return adjustTextLength(text, targetLength);
+}
 ```
 
 #### Room State Management
@@ -275,6 +363,38 @@ socket.on('gameStateChanged', ({ gameState, reason }) => {
 });
 ```
 
+#### Text Generation Integration
+```typescript
+// Enhanced text generation hook
+const useTextGeneration = () => {
+  const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
+  const [selectedCategory, setSelectedCategory] = useState('general');
+  
+  const generateRandomText = async () => {
+    // Map frontend categories to backend categories
+    const categoryMapping = {
+      'general': 'quotes',
+      'programming': 'code', 
+      'science': 'facts',
+      // ... more mappings
+    };
+    
+    // Call Railway backend API
+    const response = await fetch(`${VITE_BACKEND_URL}/api/generate-text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        category: categoryMapping[selectedCategory],
+        difficulty: selectedDifficulty
+      })
+    });
+    
+    const data = await response.json();
+    return data.text;
+  };
+};
+```
+
 #### Automatic Navigation
 ```typescript
 // Smart navigation based on game state
@@ -287,7 +407,18 @@ useEffect(() => {
 
 ### 🔄 **Data Flow**
 
-1. **Lobby Return Flow**:
+1. **Text Generation Flow**:
+   ```
+   User selects difficulty & category
+   → Frontend calls useTextGeneration hook
+   → API request to Railway backend (/api/generate-text)
+   → Backend validates input & generates text with faker.js
+   → Text returned with appropriate character count
+   → Frontend displays generated text in modal
+   → User can regenerate or start game with custom text
+   ```
+
+2. **Lobby Return Flow**:
    ```
    User clicks "Back to Lobby" 
    → Frontend emits 'returnToLobby'
@@ -297,7 +428,7 @@ useEffect(() => {
    → Room available for new players
    ```
 
-2. **Race Completion Flow**:
+3. **Race Completion Flow**:
    ```
    Player finishes typing
    → Backend checks all player status
@@ -312,7 +443,7 @@ useEffect(() => {
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `VITE_BACKEND_URL` | Backend server URL | `http://localhost:3001` |
+| `VITE_BACKEND_URL` | Backend server URL (Railway in production) | `http://localhost:3001` |
 | `PORT` | Backend server port | `3001` |
 | `FRONTEND_URL` | Frontend URL for CORS | `http://localhost:5173` |
 | `CORS_ORIGIN` | Allowed CORS origins | `localhost URLs` |
@@ -343,7 +474,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### 🎯 **Major Feature Release (July 2025)**
 
-#### 🔄 **Smart Lobby Redirection System**
+#### 🤖 **Dynamic Text Generation System**
+- ✅ **Railway Backend Integration** - Text generation now powered by Railway-hosted backend
+- ✅ **Difficulty-Based Length Control** - Easy (~200 chars), Medium (~400 chars), Hard (~800 chars)
+- ✅ **Multiple Content Categories** - Quotes, Programming, Science, Stories, Technical, Literature
+- ✅ **Faker.js Integration** - Dynamic content creation with enhanced text generation
+- ✅ **Category Mapping System** - Frontend categories intelligently mapped to backend generators
+- ✅ **Fallback System** - Local text generation as backup if backend unavailable
+
+#### 🎛️ **Enhanced Text Generation Modal**
+- ✅ **Removed Character Limit Controls** - Limits now automatically set by difficulty selection
+- ✅ **Intuitive Difficulty Selector** - Clear Easy/Medium/Hard options with character count display
+- ✅ **Category Selection** - Choose from diverse content types for varied typing challenges
+- ✅ **Real-time Generation** - Instant text creation via Railway backend API calls
+- ✅ **Custom Text Support** - Users can still input their own text with length validation
+
+#### 🔄 **Smart Lobby Redirection System** 
 - ✅ **Functional "Back to Lobby" Button** - Players are now correctly redirected to working lobbies
 - ✅ **Server-Side Room Reset** - Backend properly resets room state to 'waiting' when returning to lobby
 - ✅ **Room Availability Logic** - Rooms are available for new players only when not in active game state
@@ -356,9 +502,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ **Enhanced User Experience** - No more waiting around when everyone finishes early
 
 #### 🛠️ **Backend Enhancements**
-- ✅ **New Socket Events**:
-  - `returnToLobby` - Handles lobby returns with proper room reset
-  - `gameStateChanged` - Notifies clients of server-initiated state changes
+- ✅ **New API Endpoints**:
+  - `/api/generate-text` - Handles text generation with category/difficulty validation
+  - Enhanced Socket events for lobby returns and state changes
 - ✅ **Room State Management** - Server-authoritative room state with automatic cleanup
 - ✅ **Race Timer Management** - Proper cleanup of race timers and data
 - ✅ **Player Statistics Reset** - Automatic player stat reset when returning to lobby
@@ -371,8 +517,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 #### 🔧 **Technical Improvements**
 - ✅ **Improved Error Handling** - Better TypeScript error resolution
-- ✅ **Component Prop Fixes** - Resolved PlayerGrid and TextGenerationModal prop issues
-- ✅ **Hook Enhancements** - Updated useTextGeneration hook with missing properties
+- ✅ **Component Prop Fixes** - Resolved PlayerGrid and TextGenerationModal prop issues  
+- ✅ **Hook Enhancements** - Updated useTextGeneration hook with Railway backend integration
 - ✅ **Build Process** - Fixed compilation errors for successful deployment
 
 ### 📋 **Previous Updates**
@@ -388,6 +534,20 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ **Improved error handling and connection stability**
 
 ## 🌟 Key Features Deep Dive
+
+### 🤖 **AI-Powered Text Generation System**
+The text generation system provides a dynamic and engaging experience:
+- **Railway Backend Integration**: High-performance text generation hosted on Railway
+- **Intelligent Content Categories**: Each category uses specialized algorithms for authentic content
+- **Difficulty-Based Scaling**: Text length automatically adjusts to provide appropriate challenges
+- **Fallback Reliability**: Local text generation ensures functionality even if backend is unavailable
+
+### 🎛️ **Smart Difficulty System**
+Enhanced difficulty selection that removes guesswork:
+- **Easy Mode**: ~200 characters perfect for beginners and warm-ups
+- **Medium Mode**: ~400 characters ideal for intermediate skill building  
+- **Hard Mode**: ~800 characters designed for advanced typists and competitive play
+- **Category Variety**: Each difficulty level includes content from all categories
 
 ### 🎯 **Smart Lobby System**
 The lobby system now provides a seamless experience with:
