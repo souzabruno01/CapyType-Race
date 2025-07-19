@@ -56,8 +56,6 @@ export default function Lobby() {
   const {
     customText,
     setCustomText,
-    characterLimit,
-    setCharacterLimit,
     selectedDifficulty,
     setSelectedDifficulty,
     selectedCategory,
@@ -322,8 +320,6 @@ export default function Lobby() {
           onClose={() => setShowTextModal(false)}
           customText={customText}
           setCustomText={setCustomText}
-          characterLimit={characterLimit}
-          setCharacterLimit={setCharacterLimit}
           onGenerateRandom={handleGenerateRandom}
           onStartGame={handleStartWithCustomText}
           selectedDifficulty={selectedDifficulty}

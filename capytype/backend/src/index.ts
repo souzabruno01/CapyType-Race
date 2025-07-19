@@ -358,6 +358,68 @@ app.get('/api/room-info', (req, res) => {
   });
 });
 
+// Text generation endpoint
+app.post('/api/generate-text', apiLimiter, (req, res) => {
+  console.log('[generate-text] Request received:', req.body);
+  
+  // Add CORS headers
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  
+  try {
+    const { category, difficulty } = req.body;
+    
+    // Validate input
+    if (!category || !difficulty) {
+      return res.status(400).json({ 
+        error: 'INVALID_INPUT', 
+        message: 'Category and difficulty are required' 
+      });
+    }
+    
+    // Validate category and difficulty values
+    const validCategories = ['quotes', 'code', 'facts', 'stories', 'technical', 'literature'];
+    const validDifficulties = ['easy', 'medium', 'hard'];
+    
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({ 
+        error: 'INVALID_CATEGORY', 
+        message: 'Invalid category' 
+      });
+    }
+    
+    if (!validDifficulties.includes(difficulty)) {
+      return res.status(400).json({ 
+        error: 'INVALID_DIFFICULTY', 
+        message: 'Invalid difficulty' 
+      });
+    }
+    
+    // Generate text using the backend text generation function
+    const generatedText = generateText({
+      category: category as any,
+      difficulty: difficulty as any
+    });
+    
+    console.log(`[generate-text] Generated ${difficulty} ${category} text (${generatedText.length} chars)`);
+    
+    res.json({ 
+      text: generatedText,
+      category,
+      difficulty,
+      length: generatedText.length
+    });
+    
+  } catch (error) {
+    console.error('[generate-text] Error:', error);
+    res.status(500).json({ 
+      error: 'GENERATION_ERROR', 
+      message: 'Failed to generate text' 
+    });
+  }
+});
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
   const getNickname = () => {
@@ -586,9 +648,7 @@ io.on('connection', (socket) => {
       } else {
         raceText = generateText({
           category: validatedData.category,
-          difficulty: validatedData.difficulty,
-          minLength: 100,
-          maxLength: 400
+          difficulty: validatedData.difficulty
         });
         console.log(`[Backend] Generated text (${raceText.length} chars) - Category: ${validatedData.category || 'auto'}, Difficulty: ${validatedData.difficulty || 'auto'}`);
       }

@@ -343,28 +343,60 @@ export function getRandomText(category?: Category, difficulty?: Difficulty): str
 }
 
 /**
- * Enhanced text generation with smart defaults and variety
+ * Enhanced text generation with difficulty-based length limits
  */
-export function generateText(options: { category?: Category; difficulty?: Difficulty; minLength?: number; maxLength?: number } = {}): string {
-  const { category, difficulty, minLength = 50, maxLength = 400 } = options;
+export function generateText(options: { category?: Category; difficulty?: Difficulty; customText?: string } = {}): string {
+  const { category, difficulty, customText } = options;
+  
+  // If custom text provided, validate length (up to 2000 characters)
+  if (customText) {
+    if (customText.length > 2000) {
+      return customText.substring(0, 2000).trim();
+    }
+    return customText.trim();
+  }
+  
+  // Set length limits based on difficulty
+  let targetLength: number;
+  let maxLength: number;
+  
+  switch (difficulty) {
+    case 'easy':
+      targetLength = 200;
+      maxLength = 200;
+      break;
+    case 'medium':
+      targetLength = 400;
+      maxLength = 400;
+      break;
+    case 'hard':
+      targetLength = 800;
+      maxLength = 800;
+      break;
+    default:
+      // Auto difficulty - choose randomly
+      const randomDifficulty = faker.helpers.arrayElement(['easy', 'medium', 'hard']);
+      return generateText({ category, difficulty: randomDifficulty });
+  }
   
   let text = getRandomText(category, difficulty);
   
-  // Ensure text meets length requirements
-  if (text.length < minLength) {
-    // Add more content if too short
+  // Extend text if too short by adding more content of the same type
+  while (text.length < targetLength * 0.9) {
     const additionalText = getRandomText(category, difficulty);
     text = `${text} ${additionalText}`;
+    
+    // Prevent infinite loop
+    if (text.length > maxLength * 1.2) break;
   }
   
+  // Trim if too long, but preserve word boundaries
   if (text.length > maxLength) {
-    // Trim if too long, but preserve word boundaries
     text = text.substring(0, maxLength);
     const lastSpace = text.lastIndexOf(' ');
     if (lastSpace > maxLength * 0.8) {
       text = text.substring(0, lastSpace);
     }
-    text += '...';
   }
   
   return text.trim();

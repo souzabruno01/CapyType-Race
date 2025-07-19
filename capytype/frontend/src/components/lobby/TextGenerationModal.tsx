@@ -6,8 +6,6 @@ interface TextGenerationModalProps {
   onClose: () => void;
   customText: string;
   setCustomText: (text: string) => void;
-  characterLimit: number;
-  setCharacterLimit: (limit: number) => void;
   onGenerateRandom: () => void;
   onStartGame: () => void;
   selectedDifficulty: 'easy' | 'medium' | 'hard';
@@ -21,8 +19,6 @@ export const TextGenerationModal = ({
   onClose,
   customText,
   setCustomText,
-  characterLimit,
-  setCharacterLimit,
   onGenerateRandom,
   onStartGame,
   selectedDifficulty,
@@ -31,8 +27,6 @@ export const TextGenerationModal = ({
   setSelectedCategory
 }: TextGenerationModalProps) => {
   if (!isOpen) return null;
-
-  const characterLimits = [200, 300, 500, 750, 1000, 1250, 1500, 2000];
 
   return (
     <motion.div
@@ -238,64 +232,6 @@ export const TextGenerationModal = ({
             </div>
           </div>
 
-          {/* Character Limit Selector */}
-          <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <label style={{ 
-              display: 'block', 
-              marginBottom: 8, 
-              fontWeight: 600, 
-              color: '#374151',
-              fontSize: 12,
-              textAlign: 'center'
-            }}>
-              Character Limit
-            </label>
-            <select
-              value={characterLimit}
-              onChange={(e) => setCharacterLimit(Number(e.target.value))}
-              style={{
-                ...selectStyle,
-                width: '50%',
-                minWidth: '136px',
-                maxWidth: '176px',
-                marginBottom: 18,
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 245, 245, 0.9) 100%)',
-                border: '2px solid #10b981',
-                borderRadius: 12,
-                fontSize: 12,
-                fontWeight: 700,
-                color: '#1f2937',
-                boxShadow: '0 3px 12px rgba(16, 185, 129, 0.2)',
-                transition: 'all 0.2s ease',
-                textAlign: 'center'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#059669';
-                e.currentTarget.style.boxShadow = '0 4px 16px rgba(16, 185, 129, 0.3)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#10b981';
-                e.currentTarget.style.boxShadow = '0 3px 12px rgba(16, 185, 129, 0.2)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = '#059669';
-                e.currentTarget.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.1)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = '#10b981';
-                e.currentTarget.style.boxShadow = '0 3px 12px rgba(16, 185, 129, 0.2)';
-              }}
-            >
-              {characterLimits.map(limit => (
-                <option key={limit} value={limit}>
-                  {limit} characters
-                </option>
-              ))}
-            </select>
-          </div>
-
           {/* Text Area */}
           <div style={{ width: '100%', display: 'flex', flexDirection: 'column', minHeight: 120, maxHeight: 200 }}>
             <div style={{ 
@@ -314,7 +250,7 @@ export const TextGenerationModal = ({
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 80, maxHeight: 140 }}>
               <textarea
                 value={customText}
-                onChange={(e) => setCustomText(e.target.value.substring(0, characterLimit))}
+                onChange={(e) => setCustomText(e.target.value.substring(0, 2000))}
                 placeholder="Write your custom text here or use the 'Generate Text' button to create content based on the selected category and difficulty..."
                 style={{
                   width: '100%',
@@ -349,8 +285,8 @@ export const TextGenerationModal = ({
                 flexShrink: 0
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span>Characters: {customText.length}/{characterLimit}</span>
-                  {customText.length >= characterLimit && (
+                  <span>Characters: {customText.length}/2000</span>
+                  {customText.length >= 2000 && (
                     <span style={{ color: '#dc2626', fontWeight: 600 }}>
                       Character limit reached
                     </span>
@@ -427,7 +363,7 @@ export const TextGenerationModal = ({
                 boxShadow: '0 4px 14px rgba(99, 102, 241, 0.3)'
               }}
             >
-              🎲 Generate {selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1)} {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Text ({characterLimit} chars)
+              🎲 Generate {selectedDifficulty.charAt(0).toUpperCase() + selectedDifficulty.slice(1)} {selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Text
             </motion.button>
           </div>
         </div>

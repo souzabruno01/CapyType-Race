@@ -12,8 +12,9 @@ const HighlightedText = ({ text, input, errorPositions }: {
       lineHeight: 1.7,
       whiteSpace: 'normal', // Allow text to wrap naturally
       position: 'relative',
-      wordBreak: 'break-word', // Break words when necessary to prevent overflow
-      overflowWrap: 'break-word' // Ensure long words break within container
+      wordBreak: 'normal', // Don't break words in the middle
+      overflowWrap: 'anywhere', // Only break if absolutely necessary
+      hyphens: 'none' // Disable hyphenation
     }}>
       {text.split('').map((char, index) => {
         const isTyped = index < input.length;

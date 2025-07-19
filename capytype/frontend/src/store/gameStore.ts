@@ -50,7 +50,7 @@ interface GameStore extends GameState {
   setPlayers: (players: Player[]) => void;
   setText: (text: string) => void;
   updateProgress: (progress: number) => void;
-  startGame: (text: string, isPractice?: boolean) => void;
+  startGame: (text?: string, isPractice?: boolean, options?: { category?: string; difficulty?: string }) => void;
   setGameResults: (results: PlayerResult[]) => void;
   resetGame: () => void;
   connect: () => void;
@@ -93,9 +93,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   updateProgress: (progress) => set({ progress }),
   setConnectionStatus: (connectionStatus) => set({ connectionStatus }),
   setError: (lastError) => set({ lastError }),
-  startGame: (text, isPractice = false) => {
+  startGame: (text = '', isPractice = false, options = {}) => {
     const { socket, roomId, setError } = get();
-    console.log('[Store] startGame called with:', { text: text.substring(0, 50) + '...', isPractice, roomId, socketConnected: socket?.connected });
+    const textPreview = text ? text.substring(0, 50) + '...' : '[auto-generated]';
+    console.log('[Store] startGame called with:', { text: textPreview, isPractice, roomId, options, socketConnected: socket?.connected });
     
     if (!socket || !socket.connected) {
       const error = 'Not connected to server. Please check your internet connection.';
@@ -115,10 +116,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       setError(null); // Clear any previous errors
       if (isPractice) {
         console.log('[Store] Setting up practice game');
-        set({ text, gameState: 'playing', isPractice: true, gameStarted: true });
+        // For practice mode, use provided text or generate a simple one
+        const practiceText = text || 'This is a quick practice round. Type this text to test your typing speed and accuracy. Keep practicing to improve your skills!';
+        set({ text: practiceText, gameState: 'playing', isPractice: true, gameStarted: true });
       } else {
-        console.log('[Store] Emitting startGame to backend with roomId:', roomId);
-        socket.emit('startGame', { roomId, text });
+        console.log('[Store] Emitting startGame to backend with roomId:', roomId, 'and options:', options);
+        socket.emit('startGame', { 
+          roomId, 
+          text: text || undefined, // Send undefined if no text provided to trigger generation
+          category: options.category,
+          difficulty: options.difficulty
+        });
       }
     }
   },

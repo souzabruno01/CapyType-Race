@@ -7,7 +7,7 @@ import { CAPYBARA_AVATARS } from '../utils/avatars';
 import { capyTitleStyle } from '../utils/styles';
 import { preloadGameAssets } from '../utils/assetPreloader';
 
-// Components
+// Component imports
 import { RoomInfo } from '../components/lobby/RoomInfo';
 import { PlayerGrid } from '../components/lobby/PlayerGrid';
 import { LobbyActions } from '../components/lobby/LobbyActions';
@@ -53,8 +53,6 @@ export default function Lobby() {
   const {
     customText,
     setCustomText,
-    characterLimit,
-    setCharacterLimit,
     selectedDifficulty,
     setSelectedDifficulty,
     selectedCategory,
@@ -438,8 +436,6 @@ export default function Lobby() {
             onClose={() => setShowTextModal(false)}
             customText={customText}
             setCustomText={setCustomText}
-            characterLimit={characterLimit}
-            setCharacterLimit={setCharacterLimit}
             onGenerateRandom={generateRandomText}
             onStartGame={handleStartWithCustomText}
             selectedDifficulty={selectedDifficulty}

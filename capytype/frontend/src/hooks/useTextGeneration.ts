@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { getTextByDifficulty, getRandomText } from '../utils/textGeneration';
 
+// Use the same backend URL pattern as gameStore
+const VITE_BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+
 /**
  * Custom hook for text generation functionality
  */
 export const useTextGeneration = () => {
   const [customText, setCustomText] = useState('');
-  const [characterLimit, setCharacterLimit] = useState(200);
   const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('easy');
   const [selectedCategory, setSelectedCategory] = useState<'general' | 'programming' | 'quotes' | 'science' | 'literature' | 'history' | 'business' | 'health' | 'sports' | 'food' | 'arts' | 'nature' | 'mathematics'>('general');
   const [generatingText, setGeneratingText] = useState(false);
@@ -15,11 +17,42 @@ export const useTextGeneration = () => {
   const generateRandomText = async (): Promise<{ success: boolean; message: string }> => {
     try {
       setGeneratingText(true);
-      // Use our curated text generation with selected difficulty and category
-      const generatedText = getTextByDifficulty({
-        difficulty: selectedDifficulty,
-        category: selectedCategory
-      }, characterLimit);
+      
+      // Map frontend categories to backend categories
+      const categoryMapping: Record<string, string> = {
+        'general': 'quotes',
+        'programming': 'code',
+        'quotes': 'quotes',
+        'science': 'facts',
+        'literature': 'literature',
+        'history': 'stories',
+        'business': 'technical',
+        'health': 'facts',
+        'sports': 'stories',
+        'food': 'stories',
+        'arts': 'literature',
+        'nature': 'facts',
+        'mathematics': 'technical'
+      };
+
+      // Call the backend text generation endpoint
+      const response = await fetch(`${VITE_BACKEND_URL}/api/generate-text`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          category: categoryMapping[selectedCategory] || 'quotes',
+          difficulty: selectedDifficulty
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Backend call failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const generatedText = data.text;
       
       if (generatedText && generatedText.length > 20) {
         setCustomText(generatedText);
@@ -31,13 +64,27 @@ export const useTextGeneration = () => {
         throw new Error('Generated text is too short');
       }
     } catch (error) {
-      console.error('Random text generation failed:', error);
-      // Fallback to a simple random text
+      console.error('Backend text generation failed:', error);
+      // Fallback to local text generation
+      const generatedText = getTextByDifficulty({
+        difficulty: selectedDifficulty,
+        category: selectedCategory
+      });
+      
+      if (generatedText && generatedText.length > 20) {
+        setCustomText(generatedText);
+        return {
+          success: true,
+          message: `⚠️ Using fallback text (${generatedText.length} chars)`
+        };
+      }
+      
+      // Final fallback to simple random text
       const fallbackText = getRandomText();
       setCustomText(fallbackText);
       return {
         success: false,
-        message: '⚠️ Using fallback text due to generation error'
+        message: '⚠️ Using basic fallback text due to generation error'
       };
     } finally {
       setGeneratingText(false);
@@ -62,8 +109,6 @@ export const useTextGeneration = () => {
   return {
     customText,
     setCustomText,
-    characterLimit,
-    setCharacterLimit,
     selectedDifficulty,
     setSelectedDifficulty,
     selectedCategory,

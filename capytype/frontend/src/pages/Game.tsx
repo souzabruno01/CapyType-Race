@@ -590,8 +590,9 @@ export default function Game() {
                 fontSize: '1.2rem',
                 lineHeight: 1.7,
                 whiteSpace: 'normal', // Allow text to wrap naturally
-                wordWrap: 'break-word', // Break words when necessary
-                overflowWrap: 'break-word', // Break long words to prevent overflow
+                wordBreak: 'normal', // Don't break words in the middle
+                overflowWrap: 'anywhere', // Only break if absolutely necessary
+                hyphens: 'none', // Disable hyphenation
                 color: '#6b7280',
                 userSelect: 'none'
               }}>
