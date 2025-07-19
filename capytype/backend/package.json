@@ -11,6 +11,7 @@
     "deploy": "npm run deploy --prefix .."
   },
   "dependencies": {
+    "@faker-js/faker": "^9.9.0",
     "@types/cors": "^2.8.13",
     "@types/crypto-js": "^4.1.1",
     "@types/dompurify": "^3.0.5",

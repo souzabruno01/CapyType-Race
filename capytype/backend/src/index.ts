@@ -10,6 +10,7 @@ import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { ZodError } from 'zod';
 import { generateRoomName } from './roomUtils';
 import * as schemas from './security/schemas';
+import { generateText, calculateRaceDuration } from './textGeneration';
 
 // Load environment variables
 dotenv.config();
@@ -551,14 +552,16 @@ io.on('connection', (socket) => {
   });
 
   // Start the game
-  socket.on('startGame', ({ roomId, text }) => {
+  socket.on('startGame', ({ roomId, text, category, difficulty }) => {
     try {
       console.log(`[Backend] startGame received from ${socket.id}:`);
       console.log(`  - roomId: ${roomId}`);
       console.log(`  - text length: ${text?.length || 0}`);
+      console.log(`  - category: ${category || 'auto'}`);
+      console.log(`  - difficulty: ${difficulty || 'auto'}`);
       console.log(`  - text preview: "${text?.substring(0, 100)}..."`);
       
-      const validatedData = schemas.StartGameSchema.parse({ roomId, text });
+      const validatedData = schemas.StartGameSchema.parse({ roomId, text, category, difficulty });
       console.log(`[Backend] Validation passed for room ${validatedData.roomId}`);
       
       const room = rooms.get(validatedData.roomId);
@@ -575,23 +578,34 @@ io.on('connection', (socket) => {
         return;
       }
 
-      console.log(`[Backend] Starting game in room ${validatedData.roomId} with text length: ${validatedData.text?.length || 0}`);
+      // Generate text if not provided, or use provided text
+      let raceText: string;
+      if (validatedData.text && validatedData.text.trim()) {
+        raceText = validatedData.text;
+        console.log(`[Backend] Using provided text (${raceText.length} chars)`);
+      } else {
+        raceText = generateText({
+          category: validatedData.category,
+          difficulty: validatedData.difficulty,
+          minLength: 100,
+          maxLength: 400
+        });
+        console.log(`[Backend] Generated text (${raceText.length} chars) - Category: ${validatedData.category || 'auto'}, Difficulty: ${validatedData.difficulty || 'auto'}`);
+      }
+
+      console.log(`[Backend] Starting game in room ${validatedData.roomId} with text length: ${raceText.length}`);
       
-      // Calculate race duration based on text length with professional formula
-      const textLength = validatedData.text?.length || 0;
-      const baseTime = 30; // Minimum 30 seconds
-      const charMultiplier = 0.1; // 100ms per character
-      const networkBuffer = 10; // 10 second buffer for network delays
-      const raceDuration = Math.max(baseTime, (textLength * charMultiplier) + networkBuffer);
+      // Calculate race duration using enhanced algorithm
+      const raceDuration = calculateRaceDuration(raceText);
       
       room.gameState = 'countdown';
-      room.text = validatedData.text;
+      room.text = raceText;
       room.raceDuration = raceDuration;
       
-      console.log(`[Backend] Race duration calculated: ${raceDuration}s for ${textLength} characters`);
+      console.log(`[Backend] Race duration calculated: ${raceDuration}s for ${raceText.length} characters`);
       console.log(`[Backend] Emitting gameStarting to room ${roomId}`);
       
-      io.to(roomId).emit('gameStarting', { text: validatedData.text, raceDuration });
+      io.to(roomId).emit('gameStarting', { text: raceText, raceDuration });
 
       // Server-controlled countdown with precise timing
       let countdown = 3;
