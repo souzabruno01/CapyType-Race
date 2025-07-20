@@ -122,6 +122,8 @@ export default function Lobby() {
 
   // Handlers
   const handleColorChange = (newColor: string, playerId: string) => {
+    console.log('[Lobby] Color change requested:', { newColor, playerId, socketId: socket?.id });
+    
     if (socket) {
       const matchingAvatar = CAPYBARA_AVATARS.find(avatar => avatar.color === newColor);
       
@@ -130,8 +132,10 @@ export default function Lobby() {
         if (matchingAvatar) {
           sessionStorage.setItem('capy_avatar_file', matchingAvatar.file);
         }
+        console.log('[Lobby] Updated sessionStorage for current player');
       }
       
+      console.log('[Lobby] Emitting changePlayerColor event');
       socket.emit('changePlayerColor', { 
         playerId, 
         color: newColor, 

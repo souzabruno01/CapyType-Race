@@ -5,10 +5,11 @@ import Podium from './Podium';
 import PlayerResultCard from './PlayerResultCard';
 
 
-const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: { 
+const ResultsModal = ({ players, onReturnToLobby, onBackToLogin, currentUserId }: { 
   players: Player[];
   onReturnToLobby: () => void;
   onBackToLogin: () => void;
+  currentUserId?: string;
 }) => {
   // Calculate points and sort, then assign correct positions
   // Memoized to prevent re-sorting and animation re-triggering
@@ -92,7 +93,7 @@ const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: {
         </motion.h2>
         
         {/* Podium for top 3 */}
-        <Podium players={playersWithPoints.slice(0, 3)} />
+        <Podium players={playersWithPoints.slice(0, 3)} currentUserId={currentUserId} />
         
         {/* Remaining players grid - responsive for up to 32 players */}
         <div style={{
@@ -107,7 +108,7 @@ const ResultsModal = ({ players, onReturnToLobby, onBackToLogin }: {
           justifyItems: 'center'
         }}>
           {playersWithPoints.slice(3).map((player, idx) => (
-            <PlayerResultCard key={player.id} player={player} index={idx} />
+            <PlayerResultCard key={player.id} player={player} index={idx} currentUserId={currentUserId} />
           ))}
         </div>
         {/* Action Buttons */}

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 import DOMPurify from 'dompurify';
 import { Player } from '../../store/gameStore';
 import { CAPYBARA_AVATARS } from '../../utils/avatars';
@@ -22,6 +23,7 @@ export const PlayerCard = ({
   totalPlayers = 1
 }: PlayerCardProps) => {
   const capyColors = CAPYBARA_AVATARS.map(avatar => avatar.color);
+  const [hoveredColor, setHoveredColor] = useState<string | null>(null);
   
   const isPlayerHost = player.isHost;
 
@@ -31,7 +33,7 @@ export const PlayerCard = ({
       return {
         padding: 12,
         avatarSize: 50,
-        fontSize: 14,
+        fontSize: 12,  // Reduced by 2 points (was 14)
         minWidth: 85,  // Reduced significantly
         maxWidth: 100  // Reduced significantly
       };
@@ -39,7 +41,7 @@ export const PlayerCard = ({
       return {
         padding: 10,
         avatarSize: 42,
-        fontSize: 13,
+        fontSize: 11,  // Reduced by 2 points (was 13)
         minWidth: 80,  // Reduced significantly
         maxWidth: 95   // Reduced significantly
       };
@@ -47,7 +49,7 @@ export const PlayerCard = ({
       return {
         padding: 8,
         avatarSize: 36,
-        fontSize: 12,
+        fontSize: 10,  // Reduced by 2 points (was 12)
         minWidth: 75,  // Reduced significantly
         maxWidth: 90   // Reduced significantly
       };
@@ -55,7 +57,7 @@ export const PlayerCard = ({
       return {
         padding: 7,
         avatarSize: 32,
-        fontSize: 11,
+        fontSize: 9,   // Reduced by 2 points (was 11)
         minWidth: 70,  // Reduced significantly
         maxWidth: 85   // Reduced significantly
       };
@@ -64,7 +66,7 @@ export const PlayerCard = ({
       return {
         padding: 6,
         avatarSize: 28,
-        fontSize: 10,
+        fontSize: 8,   // Reduced by 2 points (was 10)
         minWidth: 65,  // Reduced significantly
         maxWidth: 80   // Reduced significantly
       };
@@ -72,6 +74,9 @@ export const PlayerCard = ({
   };
 
   const cardConfig = getCardConfig(totalPlayers);
+
+  // Determine the current color to display (hover preview or actual player color)
+  const displayColor = showColorPicker === player.id && hoveredColor ? hoveredColor : player.color;
 
   // Convert player color to light version for card background
   const getLightColorBackground = (color: string) => {
@@ -95,17 +100,19 @@ export const PlayerCard = ({
         alignItems: 'center',
         justifyContent: 'center', // Center content vertically
         padding: cardConfig.padding,
-        background: `linear-gradient(135deg, ${getLightColorBackground(player.color)}, rgba(255, 255, 255, 0.8))`,
+        background: `linear-gradient(135deg, ${getLightColorBackground(displayColor)}, rgba(255, 255, 255, 0.8))`,
         borderRadius: 16,
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        border: `2px solid ${player.color}`,
+        border: `2px solid ${displayColor}`,
         backdropFilter: 'blur(10px)',
         position: 'relative',
         width: '100%', // Take full width of grid cell
         minWidth: cardConfig.minWidth, // Maintain minimum width
         maxWidth: cardConfig.maxWidth, // Maintain maximum width
         margin: '0 auto', // Center the card within the grid cell when it's smaller than cell
-        transition: 'all 0.3s ease'
+        transition: 'all 0.3s ease',
+        boxShadow: showColorPicker === player.id 
+          ? '0 6px 20px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(0,0,0,0.15)' // Enhanced blue shadow when modal open
+          : '0 4px 12px rgba(0,0,0,0.15)'
       }}
     >
       <div style={{
@@ -119,8 +126,8 @@ export const PlayerCard = ({
             width: cardConfig.avatarSize,
             height: cardConfig.avatarSize,
             borderRadius: '50%',
-            border: `3px solid ${player.color}`,
-            boxShadow: `0 0 0 2px rgba(255,255,255,0.8), 0 0 16px ${player.color}40`,
+            border: `3px solid ${displayColor}`,
+            boxShadow: `0 0 0 2px rgba(255,255,255,0.8), 0 0 16px ${displayColor}40`,
             transition: 'all 0.3s ease'
           }}
         />
@@ -133,7 +140,7 @@ export const PlayerCard = ({
               right: -4,
               width: 24,
               height: 24,
-              background: player.color,
+              background: displayColor,
               borderRadius: '50%',
               border: '2px solid #fff',
               cursor: 'pointer',
@@ -144,7 +151,13 @@ export const PlayerCard = ({
               boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
               transition: 'transform 0.2s ease'
             }}
-            onClick={() => setShowColorPicker(showColorPicker === player.id ? null : player.id)}
+            onClick={() => {
+              const newPickerState = showColorPicker === player.id ? null : player.id;
+              setShowColorPicker(newPickerState);
+              if (newPickerState === null) {
+                setHoveredColor(null); // Clear hover preview when closing
+              }
+            }}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
             onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             title="Change your color"
@@ -172,6 +185,24 @@ export const PlayerCard = ({
             fontSize={cardConfig.fontSize}
             variant="lobby"
           />
+          {player.id === currentPlayerId && !isPlayerHost && (
+            <div style={{
+              marginTop: 4,
+              fontSize: 10,
+              background: 'linear-gradient(45deg, #f59e0b, #d97706)',
+              color: '#fff',
+              padding: '2px 8px',
+              borderRadius: 6,
+              fontWeight: 700,
+              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+              boxShadow: '0 1px 3px rgba(245, 158, 11, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '2px'
+            }}>
+              YOU
+            </div>
+          )}
           {isPlayerHost && (
             <div style={{
               marginTop: 4,
@@ -213,57 +244,149 @@ export const PlayerCard = ({
         </div>
       </div>
 
-      {/* Color Picker */}
+      {/* Smart Positioning Color Picker Modal */}
       {showColorPicker === player.id && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.8, y: 10 }}
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            marginTop: 8,
-            background: '#fff',
-            border: '2px solid #b6a77a',
-            borderRadius: 12,
-            padding: 8,
-            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 6,
-            width: 'fit-content',
-            zIndex: 1000 // Increased z-index to ensure it appears above all elements
-          }}
-          data-color-picker
-        >
-          {capyColors.map((color) => (
+        <>
+          {/* Backdrop overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.3)',
+              zIndex: 9998,
+              backdropFilter: 'blur(2px)',
+              borderRadius: 16 // Add rounded corners to match card design
+            }}
+            onClick={() => {
+              setShowColorPicker(null);
+              setHoveredColor(null); // Clear hover preview when closing
+            }} // Close modal when clicking backdrop
+          />
+          
+          {/* Modal */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            style={{
+              position: 'fixed', // Fixed positioning to overlay entire screen
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'linear-gradient(135deg, rgba(235, 228, 200, 0.98) 0%, rgba(255, 255, 255, 0.95) 100%)', // Project styling
+              border: `2px solid ${player.color}`,
+              borderRadius: 12,
+              padding: 8,
+              boxShadow: `0 8px 24px ${player.color}40, 0 4px 12px rgba(0,0,0,0.15)`,
+              zIndex: 9999, // Ensure it overlays everything
+              backdropFilter: 'blur(12px)',
+              maxWidth: 140, // Compact size
+              width: 'max-content'
+            }}
+            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+          >
+            <div style={{
+              fontSize: 10,
+              fontWeight: 600,
+              color: '#232323',
+              textAlign: 'center',
+              marginBottom: 6,
+              textShadow: '0 1px 2px rgba(255, 255, 255, 0.8)'
+            }}>
+              🎨 Pick Your Color
+            </div>
+            
+            {/* 2x3 grid for compact layout */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 6,
+              justifyItems: 'center',
+              marginBottom: 6
+            }}>
+              {capyColors.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => {
+                    onColorChange(color, player.id);
+                    setShowColorPicker(null); // Auto-close after selection
+                    setHoveredColor(null); // Clear hover preview after selection
+                  }}
+                  style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: '50%',
+                    background: color,
+                    border: player.color === color ? '3px solid #232323' : '2px solid rgba(255,255,255,0.8)',
+                    cursor: 'pointer',
+                    boxShadow: `0 3px 8px ${color}50`,
+                    transition: 'all 0.2s ease',
+                    position: 'relative'
+                  }}
+                  onMouseEnter={(e) => {
+                    setHoveredColor(color); // Set hover preview
+                    e.currentTarget.style.transform = 'scale(1.15)';
+                    e.currentTarget.style.boxShadow = `0 4px 12px ${color}60`;
+                  }}
+                  onMouseLeave={(e) => {
+                    setHoveredColor(null); // Clear hover preview
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.boxShadow = `0 3px 8px ${color}50`;
+                  }}
+                  title={`Change to ${color}`}
+                >
+                  {player.color === color && (
+                    <span style={{
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)',
+                      fontSize: 10,
+                      color: '#fff',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.8)'
+                    }}>✓</span>
+                  )}
+                </button>
+              ))}
+            </div>
+            
             <button
-              key={color}
-              onClick={() => onColorChange(color, player.id)}
+              onClick={() => {
+                setShowColorPicker(null);
+                setHoveredColor(null); // Clear hover preview when closing
+              }}
               style={{
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                background: color,
-                border: player.color === color ? '3px solid #232323' : '2px solid #fff',
+                width: '100%',
+                padding: '4px 8px',
+                background: 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
+                border: 'none',
+                borderRadius: 6,
+                fontSize: 9,
+                color: '#fff',
                 cursor: 'pointer',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                fontWeight: 600,
+                boxShadow: '0 2px 6px rgba(107, 114, 128, 0.3)',
                 transition: 'all 0.2s ease'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.15)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.2)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(107, 114, 128, 0.4)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.1)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 6px rgba(107, 114, 128, 0.3)';
               }}
-              title={`Change to ${color}`}
-            />
-          ))}
-        </motion.div>
+            >
+              Close
+            </button>
+          </motion.div>
+        </>
       )}
     </motion.div>
   );

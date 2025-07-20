@@ -10,9 +10,10 @@ interface PlayerWithPoints extends Player {
 
 interface PodiumProps {
   players: PlayerWithPoints[]; // Top 3
+  currentUserId?: string;
 }
 
-const Podium: React.FC<PodiumProps> = ({ players }) => {
+const Podium: React.FC<PodiumProps> = ({ players, currentUserId }) => {
   // ✅ CRITICAL FIX: Sort players by points to prevent host bias
   const sortedPlayers = [...players].sort((a, b) => {
     // Sort by points first (DESCENDING - higher points = better position)
@@ -101,6 +102,22 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
             whiteSpace: "nowrap",
           }}>
             <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(winner.nickname) }} />
+            {currentUserId && winner.id === currentUserId && !winner.isHost && (
+              <span style={{
+                marginLeft: 6,
+                fontSize: 10,
+                fontWeight: 800,
+                color: '#fbbf24',
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                background: 'linear-gradient(45deg, #f59e0b, #d97706)',
+                padding: '2px 6px',
+                borderRadius: 6,
+                border: '1px solid #fbbf24',
+                display: 'inline-block'
+              }}>
+                YOU
+              </span>
+            )}
           </div>
           <div 
             style={{
@@ -213,6 +230,22 @@ const Podium: React.FC<PodiumProps> = ({ players }) => {
               whiteSpace: "nowrap",
             }}>
               <span dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(player.nickname) }} />
+              {currentUserId && player.id === currentUserId && !player.isHost && (
+                <span style={{
+                  marginLeft: 4,
+                  fontSize: 9,
+                  fontWeight: 800,
+                  color: '#fbbf24',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                  background: 'linear-gradient(45deg, #f59e0b, #d97706)',
+                  padding: '1px 4px',
+                  borderRadius: 4,
+                  border: '1px solid #fbbf24',
+                  display: 'inline-block'
+                }}>
+                  YOU
+                </span>
+              )}
             </div>
             <div 
               style={{

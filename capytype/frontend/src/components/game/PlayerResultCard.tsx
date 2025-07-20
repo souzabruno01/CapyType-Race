@@ -7,7 +7,7 @@ interface PlayerWithPointsAndPosition extends Player {
   position: number;
 }
 
-const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPosition; index: number }) => {
+const PlayerResultCard = ({ player, index, currentUserId }: { player: PlayerWithPointsAndPosition; index: number; currentUserId?: string }) => {
   // Helper function to make player color transparent
   const makeColorTransparent = (color: string, opacity: number = 0.15) => {
     if (color.startsWith('#')) {
@@ -110,6 +110,24 @@ const PlayerResultCard = ({ player, index }: { player: PlayerWithPointsAndPositi
       variant="results"
       scaleFactor={scaleFactor}
     />
+    
+    {/* "YOU" badge for current user */}
+    {currentUserId && player.id === currentUserId && !player.isHost && (
+      <div style={{
+        fontSize: Math.round(9 * scaleFactor),
+        fontWeight: 800,
+        color: '#fbbf24',
+        textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+        background: 'linear-gradient(45deg, #f59e0b, #d97706)',
+        padding: `${Math.round(2 * scaleFactor)}px ${Math.round(6 * scaleFactor)}px`,
+        borderRadius: Math.round(4 * scaleFactor),
+        border: '1px solid #fbbf24',
+        marginTop: Math.round(2 * scaleFactor),
+        marginBottom: Math.round(4 * scaleFactor),
+      }}>
+        YOU
+      </div>
+    )}
     
     {/* Stats section */}
     <div style={{

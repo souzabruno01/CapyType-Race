@@ -526,6 +526,7 @@ export default function Game() {
               players={players}
               onReturnToLobby={handleReturnToLobby}
               onBackToLogin={handleBackToLogin}
+              currentUserId={useGameStore.getState().socket?.id || ''}
             />
           )}
         </AnimatePresence>
