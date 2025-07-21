@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
-import { useGameStore } from '../store/gameStore';
+import { useGameSt          console.log('[Anti-Cheat] Blocked key combination:', e.key);
+          // Silently block the key combinations../store/gameStore';
 import ReactConfetti from 'react-confetti';
 import { useNavigate } from 'react-router-dom';
 import LiveLeaderboard from '../components/game/LiveLeaderboard';
@@ -9,8 +10,10 @@ import WaitingForOthersOverlay from '../components/game/WaitingForOthersOverlay'
 import TimeUpOverlay from '../components/game/TimeUpOverlay';
 import ResultsModal from '../components/game/ResultsModal';
 import HighlightedText from '../components/game/HighlightedText';
+import { Notification } from '../components/lobby/Notification';
 import { useGameTimer } from '../hooks/useGameTimer';
 import { useGameState } from '../hooks/useGameState';
+import { useNotification } from '../hooks/useNotification';
 import { TIME_UP_RESULTS_DELAY, CONFETTI_DURATION, STATS_SYNC_THROTTLE, GAME_STATE_SYNC_DELAY } from '../utils/constants';
 
 
@@ -44,6 +47,7 @@ const modernButtonStyle = {
 export default function Game() {
   const navigate = useNavigate();
   const { text, players, gameState, roomId, roomClosed, clearRoomClosed } = useGameStore();
+  const { showNotification, notificationMessage, showNotificationWithMessage } = useNotification();
   
   const gameStarted = gameState === 'playing';
   const { countdown, setCountdown, timeLeft, setTimeLeft } = useGameTimer();
@@ -177,30 +181,26 @@ export default function Game() {
           console.log('[Anti-Cheat] Blocked key combination:', e.key);
           
           // Show different messages based on the key
-          let message = '🐹 CAPYBARA ALERT! 🐹\n\n';
           if (e.key === 'v') {
-            message += 'Nice try, but Capybaras don\'t like paste! 📋\nOne confused Capybara just left... 😕\n\nType it out for real! 💪';
+            showCapyAlert('� No pasting allowed! Type it out for real!');
           } else if (e.key === 'c') {
-            message += 'Copying is for homework, not typing races! 📚\nA disappointed Capybara swam away... 🏊‍♀️\n\nShow your true typing skills! ⌨️';
+            showCapyAlert('🐹 No copying! Show your true typing skills!');
           } else if (e.key === 'x') {
-            message += 'Cut that out! Literally! ✂️\nAnother Capybara friend wandered off... 🚶‍♂️\n\nKeep those paws on the keyboard! 🐾';
+            showCapyAlert('🐹 Cut that out! Keep those paws on the keyboard!');
           } else if (e.key === 'a') {
-            message += 'Select All? More like Select NONE! 🚫\nA wise Capybara shook its head and left... 🤦‍♂️\n\nType character by character! 🔤';
+            showCapyAlert('🐹 Select All? More like Select NONE! Type character by character!');
           }
-          alert(message);
         }
       }
       // Block F12 (Developer Tools)
       if (e.key === 'F12') {
         e.preventDefault();
         console.log('[Anti-Cheat] Blocked F12 key');
-        alert('🐹 CAPYBARA ALERT! 🐹\n\nDeveloper tools? Really? 🛠️\nThe tech-savvy Capybara is not impressed... 💻\nOne disappointed furry friend just logged off! 👋\n\nPlay fair and square! 🎮');
       }
       // Block Ctrl+Shift+I (Developer Tools)
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
         e.preventDefault();
         console.log('[Anti-Cheat] Blocked developer tools shortcut');
-        alert('🐹 CAPYBARA ALERT! 🐹\n\nInspect Element? The only thing you should inspect is your typing! 🔍\nA detective Capybara solved this case and left... 🕵️‍♂️\n\nKeep it honest, friend! 🤝');
       }
     };
     
@@ -220,8 +220,11 @@ export default function Game() {
       sessionStorage.removeItem('capy_nickname');
       sessionStorage.removeItem('capy_is_admin');
       
-      // Show the room closure message
-      alert(roomClosed.message);
+      // Show the room closure message as notification
+      setNotificationType('error');
+      if (showNotificationWithMessage) {
+        showNotificationWithMessage(roomClosed.message, 5000);
+      }
       
       // Reset the game state and clear the room closed state
       useGameStore.getState().resetGame();
@@ -829,32 +832,26 @@ export default function Game() {
               onPaste={(e) => {
                 e.preventDefault(); // Block paste operations
                 console.log('[Anti-Cheat] Paste attempt blocked');
-                alert('🐹 CAPYBARA ALERT! 🐹\n\nCaught you red-pawed! No pasting allowed! 🚫\nA sneaky Capybara just escaped through the back door... 🚪\n\nShow us your real typing powers! ⚡');
               }}
               onCopy={(e) => {
                 e.preventDefault(); // Block copy operations
                 console.log('[Anti-Cheat] Copy attempt blocked');
-                alert('🐹 CAPYBARA ALERT! 🐹\n\nNo copying homework from your neighbor! 📝\nA studious Capybara just dropped its pencil and left... ✏️\n\nType it yourself, champion! 🏆');
               }}
               onCut={(e) => {
                 e.preventDefault(); // Block cut operations
                 console.log('[Anti-Cheat] Cut attempt blocked');
-                alert('🐹 CAPYBARA ALERT! 🐹\n\nCutting corners, are we? ✂️\nA perfectionist Capybara just shook its head and walked away... 😤\n\nTake the scenic route and type! 🛤️');
               }}
               onContextMenu={(e) => {
                 e.preventDefault(); // Block right-click menu
                 console.log('[Anti-Cheat] Context menu blocked');
-                alert('🐹 CAPYBARA ALERT! 🐹\n\nRight-clicking for shortcuts? Nice try! 🖱️\nA clever Capybara saw right through that and left... 👀\n\nLeft-click and type like a pro! 💪');
               }}
               onDragStart={(e) => {
                 e.preventDefault(); // Block drag operations
                 console.log('[Anti-Cheat] Drag attempt blocked');
-                alert('🐹 CAPYBARA ALERT! 🐹\n\nDrag and drop? More like drag and STOP! 🛑\nA confused Capybara just got dizzy and wandered off... 😵‍💫\n\nKeep your hands on the keyboard! ⌨️');
               }}
               onSelect={(e) => {
                 e.preventDefault(); // Block text selection in textarea
                 console.log('[Anti-Cheat] Text selection blocked');
-                alert('🐹 CAPYBARA ALERT! 🐹\n\nSelecting text? The only thing selected here is fair play! 🎯\nA wise Capybara just made a better choice and left... 🧠\n\nType each letter with love! 💝');
               }}
               className="w-full max-w-2xl h-32 p-4 border-2 border-indigo-200 rounded-lg focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 font-mono text-lg shadow"
               placeholder={
@@ -906,6 +903,13 @@ export default function Game() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Notification */}
+      <Notification
+        show={showNotification}
+        message={notificationMessage}
+        type={notificationType}
+      />
     </div>
   );
 }

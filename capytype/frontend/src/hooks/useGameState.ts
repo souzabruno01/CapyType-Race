@@ -88,7 +88,6 @@ export const useGameState = (text: string, gameStarted: boolean, countdown: numb
     const inputDiff = value.length - previousValue.length;
     if (inputDiff > 3) {
       console.log('[Anti-Cheat] Suspicious input jump detected:', { inputDiff, previous: previousValue.length, current: value.length });
-      alert('🐹 CAPYBARA ALERT! 🐹\n\nA wild Capybara noticed your cheating attempt!\nOne Capybara has left the pond... 😢\n\nPlease type naturally to keep our Capybara friends happy! 🌿');
       e.target.value = previousValue; // Reset to previous value
       return;
     }
@@ -98,7 +97,6 @@ export const useGameState = (text: string, gameStarted: boolean, countdown: numb
       const timeDiff = now - state.lastKeystroke;
       if (timeDiff < 50 && Math.abs(inputDiff) > 1) { // Less than 50ms between multi-character changes
         console.log('[Anti-Cheat] Impossible typing speed detected:', { timeDiff, inputDiff });
-        alert('🐹 CAPYBARA ALERT! 🐹\n\nWoah there, speedy! Even the fastest Capybara can\'t type that fast!\nOne sad Capybara just swam away... 🏊‍♂️\n\nLet\'s keep it real for our furry friends! 💚');
         e.target.value = previousValue;
         return;
       }
@@ -107,7 +105,6 @@ export const useGameState = (text: string, gameStarted: boolean, countdown: numb
     // 3. Only allow single character additions/deletions (no multi-character inserts)
     if (Math.abs(inputDiff) > 1) {
       console.log('[Anti-Cheat] Multi-character input detected:', { inputDiff });
-      alert('🐹 CAPYBARA ALERT! 🐹\n\nOh no! A Capybara spotted some suspicious typing!\nAnother Capybara friend has wandered off... 🚶‍♂️\n\nType one letter at a time to make them happy! ✨');
       e.target.value = previousValue;
       return;
     }
