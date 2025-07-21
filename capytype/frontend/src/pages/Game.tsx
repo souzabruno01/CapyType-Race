@@ -1,8 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DOMPurify from 'dompurify';
-import { useGameSt          console.log('[Anti-Cheat] Blocked key combination:', e.key);
-          // Silently block the key combinations../store/gameStore';
+import { useGameStore } from '../store/gameStore';
 import ReactConfetti from 'react-confetti';
 import { useNavigate } from 'react-router-dom';
 import LiveLeaderboard from '../components/game/LiveLeaderboard';
@@ -10,10 +9,8 @@ import WaitingForOthersOverlay from '../components/game/WaitingForOthersOverlay'
 import TimeUpOverlay from '../components/game/TimeUpOverlay';
 import ResultsModal from '../components/game/ResultsModal';
 import HighlightedText from '../components/game/HighlightedText';
-import { Notification } from '../components/lobby/Notification';
 import { useGameTimer } from '../hooks/useGameTimer';
 import { useGameState } from '../hooks/useGameState';
-import { useNotification } from '../hooks/useNotification';
 import { TIME_UP_RESULTS_DELAY, CONFETTI_DURATION, STATS_SYNC_THROTTLE, GAME_STATE_SYNC_DELAY } from '../utils/constants';
 
 
@@ -47,7 +44,6 @@ const modernButtonStyle = {
 export default function Game() {
   const navigate = useNavigate();
   const { text, players, gameState, roomId, roomClosed, clearRoomClosed } = useGameStore();
-  const { showNotification, notificationMessage, showNotificationWithMessage } = useNotification();
   
   const gameStarted = gameState === 'playing';
   const { countdown, setCountdown, timeLeft, setTimeLeft } = useGameTimer();
@@ -67,7 +63,6 @@ export default function Game() {
   const [currentPlayerPosition, setCurrentPlayerPosition] = useState<number | null>(null);
   const [waitingForOthers, setWaitingForOthers] = useState(false);
   const [waitingTimeLeft, setWaitingTimeLeft] = useState<number | null>(null);
-  const [windowFocused, setWindowFocused] = useState(true); // Track window focus for anti-cheat
   
   // NEW: Separate race completion state from individual player completion
   const [raceCompleted, setRaceCompleted] = useState(false);
@@ -149,28 +144,6 @@ export default function Game() {
     }
   }, [countdown, gameStarted, gameFinished]);
 
-  // Anti-cheat: Monitor window focus/blur events
-  useEffect(() => {
-    const handleFocus = () => {
-      setWindowFocused(true);
-      console.log('[Anti-Cheat] Window focused');
-    };
-    
-    const handleBlur = () => {
-      setWindowFocused(false);
-      console.log('[Anti-Cheat] Window lost focus - potential cheating attempt');
-      // Could pause game or flag suspicious behavior here
-    };
-    
-    window.addEventListener('focus', handleFocus);
-    window.addEventListener('blur', handleBlur);
-    
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener('blur', handleBlur);
-    };
-  }, []);
-
   // Anti-cheat: Block certain key combinations
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -179,17 +152,7 @@ export default function Game() {
         if (e.key === 'v' || e.key === 'c' || e.key === 'x' || e.key === 'a') {
           e.preventDefault();
           console.log('[Anti-Cheat] Blocked key combination:', e.key);
-          
-          // Show different messages based on the key
-          if (e.key === 'v') {
-            showCapyAlert('� No pasting allowed! Type it out for real!');
-          } else if (e.key === 'c') {
-            showCapyAlert('🐹 No copying! Show your true typing skills!');
-          } else if (e.key === 'x') {
-            showCapyAlert('🐹 Cut that out! Keep those paws on the keyboard!');
-          } else if (e.key === 'a') {
-            showCapyAlert('🐹 Select All? More like Select NONE! Type character by character!');
-          }
+          // Silently block these actions without showing any alerts
         }
       }
       // Block F12 (Developer Tools)
@@ -220,11 +183,8 @@ export default function Game() {
       sessionStorage.removeItem('capy_nickname');
       sessionStorage.removeItem('capy_is_admin');
       
-      // Show the room closure message as notification
-      setNotificationType('error');
-      if (showNotificationWithMessage) {
-        showNotificationWithMessage(roomClosed.message, 5000);
-      }
+      // Room was closed - no popup needed, just navigate
+      console.log('Room closed:', roomClosed.message);
       
       // Reset the game state and clear the room closed state
       useGameStore.getState().resetGame();
@@ -903,13 +863,6 @@ export default function Game() {
           )}
         </AnimatePresence>
       </div>
-
-      {/* Notification */}
-      <Notification
-        show={showNotification}
-        message={notificationMessage}
-        type={notificationType}
-      />
     </div>
   );
 }
