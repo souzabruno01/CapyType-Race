@@ -122,10 +122,11 @@ export default function Lobby() {
 
   // Handlers
   const handleColorChange = (newColor: string, playerId: string) => {
-    console.log('[Lobby] Color change requested:', { newColor, playerId, socketId: socket?.id });
+    console.log('[Lobby] Color change requested:', { newColor, playerId, socketId: socket?.id, socketConnected: !!socket?.connected });
     
-    if (socket) {
+    if (socket && socket.connected) {
       const matchingAvatar = CAPYBARA_AVATARS.find(avatar => avatar.color === newColor);
+      console.log('[Lobby] Found matching avatar:', matchingAvatar);
       
       if (socket.id === playerId) {
         sessionStorage.setItem('capy_avatar_color', newColor);
@@ -135,16 +136,36 @@ export default function Lobby() {
         console.log('[Lobby] Updated sessionStorage for current player');
       }
       
-      console.log('[Lobby] Emitting changePlayerColor event');
+      console.log('[Lobby] Emitting changePlayerColor event with data:', { 
+        playerId, 
+        color: newColor, 
+        avatar: matchingAvatar ? matchingAvatar.file : undefined 
+      });
+      
       socket.emit('changePlayerColor', { 
         playerId, 
         color: newColor, 
         avatar: matchingAvatar ? matchingAvatar.file : undefined 
       });
+      
+      // Add a timeout to check if we received the response
+      setTimeout(() => {
+        console.log('[Lobby] Checking if color change was applied after 2 seconds...');
+        const currentPlayer = players.find(p => p.id === playerId);
+        if (currentPlayer) {
+          console.log('[Lobby] Current player color after change attempt:', currentPlayer.color, 'Expected:', newColor);
+        }
+      }, 2000);
+      
       setShowColorPicker(null);
       setNotificationMessage('Color updated!');
       setShowNotification(true);
       setTimeout(() => setShowNotification(false), 2000);
+    } else {
+      console.error('[Lobby] Socket not connected! Cannot change color.', { socket: !!socket, connected: socket?.connected });
+      setNotificationMessage('❌ Connection error - cannot change color');
+      setShowNotification(true);
+      setTimeout(() => setShowNotification(false), 3000);
     }
   };
 

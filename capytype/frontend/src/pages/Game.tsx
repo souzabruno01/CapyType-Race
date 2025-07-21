@@ -63,6 +63,7 @@ export default function Game() {
   const [currentPlayerPosition, setCurrentPlayerPosition] = useState<number | null>(null);
   const [waitingForOthers, setWaitingForOthers] = useState(false);
   const [waitingTimeLeft, setWaitingTimeLeft] = useState<number | null>(null);
+  const [windowFocused, setWindowFocused] = useState(true); // Track window focus for anti-cheat
   
   // NEW: Separate race completion state from individual player completion
   const [raceCompleted, setRaceCompleted] = useState(false);
@@ -143,6 +144,71 @@ export default function Game() {
       return () => clearTimeout(focusTimeout);
     }
   }, [countdown, gameStarted, gameFinished]);
+
+  // Anti-cheat: Monitor window focus/blur events
+  useEffect(() => {
+    const handleFocus = () => {
+      setWindowFocused(true);
+      console.log('[Anti-Cheat] Window focused');
+    };
+    
+    const handleBlur = () => {
+      setWindowFocused(false);
+      console.log('[Anti-Cheat] Window lost focus - potential cheating attempt');
+      // Could pause game or flag suspicious behavior here
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('blur', handleBlur);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('blur', handleBlur);
+    };
+  }, []);
+
+  // Anti-cheat: Block certain key combinations
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Block common cheat key combinations
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'v' || e.key === 'c' || e.key === 'x' || e.key === 'a') {
+          e.preventDefault();
+          console.log('[Anti-Cheat] Blocked key combination:', e.key);
+          
+          // Show different messages based on the key
+          let message = '🐹 CAPYBARA ALERT! 🐹\n\n';
+          if (e.key === 'v') {
+            message += 'Nice try, but Capybaras don\'t like paste! 📋\nOne confused Capybara just left... 😕\n\nType it out for real! 💪';
+          } else if (e.key === 'c') {
+            message += 'Copying is for homework, not typing races! 📚\nA disappointed Capybara swam away... 🏊‍♀️\n\nShow your true typing skills! ⌨️';
+          } else if (e.key === 'x') {
+            message += 'Cut that out! Literally! ✂️\nAnother Capybara friend wandered off... 🚶‍♂️\n\nKeep those paws on the keyboard! 🐾';
+          } else if (e.key === 'a') {
+            message += 'Select All? More like Select NONE! 🚫\nA wise Capybara shook its head and left... 🤦‍♂️\n\nType character by character! 🔤';
+          }
+          alert(message);
+        }
+      }
+      // Block F12 (Developer Tools)
+      if (e.key === 'F12') {
+        e.preventDefault();
+        console.log('[Anti-Cheat] Blocked F12 key');
+        alert('🐹 CAPYBARA ALERT! 🐹\n\nDeveloper tools? Really? 🛠️\nThe tech-savvy Capybara is not impressed... 💻\nOne disappointed furry friend just logged off! 👋\n\nPlay fair and square! 🎮');
+      }
+      // Block Ctrl+Shift+I (Developer Tools)
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
+        e.preventDefault();
+        console.log('[Anti-Cheat] Blocked developer tools shortcut');
+        alert('🐹 CAPYBARA ALERT! 🐹\n\nInspect Element? The only thing you should inspect is your typing! 🔍\nA detective Capybara solved this case and left... 🕵️‍♂️\n\nKeep it honest, friend! 🤝');
+      }
+    };
+    
+    if (gameStarted && !gameFinished) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [gameStarted, gameFinished]);
 
   // Handle room closure notifications
   useEffect(() => {
@@ -591,11 +657,11 @@ export default function Game() {
                 fontSize: '1.2rem',
                 lineHeight: 1.7,
                 whiteSpace: 'normal', // Allow text to wrap naturally
-                wordBreak: 'normal', // Don't break words in the middle
-                overflowWrap: 'anywhere', // Only break if absolutely necessary
+                wordBreak: 'keep-all', // Don't break words in the middle
+                overflowWrap: 'break-word', // Only break at word boundaries
                 hyphens: 'none', // Disable hyphenation
                 color: '#6b7280',
-                userSelect: 'none'
+                userSelect: 'none' // Prevent text selection for anti-cheat
               }}>
                 {text || 'Waiting for text...'}
               </div>
@@ -760,6 +826,36 @@ export default function Game() {
               ref={textareaRef} // Attach ref to textarea
               value={input}
               onChange={handleInputChange}
+              onPaste={(e) => {
+                e.preventDefault(); // Block paste operations
+                console.log('[Anti-Cheat] Paste attempt blocked');
+                alert('🐹 CAPYBARA ALERT! 🐹\n\nCaught you red-pawed! No pasting allowed! 🚫\nA sneaky Capybara just escaped through the back door... 🚪\n\nShow us your real typing powers! ⚡');
+              }}
+              onCopy={(e) => {
+                e.preventDefault(); // Block copy operations
+                console.log('[Anti-Cheat] Copy attempt blocked');
+                alert('🐹 CAPYBARA ALERT! 🐹\n\nNo copying homework from your neighbor! 📝\nA studious Capybara just dropped its pencil and left... ✏️\n\nType it yourself, champion! 🏆');
+              }}
+              onCut={(e) => {
+                e.preventDefault(); // Block cut operations
+                console.log('[Anti-Cheat] Cut attempt blocked');
+                alert('🐹 CAPYBARA ALERT! 🐹\n\nCutting corners, are we? ✂️\nA perfectionist Capybara just shook its head and walked away... 😤\n\nTake the scenic route and type! 🛤️');
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault(); // Block right-click menu
+                console.log('[Anti-Cheat] Context menu blocked');
+                alert('🐹 CAPYBARA ALERT! 🐹\n\nRight-clicking for shortcuts? Nice try! 🖱️\nA clever Capybara saw right through that and left... 👀\n\nLeft-click and type like a pro! 💪');
+              }}
+              onDragStart={(e) => {
+                e.preventDefault(); // Block drag operations
+                console.log('[Anti-Cheat] Drag attempt blocked');
+                alert('🐹 CAPYBARA ALERT! 🐹\n\nDrag and drop? More like drag and STOP! 🛑\nA confused Capybara just got dizzy and wandered off... 😵‍💫\n\nKeep your hands on the keyboard! ⌨️');
+              }}
+              onSelect={(e) => {
+                e.preventDefault(); // Block text selection in textarea
+                console.log('[Anti-Cheat] Text selection blocked');
+                alert('🐹 CAPYBARA ALERT! 🐹\n\nSelecting text? The only thing selected here is fair play! 🎯\nA wise Capybara just made a better choice and left... 🧠\n\nType each letter with love! 💝');
+              }}
               className="w-full max-w-2xl h-32 p-4 border-2 border-indigo-200 rounded-lg focus:border-indigo-400 focus:ring-2 focus:ring-indigo-200 font-mono text-lg shadow"
               placeholder={
                 countdown !== null ? `Wait for countdown: ${countdown}...` :

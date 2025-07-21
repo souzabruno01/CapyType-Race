@@ -9,6 +9,7 @@ interface GameState {
   wpm: number;
   startTime: number | null;
   hasStartedTyping: boolean;
+  lastKeystroke: number | null; // Track last keystroke time for anti-cheat
 }
 
 type GameAction =
@@ -17,6 +18,7 @@ type GameAction =
   | { type: 'SET_PROGRESS'; payload: number }
   | { type: 'SET_WPM'; payload: number }
   | { type: 'START_GAME' }
+  | { type: 'SET_LAST_KEYSTROKE'; payload: number } // Anti-cheat keystroke timing
   | { type: 'RESET' };
 
 const initialState: GameState = {
@@ -27,6 +29,7 @@ const initialState: GameState = {
   wpm: 0,
   startTime: null,
   hasStartedTyping: false,
+  lastKeystroke: null, // Initialize anti-cheat timestamp
 };
 
 const gameReducer = (state: GameState, action: GameAction): GameState => {
@@ -41,6 +44,8 @@ const gameReducer = (state: GameState, action: GameAction): GameState => {
       return { ...state, wpm: action.payload };
     case 'START_GAME':
       return { ...state, startTime: Date.now() };
+    case 'SET_LAST_KEYSTROKE':
+      return { ...state, lastKeystroke: action.payload };
     case 'RESET':
       return initialState;
     default:
@@ -75,6 +80,39 @@ export const useGameState = (text: string, gameStarted: boolean, countdown: numb
     }
     
     const value = e.target.value;
+    const previousValue = state.input;
+    const now = Date.now();
+    
+    // ANTI-CHEAT MEASURES
+    // 1. Check for paste-like behavior (large input jumps)
+    const inputDiff = value.length - previousValue.length;
+    if (inputDiff > 3) {
+      console.log('[Anti-Cheat] Suspicious input jump detected:', { inputDiff, previous: previousValue.length, current: value.length });
+      alert('🐹 CAPYBARA ALERT! 🐹\n\nA wild Capybara noticed your cheating attempt!\nOne Capybara has left the pond... 😢\n\nPlease type naturally to keep our Capybara friends happy! 🌿');
+      e.target.value = previousValue; // Reset to previous value
+      return;
+    }
+    
+    // 2. Check for impossible typing speed (>300 characters per minute instantaneous)
+    if (state.lastKeystroke) {
+      const timeDiff = now - state.lastKeystroke;
+      if (timeDiff < 50 && Math.abs(inputDiff) > 1) { // Less than 50ms between multi-character changes
+        console.log('[Anti-Cheat] Impossible typing speed detected:', { timeDiff, inputDiff });
+        alert('🐹 CAPYBARA ALERT! 🐹\n\nWoah there, speedy! Even the fastest Capybara can\'t type that fast!\nOne sad Capybara just swam away... 🏊‍♂️\n\nLet\'s keep it real for our furry friends! 💚');
+        e.target.value = previousValue;
+        return;
+      }
+    }
+    
+    // 3. Only allow single character additions/deletions (no multi-character inserts)
+    if (Math.abs(inputDiff) > 1) {
+      console.log('[Anti-Cheat] Multi-character input detected:', { inputDiff });
+      alert('🐹 CAPYBARA ALERT! 🐹\n\nOh no! A Capybara spotted some suspicious typing!\nAnother Capybara friend has wandered off... 🚶‍♂️\n\nType one letter at a time to make them happy! ✨');
+      e.target.value = previousValue;
+      return;
+    }
+    
+    // 4. Prevent input longer than the text
     if (value.length > text.length) return;
 
     // Start the timer on first keystroke
@@ -103,6 +141,9 @@ export const useGameState = (text: string, gameStarted: boolean, countdown: numb
     
     dispatch({ type: 'SET_PROGRESS', payload: newProgress });
     updateProgress(newProgress);
+    
+    // Update last keystroke time for anti-cheat
+    dispatch({ type: 'SET_LAST_KEYSTROKE', payload: now });
   };
 
   return { state, dispatch, handleInputChange };

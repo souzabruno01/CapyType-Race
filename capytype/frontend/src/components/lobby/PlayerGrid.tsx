@@ -1,7 +1,7 @@
 import { AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { Player } from '../../store/gameStore';
-import { PlayerCard } from './PlayerCard';
+import { PlayerCard } from './PlayerCard_working';
 
 interface PlayerGridProps {
   players: Player[];

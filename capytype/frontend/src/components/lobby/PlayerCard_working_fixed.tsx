@@ -89,165 +89,175 @@ export const PlayerCard = ({
   };
 
   return (
-    <motion.div
-      key={player.id}
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8 }}
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center', // Center content vertically
-        padding: cardConfig.padding,
-        background: `linear-gradient(135deg, ${getLightColorBackground(displayColor)}, rgba(255, 255, 255, 0.8))`,
-        borderRadius: 16,
-        border: `2px solid ${displayColor}`,
-        backdropFilter: 'blur(10px)',
-        position: 'relative',
-        width: '100%', // Take full width of grid cell
-        minWidth: cardConfig.minWidth, // Maintain minimum width
-        maxWidth: cardConfig.maxWidth, // Maintain maximum width
-        margin: '0 auto', // Center the card within the grid cell when it's smaller than cell
-        transition: 'all 0.3s ease',
-        boxShadow: showColorPicker === player.id 
-          ? '0 6px 20px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(0,0,0,0.15)' // Enhanced blue shadow when modal open
-          : '0 4px 12px rgba(0,0,0,0.15)'
-      }}
-    >
-      <div style={{
-        position: 'relative',
-        marginBottom: 12
-      }}>
-        <img
-          src={`/images/${player.avatar}`}
-          alt={`${DOMPurify.sanitize(player.nickname)}'s avatar`}
-          style={{
-            width: cardConfig.avatarSize,
-            height: cardConfig.avatarSize,
-            borderRadius: '50%',
-            border: `3px solid ${displayColor}`,
-            boxShadow: `0 0 0 2px rgba(255,255,255,0.8), 0 0 16px ${displayColor}40`,
-            transition: 'all 0.3s ease'
-          }}
-        />
-        
-        {player.id === currentPlayerId && (
-          <div
-            style={{
-              position: 'absolute',
-              bottom: -4,
-              right: -4,
-              width: 24,
-              height: 24,
-              background: displayColor,
-              borderRadius: '50%',
-              border: '2px solid #fff',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 10,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-              transition: 'transform 0.2s ease'
-            }}
-            onClick={() => {
-              const newPickerState = showColorPicker === player.id ? null : player.id;
-              setShowColorPicker(newPickerState);
-              if (newPickerState === null) {
-                setHoveredColor(null); // Clear hover preview when closing
-              }
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-            title="Change your color"
-            data-color-picker
-          >
-            🎨
-          </div>
-        )}
-      </div>
-
-      <div style={{
-        textAlign: 'center',
-        width: '100%'
-      }}>
-        <div style={{
+    <>
+      <motion.div
+        key={player.id}
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.8 }}
+        style={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 4,
-          minHeight: 38 /* Allocate space to prevent layout shifts */
-        }}>
-          <PlayerName
-            nickname={player.nickname}
-            fontSize={cardConfig.fontSize}
-            variant="lobby"
-          />
-          {player.id === currentPlayerId && !isPlayerHost && (
-            <div style={{
-              marginTop: 4,
-              fontSize: 10,
-              background: 'linear-gradient(45deg, #f59e0b, #d97706)',
-              color: '#fff',
-              padding: '2px 8px',
-              borderRadius: 6,
-              fontWeight: 700,
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-              boxShadow: '0 1px 3px rgba(245, 158, 11, 0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '2px'
-            }}>
-              YOU
-            </div>
-          )}
-          {isPlayerHost && (
-            <div style={{
-              marginTop: 4,
-              fontSize: 12,
-              background: 'linear-gradient(45deg, #fbbf24, #f59e0b)',
-              color: '#fff',
-              padding: '1px 6px',
-              borderRadius: 8,
-              fontWeight: 600,
-              textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-              boxShadow: '0 1px 3px rgba(245, 158, 11, 0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}>
-              <span>👑</span>
-              <span>HOST</span>
-            </div>
-          )}
-        </div>
-        
+          justifyContent: 'center', // Center content vertically
+          padding: cardConfig.padding,
+          background: `linear-gradient(135deg, ${getLightColorBackground(displayColor)}, rgba(255, 255, 255, 0.8))`,
+          borderRadius: 16,
+          border: `2px solid ${displayColor}`,
+          backdropFilter: 'blur(10px)',
+          position: 'relative',
+          width: '100%', // Take full width of grid cell
+          minWidth: cardConfig.minWidth, // Maintain minimum width
+          maxWidth: cardConfig.maxWidth, // Maintain maximum width
+          margin: '0 auto', // Center the card within the grid cell when it's smaller than cell
+          transition: 'all 0.3s ease',
+          boxShadow: showColorPicker === player.id 
+            ? '0 6px 20px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(0,0,0,0.15)' // Enhanced blue shadow when modal open
+            : '0 4px 12px rgba(0,0,0,0.15)',
+          // Add blur to the card content when color picker is open
+          filter: showColorPicker === player.id ? 'blur(2px)' : 'none',
+          overflow: 'hidden' // Ensure the blur respects the border radius
+        }}
+      >
         <div style={{
-          fontSize: 11,
-          color: '#6b7280',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 4
+          position: 'relative',
+          marginBottom: 12
         }}>
-          <div
+          <img
+            src={`/images/${player.avatar}`}
+            alt={`${DOMPurify.sanitize(player.nickname)}'s avatar`}
             style={{
-              width: 8,
-              height: 8,
+              width: cardConfig.avatarSize,
+              height: cardConfig.avatarSize,
               borderRadius: '50%',
-              background: '#10b981' // Always show as ready for now
+              border: `3px solid ${displayColor}`,
+              boxShadow: `0 0 0 2px rgba(255,255,255,0.8), 0 0 16px ${displayColor}40`,
+              transition: 'all 0.3s ease'
             }}
           />
-          Ready
+          
+          {player.id === currentPlayerId && (
+            <div
+              style={{
+                position: 'absolute',
+                bottom: -4,
+                right: -4,
+                width: 24,
+                height: 24,
+                background: displayColor,
+                borderRadius: '50%',
+                border: '2px solid #fff',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 10,
+                boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                transition: 'transform 0.2s ease',
+                zIndex: 1000 // Ensure palette button is clickable
+              }}
+              onClick={(e) => {
+                console.log('[PlayerCard] Palette button clicked!');
+                e.preventDefault();
+                e.stopPropagation();
+                const newPickerState = showColorPicker === player.id ? null : player.id;
+                console.log('[PlayerCard] Setting showColorPicker to:', newPickerState);
+                setShowColorPicker(newPickerState);
+                if (newPickerState === null) {
+                  setHoveredColor(null); // Clear hover preview when closing
+                }
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.1)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+              title="Change your color"
+              data-color-picker
+            >
+              🎨
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* Smart Positioning Color Picker Modal */}
+        <div style={{
+          textAlign: 'center',
+          width: '100%'
+        }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 4,
+            minHeight: 38 /* Allocate space to prevent layout shifts */
+          }}>
+            <PlayerName
+              nickname={player.nickname}
+              fontSize={cardConfig.fontSize}
+              variant="lobby"
+            />
+            {player.id === currentPlayerId && !isPlayerHost && (
+              <div style={{
+                marginTop: 4,
+                fontSize: 10,
+                background: 'linear-gradient(45deg, #f59e0b, #d97706)',
+                color: '#fff',
+                padding: '2px 8px',
+                borderRadius: 6,
+                fontWeight: 700,
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                boxShadow: '0 1px 3px rgba(245, 158, 11, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '2px'
+              }}>
+                YOU
+              </div>
+            )}
+            {isPlayerHost && (
+              <div style={{
+                marginTop: 4,
+                fontSize: 12,
+                background: 'linear-gradient(45deg, #fbbf24, #f59e0b)',
+                color: '#fff',
+                padding: '1px 6px',
+                borderRadius: 8,
+                fontWeight: 600,
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                boxShadow: '0 1px 3px rgba(245, 158, 11, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                <span>👑</span>
+                <span>HOST</span>
+              </div>
+            )}
+          </div>
+          
+          <div style={{
+            fontSize: 11,
+            color: '#6b7280',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 4
+          }}>
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: '#10b981' // Always show as ready for now
+              }}
+            />
+            Ready
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Color Picker Modal - Outside the card to avoid blur */}
       {showColorPicker === player.id && (
         <>
-          {/* Backdrop overlay */}
+          {/* Global backdrop overlay */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -259,11 +269,11 @@ export const PlayerCard = ({
               right: 0,
               bottom: 0,
               background: 'rgba(0, 0, 0, 0.3)',
-              zIndex: 9998,
-              backdropFilter: 'blur(2px)',
-              borderRadius: 16 // Add rounded corners to match card design
+              zIndex: 999999, // Increased z-index significantly
+              backdropFilter: 'blur(2px)'
             }}
             onClick={() => {
+              console.log('[PlayerCard] Backdrop clicked - closing modal');
               setShowColorPicker(null);
               setHoveredColor(null); // Clear hover preview when closing
             }} // Close modal when clicking backdrop
@@ -284,12 +294,15 @@ export const PlayerCard = ({
               borderRadius: 12,
               padding: 8,
               boxShadow: `0 8px 24px ${player.color}40, 0 4px 12px rgba(0,0,0,0.15)`,
-              zIndex: 9999, // Ensure it overlays everything
+              zIndex: 1000000, // Highest z-index to ensure it's on top
               backdropFilter: 'blur(12px)',
               maxWidth: 140, // Compact size
               width: 'max-content'
             }}
-            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+            onClick={(e) => {
+              console.log('[PlayerCard] Modal clicked - preventing close');
+              e.stopPropagation(); // Prevent closing when clicking inside modal
+            }}
           >
             <div style={{
               fontSize: 10,
@@ -313,8 +326,15 @@ export const PlayerCard = ({
               {capyColors.map((color) => (
                 <button
                   key={color}
-                  onClick={async () => {
+                  onMouseDown={(e) => {
+                    console.log('[PlayerCard] Color button mouse down:', { color, playerId: player.id });
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onClick={(e) => {
                     console.log('[PlayerCard] Color button clicked:', { color, playerId: player.id });
+                    e.preventDefault();
+                    e.stopPropagation();
                     
                     // Clear hover state immediately to prevent visual confusion
                     setHoveredColor(null);
@@ -334,9 +354,11 @@ export const PlayerCard = ({
                     cursor: 'pointer',
                     boxShadow: `0 3px 8px ${color}50`,
                     transition: 'all 0.2s ease',
-                    position: 'relative'
+                    position: 'relative',
+                    zIndex: 1000001 // Ensure buttons are above everything
                   }}
                   onMouseEnter={(e) => {
+                    console.log('[PlayerCard] Color button hover:', color);
                     setHoveredColor(color); // Set hover preview
                     e.currentTarget.style.transform = 'scale(1.15)';
                     e.currentTarget.style.boxShadow = `0 4px 12px ${color}60`;
@@ -359,7 +381,8 @@ export const PlayerCard = ({
                       transform: 'translate(-50%, -50%)',
                       fontSize: 10,
                       color: '#fff',
-                      textShadow: '0 1px 2px rgba(0,0,0,0.8)'
+                      textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                      pointerEvents: 'none' // Ensure checkmark doesn't block clicks
                     }}>✓</span>
                   )}
                 </button>
@@ -367,7 +390,10 @@ export const PlayerCard = ({
             </div>
             
             <button
-              onClick={() => {
+              onClick={(e) => {
+                console.log('[PlayerCard] Close button clicked');
+                e.preventDefault();
+                e.stopPropagation();
                 setShowColorPicker(null);
                 setHoveredColor(null); // Clear hover preview when closing
               }}
@@ -382,7 +408,8 @@ export const PlayerCard = ({
                 cursor: 'pointer',
                 fontWeight: 600,
                 boxShadow: '0 2px 6px rgba(107, 114, 128, 0.3)',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                zIndex: 1000001 // Ensure close button is clickable
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-1px)';
@@ -398,6 +425,6 @@ export const PlayerCard = ({
           </motion.div>
         </>
       )}
-    </motion.div>
+    </>
   );
 };
