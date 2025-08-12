@@ -104,6 +104,7 @@ export const PlayerCard = ({
           background: `linear-gradient(135deg, ${getLightColorBackground(displayColor)}, rgba(255, 255, 255, 0.8))`,
           borderRadius: 16,
           border: `2px solid ${displayColor}`,
+          backdropFilter: 'blur(10px)',
           position: 'relative',
           width: '100%', // Take full width of grid cell
           minWidth: cardConfig.minWidth, // Maintain minimum width
@@ -113,25 +114,15 @@ export const PlayerCard = ({
           boxShadow: showColorPicker === player.id 
             ? '0 6px 20px rgba(59, 130, 246, 0.3), 0 4px 12px rgba(0,0,0,0.15)' // Enhanced blue shadow when modal open
             : '0 4px 12px rgba(0,0,0,0.15)',
+          // Add blur to the card content when color picker is open
+          filter: showColorPicker === player.id ? 'blur(2px)' : 'none',
           overflow: 'hidden' // Ensure the blur respects the border radius
         }}
       >
-        {/* Card Content Wrapper - Only this gets blurred, not the modal */}
         <div style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          // Apply blur to the entire card content when color picker is open
-          filter: showColorPicker === player.id ? 'blur(2px)' : 'none',
-          transition: 'filter 0.3s ease'
+          position: 'relative',
+          marginBottom: 12
         }}>
-          <div style={{
-            position: 'relative',
-            marginBottom: 12
-          }}>
           <img
             src={`/images/${player.avatar}`}
             alt={`${DOMPurify.sanitize(player.nickname)}'s avatar`}
@@ -261,7 +252,6 @@ export const PlayerCard = ({
             Ready
           </div>
         </div>
-        </div>
       </motion.div>
 
       {/* Color Picker Modal - Outside the card to avoid blur */}
@@ -277,16 +267,19 @@ export const PlayerCard = ({
               top: 0,
               left: 0,
               right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.3)',
-          zIndex: 999999 // Increased z-index significantly
-        }}
-        onClick={() => {
-          console.log('[PlayerCard] Backdrop clicked - closing modal');
-          setShowColorPicker(null);
-          setHoveredColor(null); // Clear hover preview when closing
-        }} // Close modal when clicking backdrop
-      />          {/* Modal */}
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.3)',
+              zIndex: 999999, // Increased z-index significantly
+              backdropFilter: 'blur(2px)'
+            }}
+            onClick={() => {
+              console.log('[PlayerCard] Backdrop clicked - closing modal');
+              setShowColorPicker(null);
+              setHoveredColor(null); // Clear hover preview when closing
+            }} // Close modal when clicking backdrop
+          />
+          
+          {/* Modal */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -302,6 +295,7 @@ export const PlayerCard = ({
               padding: 8,
               boxShadow: `0 8px 24px ${player.color}40, 0 4px 12px rgba(0,0,0,0.15)`,
               zIndex: 1000000, // Highest z-index to ensure it's on top
+              backdropFilter: 'blur(12px)',
               maxWidth: 140, // Compact size
               width: 'max-content'
             }}

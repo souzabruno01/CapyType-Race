@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Lobby from './pages/Lobby';
 import Game from './pages/Game';
 import Results from './pages/Results';
+import SocketTest from './pages/SocketTest';
 
 function App() {
   const connect = useGameStore((state) => state.connect);
@@ -26,6 +27,7 @@ function App() {
           <Route path="/lobby" element={<Lobby />} />
           <Route path="/game" element={<Game />} />
           <Route path="/results" element={<Results />} />
+          <Route path="/socket-test" element={<SocketTest />} />
         </Routes>
       </div>
     </Router>

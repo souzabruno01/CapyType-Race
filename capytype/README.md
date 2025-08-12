@@ -15,7 +15,7 @@ A real-time multiplayer typing game with a capybara theme where players race aga
 - **Smart Lobby Redirection** - Seamless navigation back to functional lobbies
 - **Automatic Race Completion** - Games end automatically when all players finish
 - **Server-Authoritative Room Management** - Reliable room state management
-- **🤖 Dynamic Text Generation** - Enhanced content creation with Railway backend integration
+- **🤖 Dynamic Text Generation** - Enhanced content creation with local backend integration
 - **📊 Difficulty-Based Text System** - Easy (200 chars), Medium (400 chars), Hard (800 chars)
 - **📚 Multiple Content Categories** - Quotes, Programming, Science, Stories, Technical, Literature
 
@@ -27,8 +27,8 @@ A real-time multiplayer typing game with a capybara theme where players race aga
 - **Styling**: Tailwind CSS + Custom Styles
 - **Animations**: Framer Motion
 - **Real-time Communication**: Socket.IO
-- **Text Generation**: Faker.js + Railway Backend Integration
-- **Hosting**: Firebase (Frontend) + Railway (Backend)
+- **Text Generation**: Faker.js + Local Backend Integration
+- **Hosting**: Local Development Environment
 
 ## 🏗️ Architecture & Game Flow
 
@@ -48,7 +48,7 @@ graph TB
         I --> J[Back to Lobby Button]
     end
     
-    subgraph "Backend (Railway)"
+    subgraph "Backend (Local)"
         K[Express Server] --> L[Socket.IO Server]
         L --> M[Room Manager]
         M --> N[Game Logic]
@@ -77,7 +77,7 @@ graph TB
         Z --> AA{Custom Text?}
         AA -->|Yes| BB[Select Difficulty & Category]
         AA -->|No| CC[Quick Start]
-        BB --> DD[API Call to Railway Backend]
+        BB --> DD[API Call to Local Backend]
         DD --> EE[AI-Generated Text]
         CC --> FF[Random Default Text]
         EE --> GG[Game Start]
@@ -105,7 +105,7 @@ graph TB
         UU[Dynamic Text Generation]
         VV[Difficulty-Based Limits]
         WW[Category-Based Content]
-        XX[Railway Backend Integration]
+        XX[Local Backend Integration]
     end
     
     style A fill:#e1f5fe
@@ -222,7 +222,7 @@ npm run build
 firebase deploy
 ```
 
-### Backend (Render/Railway)
+### Backend (Local)
 1. Connect your GitHub repository
 2. Set environment variables:
    - `FRONTEND_URL`: Your Firebase hosting URL
@@ -239,7 +239,7 @@ firebase deploy
    - Click "Generate Text" button to open the text generation modal
    - Choose difficulty: **Easy** (~200 chars), **Medium** (~400 chars), **Hard** (~800 chars)
    - Select category: Quotes, Programming, Science, Stories, Technical, Literature, etc.
-   - Click "Generate Random Text" to create dynamic content via Railway backend
+   - Click "Generate Random Text" to create dynamic content via local backend
 7. **Start the game** when ready (room admin can use custom text or quick start with random text)
 8. **Type the displayed text** as fast and accurately as possible
 9. **View results** and compare your performance with others
@@ -379,7 +379,7 @@ const useTextGeneration = () => {
       // ... more mappings
     };
     
-    // Call Railway backend API
+    // Call local backend API
     const response = await fetch(`${VITE_BACKEND_URL}/api/generate-text`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -411,7 +411,7 @@ useEffect(() => {
    ```
    User selects difficulty & category
    → Frontend calls useTextGeneration hook
-   → API request to Railway backend (/api/generate-text)
+   → API request to local backend (/api/generate-text)
    → Backend validates input & generates text with faker.js
    → Text returned with appropriate character count
    → Frontend displays generated text in modal
@@ -443,7 +443,7 @@ useEffect(() => {
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `VITE_BACKEND_URL` | Backend server URL (Railway in production) | `http://localhost:3001` |
+| `VITE_BACKEND_URL` | Backend server URL (local development) | `http://localhost:3001` |
 | `PORT` | Backend server port | `3001` |
 | `FRONTEND_URL` | Frontend URL for CORS | `http://localhost:5173` |
 | `CORS_ORIGIN` | Allowed CORS origins | `localhost URLs` |
@@ -475,7 +475,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### 🎯 **Major Feature Release (July 2025)**
 
 #### 🤖 **Dynamic Text Generation System**
-- ✅ **Railway Backend Integration** - Text generation now powered by Railway-hosted backend
+- ✅ **Local Backend Integration** - Text generation now powered by locally-hosted backend
 - ✅ **Difficulty-Based Length Control** - Easy (~200 chars), Medium (~400 chars), Hard (~800 chars)
 - ✅ **Multiple Content Categories** - Quotes, Programming, Science, Stories, Technical, Literature
 - ✅ **Faker.js Integration** - Dynamic content creation with enhanced text generation
@@ -486,7 +486,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ **Removed Character Limit Controls** - Limits now automatically set by difficulty selection
 - ✅ **Intuitive Difficulty Selector** - Clear Easy/Medium/Hard options with character count display
 - ✅ **Category Selection** - Choose from diverse content types for varied typing challenges
-- ✅ **Real-time Generation** - Instant text creation via Railway backend API calls
+- ✅ **Real-time Generation** - Instant text creation via local backend API calls
 - ✅ **Custom Text Support** - Users can still input their own text with length validation
 
 #### 🔄 **Smart Lobby Redirection System** 
@@ -518,7 +518,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 #### 🔧 **Technical Improvements**
 - ✅ **Improved Error Handling** - Better TypeScript error resolution
 - ✅ **Component Prop Fixes** - Resolved PlayerGrid and TextGenerationModal prop issues  
-- ✅ **Hook Enhancements** - Updated useTextGeneration hook with Railway backend integration
+- ✅ **Hook Enhancements** - Updated useTextGeneration hook with local backend integration
 - ✅ **Build Process** - Fixed compilation errors for successful deployment
 
 ### 📋 **Previous Updates**
@@ -526,7 +526,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - ✅ **Enhanced UI Visibility** - Improved transparency for login card and player cards in lobby
 - ✅ **Avatar Customization** - Added 10 capybara color options with real-time color picker
 - ✅ **Better Player Cards** - Increased color opacity for better visibility on the lobby board
-- ✅ **Railway Deployment** - Optimized backend deployment configuration
+- ✅ **Local Deployment** - Optimized backend configuration for local development
 - ✅ **Improved UX** - Better color contrast and visual feedback
 - ✅ **Real-time Color Sync** - Avatar colors update instantly across all connected players
 - ✅ **Fixed environment variable configuration**
@@ -537,7 +537,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### 🤖 **AI-Powered Text Generation System**
 The text generation system provides a dynamic and engaging experience:
-- **Railway Backend Integration**: High-performance text generation hosted on Railway
+- **Local Backend Integration**: High-performance text generation hosted locally
 - **Intelligent Content Categories**: Each category uses specialized algorithms for authentic content
 - **Difficulty-Based Scaling**: Text length automatically adjusts to provide appropriate challenges
 - **Fallback Reliability**: Local text generation ensures functionality even if backend is unavailable

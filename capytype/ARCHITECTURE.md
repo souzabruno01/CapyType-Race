@@ -25,7 +25,7 @@ graph TB
         end
     end
     
-    subgraph "Server Side (Render/Railway)"
+    subgraph "Server Side (Local)"
         K[Express.js Server] --> L[Socket.IO Server]
         L --> M[Room Manager]
         M --> N[Game Logic Engine]
@@ -140,7 +140,7 @@ graph LR
     end
     
     subgraph "Deployment"
-        U[Firebase Hosting] --> V[Render/Railway]
+        U[Local Frontend] --> V[Local Backend]
         V --> W[Environment Variables]
         W --> X[CI/CD Pipeline]
     end
@@ -158,7 +158,7 @@ graph TB
     
     subgraph "Production Environment"
         D[Frontend: Firebase Hosting]
-        E[Backend: Render/Railway]
+        E[Backend: Local]
         F[Production .env variables]
     end
     
@@ -224,7 +224,7 @@ graph TB
     end
     
     subgraph "Backend Deployment"
-        E[Git Integration] --> F[Render/Railway]
+        E[Git Integration] --> F[Local Environment]
         F --> G[Auto-deployment]
         G --> H[Health Monitoring]
     end

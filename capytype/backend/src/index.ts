@@ -12,6 +12,36 @@ import { generateRoomName } from './roomUtils';
 import * as schemas from './security/schemas';
 import { generateText, calculateRaceDuration } from './textGeneration';
 
+// Types
+interface Player {
+  id: string;
+  nickname: string;
+  progress: number;
+  wpm: number;
+  errors: number;
+  points: number;
+  position: number;
+  avatar: string;
+  color: string;
+  disconnected: boolean;
+  disconnectTime?: number;
+  correctLetters?: number;
+  correctWords?: number;
+}
+
+interface Room {
+  id: string;
+  admin: string;
+  text: string;
+  textLength?: number;
+  duration?: number;
+  raceDuration?: number | null;
+  gameState: 'waiting' | 'starting' | 'countdown' | 'playing' | 'inProgress' | 'finished';
+  players: Map<string, Player>;
+  startTime?: number | null;
+  endTime?: number;
+}
+
 // Load environment variables
 dotenv.config();
 
@@ -38,8 +68,8 @@ console.log(`   - XSS Protection: Enabled (Helmet)`);
 
 const app = express();
 
-// Trust proxy for Railway deployment
-app.set('trust proxy', 1);
+// Trust proxy setting for local development
+// app.set('trust proxy', 1);
 
 // --- Security Middlewares ---
 // 1. Helmet for essential security headers
@@ -69,9 +99,22 @@ const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigins,
     methods: ['GET', 'POST'],
-    credentials: true
-  }
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
+  },
+  transports: ['polling', 'websocket'],
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  connectTimeout: 30000,
+  path: '/socket.io/',
+  serveClient: true
 });
+
+console.log('[SOCKET.IO] Server initialized with configuration:');
+console.log(`  - CORS Origins: ${allowedOrigins.join(', ')}`);
+console.log(`  - Transports: polling, websocket`);
+console.log(`  - Path: /socket.io/`);
 
 // 3. Rate limiting for Socket.IO events
 const socketLimiter = new RateLimiterMemory({
@@ -85,16 +128,28 @@ io.use((socket, next) => {
       next();
     })
     .catch(() => {
+      console.log(`[SOCKET] Rate limit exceeded for ${socket.handshake.address}`);
       next(new Error('Rate limit exceeded'));
     });
 });
 
+// Add error event handler for Socket.IO server
+io.engine.on('connection_error', (err) => {
+  console.log(`[SOCKET] Connection error: ${err.code} - ${err.message}`);
+  console.log(`[SOCKET] Error details:`, err);
+});
+
+// Add error event handler for Socket.IO server
+io.on('connect_error', (err) => {
+  console.log(`[SOCKET] Connect error: ${err.message}`);
+});
+
 // Store active rooms
-const rooms = new Map();
-const raceTimers = new Map(); // Store race timers for each room
+const rooms = new Map<string, Room>();
+const raceTimers = new Map<string, NodeJS.Timeout>(); // Store race timers for each room
 
 // NEW: Centralized point calculation function
-const calculatePoints = (player: any): number => {
+const calculatePoints = (player: Player): number => {
   const basePoints = (player.wpm || 0) * 10;
   const errorPenalty = (player.errors || 0) * 3;
   const progressBonus = Math.round((player.progress || 0) / 5);
@@ -105,7 +160,7 @@ const calculatePoints = (player: any): number => {
 };
 
 // 🎯 NEW: Enhanced word-based scoring system (future implementation)
-const calculateWordBasedPoints = (player: any): number => {
+const calculateWordBasedPoints = (player: Player): number => {
   // Points per correct letter typed
   const POINTS_PER_CORRECT_LETTER = 5;
   // Bonus points for completing entire words correctly
@@ -140,6 +195,12 @@ function startRaceTimer(roomId: string, duration: number) {
       return;
     }
 
+    if (!room.startTime) {
+      clearInterval(timer);
+      raceTimers.delete(roomId);
+      return;
+    }
+
     const elapsed = (Date.now() - room.startTime) / 1000;
     const remaining = Math.max(0, duration - elapsed);
 
@@ -157,7 +218,7 @@ function startRaceTimer(roomId: string, duration: number) {
       room.gameState = 'finished';
       
       // ✅ CRITICAL FIX: Sort and send players when timer expires (same as when all players finish)
-      const finalPlayers = Array.from(room.players.values()).sort((a: any, b: any) => {
+      const finalPlayers = Array.from(room.players.values()).sort((a: Player, b: Player) => {
         // Sort by points first (DESCENDING - higher points = better position)
         if (b.points !== a.points) return b.points - a.points;
         // Then by progress (DESCENDING - more progress = better position)
@@ -202,10 +263,12 @@ function handlePlayerLeaving(socketId: string, isExplicitLeave: boolean = false)
         setTimeout(() => {
           // Check if the admin has reconnected (different socket ID but same nickname)
           let adminReconnected = false;
-          for (const [pid, player] of room.players.entries()) {
-            if (player.nickname === leavingPlayer.nickname && !player.disconnected) {
-              adminReconnected = true;
-              break;
+          if (leavingPlayer) {
+            for (const [pid, player] of room.players.entries()) {
+              if (player.nickname === leavingPlayer.nickname && !player.disconnected) {
+                adminReconnected = true;
+                break;
+              }
             }
           }
           
@@ -422,6 +485,10 @@ app.post('/api/generate-text', apiLimiter, (req, res) => {
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
+  console.log(`[SOCKET] New connection: ${socket.id} from ${socket.handshake.address}`);
+  console.log(`[SOCKET] Transport: ${socket.conn.transport.name}`);
+  console.log(`[SOCKET] Query params:`, socket.handshake.query);
+  console.log(`[SOCKET] Headers:`, socket.handshake.headers.origin);
   const getNickname = () => {
     // Search all rooms for this socket.id and return the nickname if found
     for (const room of rooms.values()) {
@@ -462,11 +529,11 @@ io.on('connection', (socket) => {
         color: validatedData.color,
         disconnected: false
       };
-      const room = {
+      const room: Room = {
         id: roomId,
         admin: socket.id,
         players: new Map([[socket.id, player]]),
-        gameState: 'waiting',
+        gameState: 'waiting' as const,
         text: '',
         startTime: null
       };
@@ -481,7 +548,7 @@ io.on('connection', (socket) => {
       
       socket.emit('roomCreated', roomId);
       socket.emit('roomJoined', { roomId, isAdmin: true, nickname: validatedData.nickname });
-      io.to(roomId).emit('playerJoined', Array.from(room.players.values()).filter((p: any) => !p.disconnected));
+      io.to(roomId).emit('playerJoined', Array.from(room.players.values()).filter((p: Player) => !p.disconnected));
       console.log(`[ROOM CREATED] Room ID: ${roomId} | Admin: ${socket.id} | Nickname: ${validatedData.nickname}`);
       logWithInfo(`connected and created room with nickname: ${validatedData.nickname}`);
     } catch (error) {
@@ -572,7 +639,7 @@ io.on('connection', (socket) => {
       socket.join(normalizedRoomId);
       
       console.log(`  - Added player to room, total players: ${room.players.size}`);
-      console.log(`  - Current players: [${Array.from(room.players.values()).map((p: any) => p.nickname).join(', ')}]`);
+      console.log(`  - Current players: [${Array.from(room.players.values()).map((p: Player) => p.nickname).join(', ')}]`);
       
       // Emit roomJoined to the joining player with their admin status
       const isAdmin = room.admin === socket.id;
@@ -581,15 +648,15 @@ io.on('connection', (socket) => {
       
       // Emit playerJoined to all players in the room (including the complete player list)
       // Filter out disconnected players from the list
-      const currentPlayers = Array.from(room.players.values()).filter((p: any) => !p.disconnected);
+      const currentPlayers = Array.from(room.players.values()).filter((p: Player) => !p.disconnected);
       io.to(normalizedRoomId).emit('playerJoined', currentPlayers);
-      console.log(`  - Emitted playerJoined to all players with ${currentPlayers.length} players: [${currentPlayers.map((p: any) => p.nickname).join(', ')}]`);
+      console.log(`  - Emitted playerJoined to all players with ${currentPlayers.length} players: [${currentPlayers.map((p: Player) => p.nickname).join(', ')}]`);
       
       // For reconnections (especially admin), send an additional player list update after a brief delay
       // This ensures all clients have the most up-to-date player list
       if (existingPlayerSocketId) {
         setTimeout(() => {
-          const updatedPlayers = Array.from(room.players.values()).filter((p: any) => !p.disconnected);
+          const updatedPlayers = Array.from(room.players.values()).filter((p: Player) => !p.disconnected);
           io.to(normalizedRoomId).emit('playerJoined', updatedPlayers);
           console.log(`  - [RECONNECTION SYNC] Sent additional player list update with ${updatedPlayers.length} players`);
         }, 100);
@@ -762,7 +829,7 @@ io.on('connection', (socket) => {
 
         // Check if player has completed the text but don't end the race
         if (validatedData.progress >= 100) {
-          const timeTaken = (Date.now() - room.startTime) / 1000;
+          const timeTaken = room.startTime ? (Date.now() - room.startTime) / 1000 : 0;
           const minimumRaceTime = 30; // Minimum race duration in seconds
           
           // If race duration is less than minimum, adjust the time to minimum
@@ -834,7 +901,7 @@ io.on('connection', (socket) => {
             });
             
             // Broadcast that this player finished and include the full updated player list
-            const timeTaken = validatedData.time || ((Date.now() - room.startTime) / 1000);
+            const timeTaken = validatedData.time || (room.startTime ? (Date.now() - room.startTime) / 1000 : 0);
             const minimumRaceTime = 30; // Minimum race duration in seconds
             const adjustedTime = Math.max(timeTaken, minimumRaceTime);
             
@@ -845,7 +912,7 @@ io.on('connection', (socket) => {
             });
 
             // Check if all players have finished
-            const allFinished = Array.from(room.players.values()).every((p: any) => p.progress >= 100);
+            const allFinished = Array.from(room.players.values()).every((p: Player) => p.progress >= 100);
             if (allFinished) {
               // If all finished, end the race for everyone
               const raceTimer = raceTimers.get(roomId);
@@ -856,7 +923,7 @@ io.on('connection', (socket) => {
               room.gameState = 'finished';
               
               // Send final sorted player data with race completion - comprehensive sorting
-              const finalPlayers = Array.from(room.players.values()).sort((a: any, b: any) => {
+              const finalPlayers = Array.from(room.players.values()).sort((a: Player, b: Player) => {
                 // Sort by points first (DESCENDING - higher points = better position)
                 if (b.points !== a.points) return b.points - a.points;
                 // Then by progress (DESCENDING - more progress = better position)
@@ -914,7 +981,7 @@ io.on('connection', (socket) => {
           console.log(`[Backend] Room ${roomId} reset to waiting state`);
           
           // Notify all players in the room that we're back in lobby
-          const activePlayers = Array.from(room.players.values()).filter((p: any) => !p.disconnected);
+          const activePlayers = Array.from(room.players.values()).filter((p: Player) => !p.disconnected);
           io.to(roomId).emit('gameStateChanged', { 
             gameState: 'waiting',
             players: activePlayers 

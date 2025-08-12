@@ -1,108 +1,97 @@
-# CapyType Race - Deployment Guide
+# CapyType Race - Local Deployment Guide
 
-## 🚀 Deployment Status
+## 🚀 Local Deployment
 
-### Frontend Deployment ✅
-- **URL**: https://napsdsub.manus.space
-- **Platform**: Manus Space (React deployment)
-- **Status**: Successfully deployed
-- **Build**: Production-ready with optimizations
+This guide focuses on running CapyType Race locally only, without any cloud deployment.
 
-### Backend Deployment 🔄
-The backend needs to be deployed to a service that supports WebSockets. Here are the recommended options:
+### Local Development Setup
 
-## 🌐 Backend Deployment Options
-
-### Option 1: Railway (Recommended)
-1. Go to [Railway.app](https://railway.app)
-2. Connect your GitHub account
-3. Select the CapyType-Race repository
-4. Choose the `capytype/backend` folder as root
-5. Set environment variables:
-   ```
-   FRONTEND_URL=https://napsdsub.manus.space
-   CORS_ORIGIN=https://napsdsub.manus.space,http://localhost:5173
-   PORT=3001
-   ```
-6. Deploy automatically
-
-### Option 2: Render
-1. Go to [Render.com](https://render.com)
-2. Connect your GitHub repository
-3. Create a new Web Service
-4. Set root directory to `capytype/backend`
-5. Build command: `npm install && npm run build`
-6. Start command: `npm start`
-7. Set environment variables (same as above)
-
-### Option 3: Heroku
-1. Install Heroku CLI
-2. Create new app: `heroku create capytype-backend`
-3. Set buildpack: `heroku buildpacks:set heroku/nodejs`
-4. Set environment variables: `heroku config:set FRONTEND_URL=https://napsdsub.manus.space`
-5. Deploy: `git subtree push --prefix=capytype/backend heroku main`
-
-## 🔧 Configuration Update Required
-
-After deploying the backend, you need to update the frontend configuration:
-
-1. **Update frontend/.env**:
-   ```env
-   VITE_BACKEND_URL=https://your-backend-url.com
-   ```
-
-2. **Rebuild and redeploy frontend**:
+#### Backend Setup
+1. Navigate to the backend directory:
    ```bash
-   cd frontend
-   npm run build
-   # Then redeploy to your hosting service
+   cd capytype/backend
    ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the backend server:
+   ```bash
+   npm run dev
+   ```
+4. The backend will run on http://localhost:3001
 
-## 🧪 Testing the Deployment
+#### Frontend Setup
+1. Navigate to the frontend directory:
+   ```bash
+   cd capytype/frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the frontend development server:
+   ```bash
+   npm run dev
+   ```
+4. The frontend will be available at http://localhost:5173
 
-1. Open the frontend URL: https://napsdsub.manus.space
-2. Enter a nickname
-3. Try to create a room
-4. If you see "Failed to connect to server", the backend needs to be deployed
+#### Environment Configuration
 
-## 📋 Deployment Checklist
+**Backend (.env)**
+```
+CORS_ORIGIN=http://localhost:5173,http://localhost:5174
+NODE_ENV=development
+ROOM_ID_SECRET=capytype-shared-secret
+```
 
-- [x] Frontend deployed to Manus Space
-- [x] Frontend build optimized
-- [x] Environment variables configured
-- [ ] Backend deployed to hosting service
-- [ ] Backend environment variables set
-- [ ] Frontend updated with backend URL
-- [ ] End-to-end testing completed
+**Frontend (.env)**
+```
+VITE_BACKEND_URL=http://localhost:3001
+```
 
-## 🔍 Next Steps
+## 🧪 Testing the Local Deployment
 
-1. **Choose a backend hosting service** from the options above
-2. **Deploy the backend** with the provided instructions
-3. **Update the frontend** with the new backend URL
-4. **Test the complete application** to ensure everything works
+1. Start both the backend and frontend servers as described above
+2. Open http://localhost:5173 in your browser
+3. Enter a nickname
+4. Create a room
+5. Share the room code with others on your local network
+
+## 📋 Local Deployment Checklist
+
+- [ ] Backend running on http://localhost:3001
+- [ ] Frontend running on http://localhost:5173
+- [ ] Environment variables properly configured
+- [ ] WebSocket connection working
+- [ ] Room creation and joining working
+- [ ] Game functionality working
 
 ## 🆘 Troubleshooting
 
 ### "Failed to connect to server"
-- Backend is not deployed or not accessible
-- Check backend URL in frontend .env file
-- Verify CORS configuration in backend
-
-### CORS Errors
-- Add frontend URL to backend CORS_ORIGIN
-- Ensure both HTTP and HTTPS are handled
+- Ensure backend is running on port 3001
+- Check frontend .env file has correct backend URL
+- Verify CORS configuration in backend .env file
 
 ### WebSocket Connection Issues
-- Ensure hosting service supports WebSockets
-- Check firewall and proxy settings
+- Check browser console for specific errors
+- Ensure no firewall is blocking WebSocket connections
+- Try using different browsers
 
-## 📞 Support
+### Room Creation/Joining Issues
+- Check backend logs for any errors
+- Ensure both frontend and backend are running
+- Verify that the socket connection is established (check browser console)
 
-If you need help with the backend deployment, please provide:
-1. Which hosting service you prefer
-2. Any error messages you encounter
-3. Your backend deployment URL (once available)
+## 📞 Running the Application
 
-The frontend is ready and waiting for the backend connection!
+To run the entire application with a single command, use:
+
+```bash
+cd capytype
+npm run dev
+```
+
+This will start both the backend and frontend servers concurrently.
 

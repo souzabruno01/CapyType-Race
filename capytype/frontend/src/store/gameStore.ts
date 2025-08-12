@@ -170,15 +170,37 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
 
     console.log('[Store] Creating new socket connection to:', VITE_BACKEND_URL);
+    console.log('[Store] Environment variables:', import.meta.env);
     const { setConnectionStatus, setError } = get();
     setConnectionStatus('connecting');
     setError(null);
 
     const newSocket = io(VITE_BACKEND_URL, {
-      transports: ['websocket'],
+      transports: ['polling', 'websocket'],
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      timeout: 20000,
+      autoConnect: true,
+      path: '/socket.io/',
+      reconnection: true,
+      forceNew: true
     });
+    
+    console.log('[Store] Socket configuration:', {
+      url: VITE_BACKEND_URL,
+      transports: ['polling', 'websocket'],
+      path: '/socket.io/'
+    });
+    
+    // Log all socket events for debugging
+    const onevent = newSocket.onevent;
+    newSocket.onevent = function(packet) {
+      const args = packet.data || [];
+      console.log('[Socket] Event:', args[0], args.slice(1));
+      onevent.call(this, packet);
+    };
+    
+    console.log('[Store] Socket connection attempt initiated');
 
     set({ socket: newSocket });
 
@@ -392,6 +414,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     newSocket.on('connect_error', (error) => {
       console.error('[Store] Connection error:', error);
+      console.error('[Store] Connection error details:', {
+        message: error.message,
+        // Handle potential Socket.IO specific properties safely
+        type: (error as any).type,
+        description: (error as any).description,
+        stack: error.stack
+      });
       const { setConnectionStatus, setError } = get();
       setConnectionStatus('error');
       setError(`Connection failed: ${error.message}`);
@@ -399,9 +428,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
     return newSocket;
   },
-  // New helper function to manage actions
+  // Helper function to manage actions
   executeOrQueueAction: (action) => {
-    const { socket, initializeSocket, actionQueue } = get();
+    const { socket, initializeSocket, actionQueue, setError } = get();
     console.log('[Store] executeOrQueueAction called, socket state:', { 
       socketExists: !!socket, 
       socketConnected: socket?.connected,
@@ -410,24 +439,60 @@ export const useGameStore = create<GameStore>((set, get) => ({
     
     if (socket && socket.connected) {
       console.log('[Store] Socket is connected, executing action immediately');
-      action();
+      try {
+        action();
+      } catch (error) {
+        console.error('[Store] Error executing action:', error);
+        setError(`Action failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     } else {
       console.log('[Store] Socket not connected, queueing action and initializing socket');
       set({ actionQueue: [...actionQueue, action] });
-      // Ensure a socket exists and is trying to connect
-      initializeSocket();
+      
+      try {
+        // Ensure a socket exists and is trying to connect
+        const newSocket = initializeSocket();
+        console.log('[Store] Socket initialization result:', { 
+          socketId: newSocket?.id, 
+          connected: newSocket?.connected 
+        });
+      } catch (error) {
+        console.error('[Store] Error initializing socket:', error);
+        setError(`Failed to initialize socket: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     }
   },
   createRoom: (nickname, avatar, color) => {
     console.log('[Store] createRoom called with:', { nickname, avatar, color });
+    const { socket, setError } = get();
+    
+    // Check if socket exists
+    if (!socket) {
+      console.error('[Store] Socket is null, attempting to initialize');
+      setError('Socket connection not initialized. Attempting to connect...');
+    }
+    
     get().executeOrQueueAction(() => {
       const { socket } = get();
+      if (!socket) {
+        console.error('[Store] Socket is still null after initialization attempt');
+        setError('Failed to establish socket connection. Please refresh the page.');
+        return;
+      }
+      
       console.log('[Store] Socket connected, creating room...');
       console.log('[Store] Socket state:', { id: socket?.id, connected: socket?.connected });
       // Use the avatar filename, not the full path
       const avatarFile = avatar.split('/').pop() || avatar;
       console.log('[Store] Emitting createRoom with:', { nickname, avatar: avatarFile, color });
-      socket?.emit('createRoom', { nickname, avatar: avatarFile, color });
+      
+      try {
+        socket.emit('createRoom', { nickname, avatar: avatarFile, color });
+        console.log('[Store] createRoom event emitted successfully');
+      } catch (error) {
+        console.error('[Store] Error emitting createRoom event:', error);
+        setError(`Failed to create room: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
     });
   },
   joinRoom: (roomId, nickname, avatar, color) => {

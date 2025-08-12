@@ -219,8 +219,36 @@ export default function Login() {
     // Clear room code on create
     sessionStorage.removeItem('capy_roomId');
     setRoomCode('');
-    // Pass both avatarFile and selectedAvatarColor
-    createRoom(nickname, avatarFile, selectedAvatarColor);
+    
+    // Test socket connection before creating room
+    console.log('Testing socket connection before creating room...');
+    const { socket, connectionStatus } = useGameStore.getState();
+    console.log('Current socket:', socket);
+    console.log('Connection status:', connectionStatus);
+    
+    if (!socket || connectionStatus !== 'connected') {
+      console.log('Socket not connected, attempting to connect...');
+      useGameStore.getState().connect();
+      
+      // Wait a moment for the connection to establish
+      setTimeout(() => {
+        const { socket, connectionStatus } = useGameStore.getState();
+        console.log('After connect attempt - Socket:', socket);
+        console.log('After connect attempt - Connection status:', connectionStatus);
+        
+        if (connectionStatus === 'connected') {
+          console.log('Socket connected successfully, creating room...');
+          createRoom(nickname, avatarFile, selectedAvatarColor);
+        } else {
+          console.error('Failed to connect socket after attempt');
+          setError('Connection error. Please try again.');
+        }
+      }, 1000);
+    } else {
+      console.log('Socket already connected, creating room directly...');
+      // Pass both avatarFile and selectedAvatarColor
+      createRoom(nickname, avatarFile, selectedAvatarColor);
+    }
   };
 
   const handleJoinRoom = (e: React.FormEvent) => {
