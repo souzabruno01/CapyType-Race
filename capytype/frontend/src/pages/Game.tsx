@@ -620,11 +620,13 @@ export default function Game() {
                 fontSize: '1.2rem',
                 lineHeight: 1.7,
                 whiteSpace: 'normal', // Allow text to wrap naturally
-                wordBreak: 'keep-all', // Don't break words in the middle
-                overflowWrap: 'break-word', // Only break at word boundaries
+                wordWrap: 'break-word', // Break long words if necessary
+                overflowWrap: 'break-word', // Modern property for word breaking
                 hyphens: 'none', // Disable hyphenation
                 color: '#6b7280',
-                userSelect: 'none' // Prevent text selection for anti-cheat
+                userSelect: 'none', // Prevent text selection for anti-cheat
+                width: '100%', // Ensure full width usage
+                overflow: 'hidden' // Prevent any horizontal overflow
               }}>
                 {text || 'Waiting for text...'}
               </div>

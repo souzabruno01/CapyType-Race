@@ -5,28 +5,30 @@ const HighlightedText = ({ text, input, errorPositions }: {
   input: string; 
   errorPositions: Set<number>;
 }) => {
-  return (
-    <div style={{
-      fontFamily: 'monospace',
-      fontSize: '1.2rem',
-      lineHeight: 1.7,
-      whiteSpace: 'normal', // Allow text to wrap naturally
-      position: 'relative',
-      wordBreak: 'keep-all', // Keep words together - don't break in middle
-      overflowWrap: 'break-word', // Only break at word boundaries
-      hyphens: 'none', // Disable hyphenation
-      userSelect: 'none' // Prevent text selection for anti-cheat
-    }}>
-      {text.split('').map((char, index) => {
-        const isTyped = index < input.length;
-        const isError = errorPositions.has(index);
-        const isCurrent = index === input.length;
+  // Split text into words while keeping track of character indices
+  const buildWordElements = () => {
+    const words: JSX.Element[] = [];
+    let currentIndex = 0;
+    
+    // Split by spaces but keep the spaces
+    const tokens = text.split(/(\s+)/);
+    
+    tokens.forEach((token, tokenIndex) => {
+      const wordChars: JSX.Element[] = [];
+      
+      for (let i = 0; i < token.length; i++) {
+        const charIndex = currentIndex + i;
+        const char = token[i];
+        const isTyped = charIndex < input.length;
+        const isError = errorPositions.has(charIndex);
+        const isCurrent = charIndex === input.length;
 
         const style: React.CSSProperties = {
           transition: 'all 0.15s ease',
           padding: '2px 1px',
           borderRadius: 3,
-          position: 'relative'
+          position: 'relative',
+          display: 'inline' // Ensure inline display for proper wrapping
         };
 
         if (isTyped) {
@@ -48,12 +50,48 @@ const HighlightedText = ({ text, input, errorPositions }: {
           style.animation = 'pulse 1.2s infinite';
         }
 
-        return (
-          <span key={index} style={style}>
-            {char === ' ' ? <span>&nbsp;</span> : char}
+        wordChars.push(
+          <span key={charIndex} style={style}>
+            {char === ' ' ? '\u00A0' : char}
           </span>
         );
-      })}
+      }
+      
+      // Wrap each word (or space sequence) in a span with inline-block
+      // This allows the browser to treat it as a word for wrapping purposes
+      words.push(
+        <span 
+          key={`word-${tokenIndex}`} 
+          style={{ 
+            display: 'inline-block',
+            whiteSpace: token.trim() === '' ? 'pre' : 'nowrap' // Spaces keep their whitespace, words don't wrap internally
+          }}
+        >
+          {wordChars}
+        </span>
+      );
+      
+      currentIndex += token.length;
+    });
+    
+    return words;
+  };
+
+  return (
+    <div style={{
+      fontFamily: 'monospace',
+      fontSize: '1.2rem',
+      lineHeight: 1.7,
+      whiteSpace: 'normal', // Allow text to wrap naturally
+      position: 'relative',
+      wordWrap: 'break-word', // Break long words if necessary
+      overflowWrap: 'break-word', // Modern property for word breaking
+      hyphens: 'none', // Disable hyphenation
+      userSelect: 'none', // Prevent text selection for anti-cheat
+      width: '100%', // Ensure full width usage
+      overflow: 'hidden' // Prevent any horizontal overflow
+    }}>
+      {buildWordElements()}
     </div>
   );
 };
